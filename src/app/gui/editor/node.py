@@ -227,7 +227,7 @@ class NoteNode(Node):
                          bar_num=bar_num, beat=beat, color=color,
                          parent=parent, is_temporary=is_temporary)
         self._key: Key = key
-        logger.debug(f'NoteNode key {self._key}')
+        # logger.debug(f'NoteNode key {self._key}')
         self._event = Event(type=EventType.note, pitch=int(key.note),
                             channel=key.note.channel, beat=beat, unit=unit)
         self.set_pos()

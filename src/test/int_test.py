@@ -20,16 +20,16 @@ say_whee()
 say_whee()
 
 
-class TestIter:
-    def __init__(self, length=4):
-        self.dct = {item: [item] for item in range(length)}
-
-    def gen(self):
-        return (item for k, v in self.dct.items() for item in v)
-
-
-test = TestIter()
-print(test.dct)
-print(list(test.gen()))
-for i in test.gen():
-    print(i)
+# class TestIter:
+#     def __init__(self, length=4):
+#         self.dct = {item: [item] for item in range(length)}
+#
+#     def gen(self):
+#         return (item for k, v in self.dct.items() for item in v)
+#
+#
+# test = TestIter()
+# print(test.dct)
+# print(list(test.gen()))
+# for i in test.gen():
+#     print(i)

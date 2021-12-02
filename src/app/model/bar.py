@@ -1,10 +1,11 @@
+from __future__ import annotations
 import copy
 from typing import List, Union, Optional
 
 from pydantic import BaseModel, PositiveInt, NonNegativeInt, NonNegativeFloat
 
 from src.app.lib4py.logger import get_console_logger
-from src.app.model.note import Event
+from src.app.model.note import Event, EventType
 import logging
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
@@ -28,6 +29,10 @@ class Bar(BaseModel):
         self.bar.append(event)
         self.bar.sort(key=lambda x: x.beat)
 
+    def add_events(self, events: List[Event]):
+        for event in events:
+            self.add_event(event=event)
+
     def event_index(self, event: Event) -> int:
         """Index of note in bar list"""
         return self.bar.index(event)
@@ -35,41 +40,46 @@ class Bar(BaseModel):
     def remove_event(self, event: Event) -> None:
         self.bar.remove(event)
 
-    def remove_events(self, notes: Optional[List[Event]]) -> None:
-        for note in notes:
-            self.remove_event(event=note)
+    def remove_events(self, events: Optional[List[Event]]) -> None:
+        for event in events:
+            self.remove_event(event=event)
 
-    def remove_control_notes(self):
+    def remove_events_by_type(self, event_type: EventType) -> None:
         raise NotImplementedError
 
     def add(self, this, other):
         if isinstance(other, Event):
-            this.add_event(other)
+            this.add_event(event=other)
         elif isinstance(other, Bar):
-            for note in other:
-                this.add_event(event=note)
+            for event in other:
+                this.add_event(event=event)
+        elif isinstance(other, List):
+            this.add_events(events=other)
         else:
             raise ValueError(f"Unsupported type {type(other)}")
         return this
 
-    def __add__(self, other):
+    def __add__(self, other) -> Bar:
         bar = copy.deepcopy(self)
         return self.add(this=bar, other=other)
 
-    def __iadd__(self, other):
+    def __iadd__(self, other) -> Bar:
         return self.add(this=self, other=other)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> Event:
         """Enable the  '[]' notation on Bars to get the item at the index."""
         return self.bar[index]
+
+    def __iter__(self):
+        return iter(self.bar)
 
     def events(self):
         return (event for event in self.bar)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Enable str() and repr() for Bars."""
         return str(self.bar)
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Enable the len() method for Bars."""
         return len(self.bar)

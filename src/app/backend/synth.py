@@ -1925,7 +1925,7 @@ class FS(Synth):
         # current_preset = self.get_current_preset(channel=channel)
         # if preset:
         #     self.preset_change(channel=channel, preset=preset)
-        logger.debug(f'channel {channel} key {pitch} velocity {velocity}')
+        # logger.debug(f'channel {channel} key {pitch} velocity {velocity}')
         self.noteon(chan=channel, key=pitch, vel=velocity)
         # if preset:
         #     self.preset_change(channel=channel, preset=current_preset)

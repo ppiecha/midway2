@@ -9,18 +9,18 @@ from PySide6.QtWidgets import QApplication, QHBoxLayout, QWidget, \
     QGraphicsScene, QGraphicsSceneMouseEvent
 from pydantic import NonNegativeInt
 
-from constants import KEY_W_WIDTH, KEY_W_HEIGHT, RULER_HEIGHT, CLR_RULER, \
+from src.app.constants import KEY_W_WIDTH, KEY_W_HEIGHT, RULER_HEIGHT, \
+    CLR_RULER, \
     CLR_RULER_TEXT, CLR_RULER_META_NOTES_BACK, \
     CLR_GRID_BAR, CLR_GRID_OCT, CLR_GRID_DEFAULT, GRID_DIVIDER, DARK_PALETTE, \
     KEY_MAPPING
-from gui.editor import node
-from gui.editor.grid import GridView, GenericGridScene
-from gui.editor.node import MetaNode
-from gui.widgets import GraphicsView
-from lib4py.logger import get_console_logger
-from mingus.core import value
-from model.note import Channel, EventType, Beat
-from model.sequence import Sequence
+from src.app.gui.editor.grid import GridView, GenericGridScene
+from src.app.gui.editor.node import MetaNode
+from src.app.gui.widgets import GraphicsView
+from src.app.lib4py.logger import get_console_logger
+from src.app.mingus.core import value
+from src.app.model.note import Channel, EventType, Beat
+from src.app.model.sequence import Sequence
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
@@ -49,10 +49,11 @@ class Header(QGraphicsItem):
         self.rect = self.get_rect()
 
     def get_rect(self):
-        meta_notes_height = 2 * KEY_W_HEIGHT
+        meta_notes_height = 3 * KEY_W_HEIGHT
         width = KEY_W_WIDTH
         height = (
-                    RULER_HEIGHT + meta_notes_height) if self.show_meta_notes else RULER_HEIGHT
+                RULER_HEIGHT + meta_notes_height) if self.show_meta_notes \
+            else RULER_HEIGHT
         return QRect(0, 0, width, height)
 
     @property
@@ -91,17 +92,28 @@ class Header(QGraphicsItem):
         if self.show_meta_notes:
             pen.setWidth(1)
             painter.setBrush(meta_notes_brush)
-            painter.drawRect(0, RULER_HEIGHT, KEY_W_WIDTH, 3 * KEY_W_HEIGHT)
-            painter.drawLine(0, RULER_HEIGHT + KEY_W_HEIGHT, self.rect.width(),
-                             RULER_HEIGHT + KEY_W_HEIGHT)
+            painter.drawRect(0, KEY_MAPPING[EventType.program], KEY_W_WIDTH,
+                             3 * KEY_W_HEIGHT)
+            painter.drawLine(0, KEY_MAPPING[EventType.controls],
+                             self.rect.width(), KEY_MAPPING[EventType.controls])
+            painter.drawLine(0, KEY_MAPPING[EventType.pitch_bend],
+                             self.rect.width(),
+                             KEY_MAPPING[EventType.pitch_bend])
             painter.setPen(CLR_RULER_TEXT)
-            painter.drawText(QRect(0, RULER_HEIGHT, KEY_W_WIDTH, KEY_W_HEIGHT),
+            painter.drawText(QRect(0, KEY_MAPPING[EventType.program],
+                                   KEY_W_WIDTH, KEY_W_HEIGHT),
                              Qt.AlignHCenter | Qt.AlignVCenter | Qt.TextSingleLine,
                              "Program")
-            painter.drawText(QRect(0, RULER_HEIGHT + KEY_W_HEIGHT, KEY_W_WIDTH,
+            painter.drawText(QRect(0, KEY_MAPPING[EventType.controls],
+                                   KEY_W_WIDTH,
                                    KEY_W_HEIGHT),
                              Qt.AlignHCenter | Qt.AlignVCenter | Qt.TextSingleLine,
                              "Control")
+            painter.drawText(QRect(0, KEY_MAPPING[EventType.pitch_bend],
+                                   KEY_W_WIDTH,
+                                   KEY_W_HEIGHT),
+                             Qt.AlignHCenter | Qt.AlignVCenter | Qt.TextSingleLine,
+                             "Pitch bend")
             painter.setPen(pen)
 
     def boundingRect(self):
@@ -159,7 +171,7 @@ class RulerScene(GenericGridScene):
             self._add_note(meta_node=meta_node, including_sequence=True)
 
     def mousePressEvent(self, e: QGraphicsSceneMouseEvent):
-        super().mousePressEvent(e)
+        # super().mousePressEvent(e)
         # logger.debug(f"ruler {e.pos()}")
         if not e.isAccepted():
             # logger.debug("meta scene not acceted")
@@ -187,10 +199,10 @@ class Ruler(QGraphicsItem):
         self.rect = self.get_rect()
 
     def get_rect(self):
-        meta_notes_height = 2 * KEY_W_HEIGHT
+        meta_notes_height = 3 * KEY_W_HEIGHT
         width = self.num_of_bars * GRID_DIVIDER * KEY_W_HEIGHT + self.scroll_diff
         height = (
-                    RULER_HEIGHT + meta_notes_height) if self.show_meta_notes else RULER_HEIGHT
+                RULER_HEIGHT + meta_notes_height) if self.show_meta_notes else RULER_HEIGHT
         return QRect(0, 0, width, height)
 
     @property
@@ -242,17 +254,21 @@ class Ruler(QGraphicsItem):
         pen.setWidth(1)
         meta_notes_brush = QBrush(CLR_RULER_META_NOTES_BACK)
         painter.setPen(pen)
-        painter.drawLine(0, RULER_HEIGHT, self.rect.width() - self.scroll_diff,
-                         RULER_HEIGHT)
+        painter.drawLine(0, KEY_MAPPING[EventType.program],
+                         self.rect.width() - self.scroll_diff,
+                         KEY_MAPPING[EventType.program])
         if self.show_meta_notes:
             pen.setWidth(1)
             painter.setBrush(meta_notes_brush)
             painter.drawRect(0, RULER_HEIGHT,
                              self.rect.width() - self.scroll_diff,
                              3 * KEY_W_HEIGHT)
-            painter.drawLine(0, RULER_HEIGHT + KEY_W_HEIGHT,
+            painter.drawLine(0, KEY_MAPPING[EventType.controls],
                              self.rect.width() - self.scroll_diff,
-                             RULER_HEIGHT + KEY_W_HEIGHT)
+                             KEY_MAPPING[EventType.controls])
+            painter.drawLine(0, KEY_MAPPING[EventType.pitch_bend],
+                             self.rect.width() - self.scroll_diff,
+                             KEY_MAPPING[EventType.pitch_bend])
         for tick in range(self.num_of_bars * GRID_DIVIDER):
             x = (tick + 1) * KEY_W_HEIGHT
             if self.show_meta_notes:
