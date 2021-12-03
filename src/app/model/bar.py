@@ -45,7 +45,8 @@ class Bar(BaseModel):
             self.remove_event(event=event)
 
     def remove_events_by_type(self, event_type: EventType) -> None:
-        raise NotImplementedError
+        self.remove_events(
+            [event for event in self.bar if event.type == event_type])
 
     def add(self, this, other):
         if isinstance(other, Event):

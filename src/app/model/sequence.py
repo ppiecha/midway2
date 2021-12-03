@@ -3,8 +3,8 @@ from typing import Dict, Union, Optional, List
 
 from pydantic import PositiveInt, BaseModel, NonNegativeInt, validator
 
-from model.bar import Bar
-from model.note import Event
+from src.app.model.bar import Bar
+from src.app.model.note import Event, EventType
 
 _bars = Dict[int, Union[Bar, type(None)]]
 
@@ -81,8 +81,13 @@ class Sequence(BaseModel):
 
     def remove_events(self, bar_num: NonNegativeInt,
                       events: Optional[List[Event]]) -> None:
-        for event in events:
-            self.remove_event(bar_num=bar_num, event=event)
+        self.bars[bar_num].remove_events(events=events)
+        # for event in events:
+        #     self.remove_event(bar_num=bar_num, event=event)
+
+    def remove_events_by_type(self, event_type: EventType) -> None:
+        for bar in self.bars.values():
+            bar.remove_events_by_type(event_type=event_type)
 
     def add(self, this, other):
         if isinstance(other, Sequence):

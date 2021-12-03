@@ -1,56 +1,8 @@
-import json
 from typing import Dict, List
 
 import pytest
 
-from src.app.model.bar import Bar
-from src.app.model.note import EventType, Event
-
-
-@pytest.fixture
-def bar0() -> Bar:
-    return Bar(bar_num=0)
-
-
-@pytest.fixture
-def bar1() -> Bar:
-    return Bar(bar_num=1)
-
-
-@pytest.fixture
-def note0() -> Event:
-    return Event(type=EventType.note,
-                 channel=0,
-                 beat=0,
-                 pitch=79,
-                 unit=8)
-
-
-@pytest.fixture
-def note1() -> Event:
-    return Event(type=EventType.note,
-                 channel=0,
-                 beat=0.125,
-                 pitch=80,
-                 unit=8)
-
-
-@pytest.fixture
-def note2() -> Event:
-    return Event(type=EventType.note,
-                 channel=0,
-                 beat=0.250,
-                 pitch=81,
-                 unit=4)
-
-
-@pytest.fixture
-def note3() -> Event:
-    return Event(type=EventType.note,
-                 channel=0,
-                 beat=0.5,
-                 pitch=81,
-                 unit=2)
+from src.app.model.note import Event, EventType
 
 
 @pytest.fixture
@@ -112,6 +64,7 @@ def test_add_note(bar0, note0, capsys):
     for note in b0:
         print(note)
         assert isinstance(note, Event)
+        assert note.type == EventType.note
 
 
 def test_add_two_notes(bar0, note0, note1, bar_result):
@@ -161,6 +114,18 @@ def test_remove_events(bar0, note0, note1, note2, note3, two_notes):
     assert len(b0) == 4
     b0.remove_events([note2, note3])
     assert list(b0.events()) == two_notes
+
+
+def test_program():
+    pass
+
+
+def test_controls():
+    pass
+
+
+def test_pitch_bend():
+    pass
 
 
 def test_remove_events_by_type_notes():
