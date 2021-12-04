@@ -14,16 +14,17 @@ from PySide6.QtWidgets import QWidget, QBoxLayout, QComboBox, QListWidget, \
     QSpinBox, QLabel, QStackedWidget, QFrame, QToolBar
 from pubsub import pub
 
-from constants import DARK_PALETTE, NEW_TRACK, EDIT_TRACK, DELETE_TRACK
-from gui.dialogs.generic_config import GenericConfig, GenericConfigMode
-from gui.track_tab import TrackVersionTab
-from gui.widgets import Box
-from model.composition import Composition
-from model.track import Track, TrackVersion
+from src.app.utils.constants import DARK_PALETTE, NEW_TRACK, EDIT_TRACK, \
+    DELETE_TRACK
+from src.app.gui.dialogs.generic_config import GenericConfig, GenericConfigMode
+from src.app.gui.track_tab import TrackVersionTab
+from src.app.gui.widgets import Box
+from src.app.model.composition import Composition
+from src.app.model.track import Track, TrackVersion
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from gui.main_frame import MainFrame
+    from src.app.gui.main_frame import MainFrame
 
 import resources
 

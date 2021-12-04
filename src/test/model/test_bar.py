@@ -40,7 +40,8 @@ def bar_result(two_notes) -> Dict:
         "bar": two_notes}
 
 
-def test_note(note0):
+def test_note(note0, capsys):
+    print(str(note0.dict()))
     assert note0.dict() == {"type": "note",
                             "channel": 0,
                             "beat": 0.0,
@@ -116,8 +117,18 @@ def test_remove_events(bar0, note0, note1, note2, note3, two_notes):
     assert list(b0.events()) == two_notes
 
 
-def test_program():
-    pass
+def test_program(program0):
+    print(str(program0.dict()))
+    assert program0.dict() == {"type": "program",
+                               "channel": 0,
+                               "beat": 0.0,
+                               "pitch": None,
+                               "unit": None,
+                               "velocity": None,
+                               "preset": {'sf_name': 'test', 'bank': 0,
+                                          'patch': 0},
+                               "controls": None
+                               }
 
 
 def test_controls():

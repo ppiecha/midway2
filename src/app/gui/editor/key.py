@@ -7,11 +7,10 @@ from PySide6.QtGui import QPainter, QColor
 from PySide6.QtWidgets import QGraphicsItem, QGraphicsSceneHoverEvent, \
     QGraphicsSceneMouseEvent
 
-from src.app.constants import KEY_W_WIDTH, KEY_W_HEIGHT, KEY_B_WIDTH, \
+from src.app.utils.constants import KEY_W_WIDTH, KEY_W_HEIGHT, KEY_B_WIDTH, \
     KEY_B_HEIGHT, CLR_WK_ON, CLR_WK_OFF, CLR_WK_PRESSED, CLR_BK_ON, CLR_BK_OFF, \
-    CLR_BK_PRESSED
-from src.app.lib4py.logger import get_console_logger
-from src.app.backend.synth_config import DEFAULT_VELOCITY
+    CLR_BK_PRESSED, DEFAULT_VELOCITY
+from src.app.utils.logger import get_console_logger
 from src.app.mingus.containers.note import Note
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)

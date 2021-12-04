@@ -8,21 +8,19 @@ from PySide6.QtWidgets import QWidget, QBoxLayout, QCheckBox, QSpinBox, \
     QPushButton, QTabWidget, QMenu, QToolButton, QTableWidget, QTableWidgetItem
 from pubsub import pub
 
-from constants import EVENT_WIN_SIZE, EVENT_WIN_POS, EDIT_TRACK_VERSION, \
-    NEW_TRACK_VERSION
-from gui.dialogs.generic_config import GenericConfigDlg, GenericConfig
-from gui.editor.piano_roll import PianoRoll
+from src.app.utils.constants import EDIT_TRACK_VERSION, NEW_TRACK_VERSION
+from src.app.gui.editor.piano_roll import PianoRoll
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from gui.track_list import TrackListItem
-    from gui.main_frame import MainFrame
-from gui.widgets import Box, FontBox, PresetBox, ChannelBox
-from backend.synth import FS
-from model.composition import Composition
-from model.note import Preset
-from model.sequence import Sequence
-from model.track import Track, TrackVersion
+    from src.app.gui.track_list import TrackListItem
+    from src.app.gui.main_frame import MainFrame
+from src.app.gui.widgets import Box, FontBox, PresetBox, ChannelBox
+from src.app.backend.synth import FS
+from src.app.model.composition import Composition
+from src.app.model.note import Preset
+from src.app.model.sequence import Sequence
+from src.app.model.track import Track, TrackVersion
 
 
 class MelodyTrackVersion(QWidget):

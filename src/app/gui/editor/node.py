@@ -9,15 +9,15 @@ from PySide6.QtWidgets import QGraphicsItem, QGraphicsSceneMouseEvent, \
     QGraphicsSceneHoverEvent, QGraphicsItemGroup
 from pydantic import NonNegativeInt
 
-from src.app.constants import KEY_W_HEIGHT, CLR_NODE_START, CLR_NODE_END, \
+from src.app.utils.constants import KEY_W_HEIGHT, CLR_NODE_START, CLR_NODE_END, \
     CLR_NODE_SELECTED, KEY_MAPPING
 
 if TYPE_CHECKING:
     from src.app.gui.editor.grid import GenericGridScene
 from src.app.gui.editor.key import Key, BlackKey
-from src.app.lib4py.logger import get_console_logger
+from src.app.utils.logger import get_console_logger
 from src.app.mingus.core import value
-from src.app.model.note import Event, Preset, Beat, EventType, Channel
+from src.app.model.note import Event, Beat, EventType, Channel
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 

@@ -7,23 +7,20 @@ from PySide6.QtWidgets import QWidget, QTabWidget, QSplitter, QStackedWidget, \
     QBoxLayout
 from pubsub import pub
 
-from src.app.constants import NEW_TRACK, EDIT_TRACK, DELETE_TRACK, \
-    REFRESH_LOOPS
+from src.app.utils.constants import REFRESH_LOOPS
 from src.app.gui.sequence_grid import CustomLoopGrid, CompositionLoopGrid
 from src.app.gui.track_list import TrackList
 from src.app.gui.widgets import Box
-from src.app.backend.synth import FS
 from src.app.model.composition import Composition
 from src.app.model.project import Project
-import resources
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from gui.main_frame import MainFrame
+    from src.app.gui.main_frame import MainFrame
 
 
 class CompositionTab(QWidget):
-    def __init__(self, mf: MainFrame, parent, project: Project, synth: FS):
+    def __init__(self, mf: MainFrame, parent, project: Project):
         super().__init__(parent=parent)
         self.mf = mf
         self.project = project

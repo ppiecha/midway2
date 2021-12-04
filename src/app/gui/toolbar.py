@@ -1,8 +1,8 @@
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import QToolBar
 
-from constants import NEW_PROJECT
-from gui.menu import MenuBar
+from src.app.utils.constants import NEW_PROJECT
+from src.app.gui.menu import MenuBar
 
 
 class ToolBar(QToolBar):

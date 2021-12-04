@@ -5,22 +5,22 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import QMenuBar, QMenu
 
-from constants import NEW_PROJECT, NEW_TRACK, NEW_COMPOSITION, \
+from src.app.utils.constants import NEW_PROJECT, NEW_TRACK, NEW_COMPOSITION, \
     NEW_TRACK_VERSION, EDIT_TRACK_VERSION, EDIT_TRACK, \
     DELETE_PROJECT, REFRESH_LOOPS
 
 from typing import TYPE_CHECKING, Dict
 
-from gui.dialogs.generic_config import GenericConfig, GenericConfigMode
+from src.app.gui.dialogs.generic_config import GenericConfig, GenericConfigMode
 
 from pubsub import pub
 
-import resources
-from model.composition import Composition
-from model.track import Track
+import src.app.resources
+from src.app.model.composition import Composition
+from src.app.model.track import Track
 
 if TYPE_CHECKING:
-    from gui.main_frame import MainFrame
+    from src.app.gui.main_frame import MainFrame
 
 
 class Action(QAction):

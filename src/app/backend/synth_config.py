@@ -1,27 +1,14 @@
 import logging
-import os
 from typing import Dict
 
-import constants
-from lib4py.logger import get_console_logger
+from src.app.model.note import Beat
+from src.app.utils.logger import get_console_logger
 
-from src.app.constants import SF2_PATH
+from src.app.utils.constants import TICKS_PER_BEAT
 
 logger = get_console_logger(name=__name__, log_level=logging.INFO)
 
-TICKS_PER_BEAT = 96
-MAX_MIDI = 128
-MAX_CHANNEL = 256
-
 # TODO read all soundfonts from folder
-DEFAULT_SF2 = os.path.join(SF2_PATH, "ChoriumRevA.SF2")
-SF2_FLUID = os.path.join(SF2_PATH, "FluidR3.sf2")
-DEFAULT_BANK = 0
-DEFAULT_PATCH = 0
-DEFAULT_VELOCITY = 100
-DEFAULT_VERSION_NAME = "Default"
-
-CHANNELS = [channel for channel in range(MAX_CHANNEL)]
 
 CONTROL_CODE: Dict[str, int] = {
     'Modulation Wheel': 1,
@@ -141,7 +128,7 @@ def unit2tick(unit: float, bpm: float):
     return tick
 
 
-def pos2tick(pos: float, bpm: float):
+def pos2tick(pos: Beat, bpm: float):
     qn_length = 60.0 / bpm
     s = 4 * qn_length * pos
     tick = round(second2tick(second=s, ticks_per_beat=TICKS_PER_BEAT, tempo=bpm2tempo(bpm=bpm)))

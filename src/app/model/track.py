@@ -1,14 +1,14 @@
 from __future__ import annotations
 import copy
-from typing import List, Dict, Optional
+from typing import List, Optional
 
-from pydantic import BaseModel, conint, PositiveInt, Field
+from pydantic import BaseModel, PositiveInt
 
-from constants import CLR_NODE_START
-from backend.synth_config import DEFAULT_SF2, DEFAULT_BANK, DEFAULT_PATCH
+from src.app.utils.constants import CLR_NODE_START
+from src.app.utils.constants import DEFAULT_SF2, DEFAULT_BANK, DEFAULT_PATCH
 
-from model.note import Channel, MidiValue
-from model.sequence import Sequence
+from src.app.model.note import Channel, MidiValue
+from src.app.model.sequence import Sequence
 
 
 class TrackVersion(BaseModel):

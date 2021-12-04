@@ -2,7 +2,7 @@ import sys
 
 from PySide6.QtWidgets import QApplication
 
-from constants import DARK_PALETTE
+from src.app.utils.constants import DARK_PALETTE
 from gui.main_frame import MainFrame
 
 if __name__ == '__main__':

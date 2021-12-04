@@ -42,12 +42,12 @@ from PySide6.QtCore import QThread
 from six import binary_type, iteritems, text_type
 
 # Bump this up when changing the interface for users
-from src.app.lib4py.logger import get_console_logger
-from src.app.backend.synth_config import unit2tick, pos2tick, DEFAULT_VELOCITY, \
-    bpm2time_scale, BarProps, MAX_MIDI
+from src.app.utils.logger import get_console_logger
+from src.app.backend.synth_config import unit2tick, pos2tick, bpm2time_scale, BarProps
+from src.app.utils.constants import MAX_MIDI, DEFAULT_VELOCITY
 from src.app.model.bar import Bar
 from src.app.model.composition import Composition
-from src.app.model.note import Event, Preset
+from src.app.model.note import Event, Preset, EventType
 from src.app.model.sequence import Sequence
 from src.app.model.types import LoopType
 
@@ -1200,7 +1200,9 @@ class Synth:
         self.settings = new_fluid_settings()
         self.setting('synth.gain', float(gain))
         self.setting('synth.sample-rate', float(samplerate))
-        self.setting('synth.backend-channels', channels)
+        # self.setting('synth.backend-channels', channels)
+        self.setting('synth.midi-channels', channels)
+        # synth.midi-channels
 
         for opt, val in iteritems(kwargs):
             self.setting(opt, val)
@@ -1345,6 +1347,7 @@ class Synth:
     @staticmethod
     def get_sf_files(path: str) -> List[str]:
         glob_path = Path(path)
+        logger.debug(f'Reading soundfonts from path {glob_path}')
         return [str(item) for item in glob_path.glob("**/*.sf2")]
 
     def load_sf(self, file_name: str):
@@ -1661,6 +1664,7 @@ class Sequencer:
         self.client_callbacks = []
         self.sequencer = new_fluid_sequencer2(use_system_timer)
         fluid_sequencer_set_time_scale(self.sequencer, time_scale)
+        self.synth: Optional[Synth] = None
 
     def register_fluidsynth(self, synth):
         response = fluid_sequencer_register_fluidsynth(self.sequencer,
@@ -1708,10 +1712,11 @@ class Sequencer:
         self._schedule_event(evt, time, absolute)
         delete_fluid_event(evt)
 
-    def program_change(self, time, channel, preset, source=-1, dest=-1,
+    def program_change(self, time, channel, preset: Preset, source=-1, dest=-1,
                        absolute=True):
         evt = self._create_event(source, dest)
-        fluid_event_program_select(evt, channel, preset.sfid, preset.bank,
+        sfid = self.synth.sf_map[preset.sf_name]
+        fluid_event_program_select(evt, channel, sfid, preset.bank,
                                    preset.patch)
         self._schedule_event(evt, time, absolute)
         delete_fluid_event(evt)
@@ -1762,35 +1767,41 @@ class Sequencer:
     -----------------------------------------------------------------------------------------------
     """
 
-    def generic_note(self, time: int, note: Event, duration: int,
-                     synth_seq_id):
-        if isinstance(note, Note):
+    def send_event(self, time: int, event: Event, duration: int,
+                   synth_seq_id):
+        if event.type == EventType.note:
             self.note(time=time,
-                      channel=note.channel,
-                      key=int(note.pitch),
+                      channel=event.channel,
+                      key=int(event.pitch),
                       duration=duration,  # unit2tick(unit=note.unit, bpm=bpm),
-                      velocity=note.velocity,
+                      velocity=event.velocity,
                       dest=synth_seq_id)
-        if isinstance(note, ProgramEvent):
+        elif event.type == EventType.program:
             self.program_change(time=time,
-                                channel=note.channel,
-                                preset=note.preset,
+                                channel=event.channel,
+                                preset=event.preset,
                                 dest=synth_seq_id)
-        if isinstance(note, ControlEvent):
-            self.control_change(time=time,
-                                channel=note.channel,
-                                control=note.control,
-                                value=note.value,
-                                dest=synth_seq_id)
+        elif event.type == EventType.controls:
+            pass
+            # self.control_change(time=time,
+            #                     channel=event.channel,
+            #                     control=event.control,
+            #                     value=event.value,
+            #                     dest=synth_seq_id)
+        elif event.type == EventType.pitch_bend:
+            pass
+        else:
+            raise ValueError(f'Event type {event.type} not supported')
 
     def play_bar(self, synth: Synth, bar: Bar, bpm: int, start_tick: int = 0):
         synth_seq_id = self.register_fluidsynth(synth)
         current_tick: int = self.get_tick() + start_tick
-        for note in bar:
-            time = current_tick + pos2tick(pos=note.beat, bpm=bpm)
-            self.generic_note(time=time, note=note,
-                              duration=unit2tick(unit=note.unit, bpm=bpm),
-                              synth_seq_id=synth_seq_id)
+        for event in bar.events():
+            time = current_tick + pos2tick(pos=event.beat, bpm=bpm)
+            self.send_event(time=time,
+                            event=event,
+                            duration=unit2tick(unit=event.unit, bpm=bpm),
+                            synth_seq_id=synth_seq_id)
 
 
 class SequencePlayer:
@@ -1864,13 +1875,14 @@ class SequencePlayer:
                 loop_name=self.loop_name)
         bar = self.sequence[self.bar_props.bar_num]
         logger.debug(f"Scheduling next bar {self.bar_props.bar_num} {bar}")
-        for note in bar.bar:
-            time = self.bar_props.start_tick + pos2tick(pos=note.beat,
+        for event in bar.events():
+            time = self.bar_props.start_tick + pos2tick(pos=event.beat,
                                                         bpm=self.bpm)
-            self.sequencer.generic_note(time=time, note=note,
-                                        duration=unit2tick(unit=note.unit,
+            self.sequencer.send_event(time=time,
+                                      event=event,
+                                      duration=unit2tick(unit=event.unit,
                                                            bpm=self.bpm) - 1,
-                                        synth_seq_id=self.synth_seq_id)
+                                      synth_seq_id=self.synth_seq_id)
         self.schedule_next_callback()
         self.bar_props.bar_num += 1
         self.bar_props.start_tick += self.bar_props.duration
@@ -1886,8 +1898,11 @@ class FontLoader(QThread):
     def run(self):
         for file_name in self.synth.get_sf_files(path=self.sf2_path):
             self.mf.show_message(f'Loading soundfont {file_name}')
+            # logger.debug(f'loading {file_name}')
             self.synth.load_sf(file_name=file_name)
         self.mf.show_message(message=f'Fonts loaded')
+        while not hasattr(self.mf, 'composition_tab'):
+            sleep(0.01)
         self.mf.composition_tab.init_fonts()
         self.synth.start(driver='dsound')
 

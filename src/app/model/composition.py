@@ -2,9 +2,9 @@ from typing import List, Optional, Dict
 
 from pydantic import BaseModel
 
-from backend.synth_config import CHANNELS
-from model.track import Track, Loops, TrackVersion
-from model.types import LoopType
+from src.app.utils.constants import CHANNELS
+from src.app.model.track import Track, Loops, TrackVersion
+from src.app.model.types import LoopType
 
 
 class Composition(BaseModel):

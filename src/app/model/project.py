@@ -2,7 +2,7 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel, PositiveInt
 
-from src.app.backend.synth_config import DEFAULT_SF2
+from src.app.utils.constants import DEFAULT_SF2
 from src.app.model.composition import Composition
 from src.app.model.sequence import Sequence
 from src.app.model.track import TrackVersion, Track
@@ -32,7 +32,7 @@ class Project(BaseModel):
 
 
 def sample_project() -> Project:
-    track_version = TrackVersion(channel=1, version_name='Bass 0',
+    track_version = TrackVersion(channel=100, version_name='Bass 0',
                                  num_of_bars=4, sf_name=DEFAULT_SF2,
                                  sequence=Sequence(num_of_bars=4))
     track_version1 = TrackVersion(channel=2, version_name='Version 1',

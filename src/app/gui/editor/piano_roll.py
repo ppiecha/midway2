@@ -7,24 +7,24 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeySequence
 from PySide6.QtWidgets import QWidget, QBoxLayout
 
-from constants import SINGLE_TRACK
-from gui.menu import Action
-from gui.editor.grid import GridView
-from gui.editor.keyboard import KeyboardView
-from gui.editor.ruler import RulerView, HeaderView
-from gui.widgets import Box
-from lib4py.logger import get_console_logger
-from backend.synth import FS
-from model.types import Bpm
-from model.composition import Composition
-from model.sequence import Sequence
-from model.track import TrackVersion, Track
-from model.types import LoopType
+from src.app.utils.constants import SINGLE_TRACK
+from src.app.gui.menu import Action
+from src.app.gui.editor.grid import GridView
+from src.app.gui.editor.keyboard import KeyboardView
+from src.app.gui.editor.ruler import RulerView, HeaderView
+from src.app.gui.widgets import Box
+from src.app.utils.logger import get_console_logger
+from src.app.backend.synth import FS
+from src.app.model.types import Bpm
+from src.app.model.composition import Composition
+from src.app.model.sequence import Sequence
+from src.app.model.track import TrackVersion, Track
+from src.app.model.types import LoopType
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from gui.main_frame import MainFrame
+    from src.app.gui.main_frame import MainFrame
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 

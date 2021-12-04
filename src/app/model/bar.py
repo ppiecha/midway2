@@ -4,7 +4,7 @@ from typing import List, Union, Optional
 
 from pydantic import BaseModel, PositiveInt, NonNegativeInt, NonNegativeFloat
 
-from src.app.lib4py.logger import get_console_logger
+from src.app.utils.logger import get_console_logger
 from src.app.model.note import Event, EventType
 import logging
 

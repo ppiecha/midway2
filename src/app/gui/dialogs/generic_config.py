@@ -6,24 +6,24 @@ from typing import Any, NamedTuple
 
 from PySide6.QtCore import QSize
 
-from constants import EVENT_WIN_SIZE, EVENT_WIN_POS, CLR_NODE_START, DEFAULT, \
-    GENERAL, PRESET
-from gui.editor.keyboard import KeyboardView
+from src.app.utils.constants import EVENT_WIN_SIZE, EVENT_WIN_POS, \
+    CLR_NODE_START, DEFAULT, GENERAL, PRESET
+from src.app.gui.editor.keyboard import KeyboardView
 from typing import TYPE_CHECKING
 
-from model.sequence import Sequence
+from src.app.model.sequence import Sequence
 
 if TYPE_CHECKING:
-    from gui.editor.node import Node, ProgramNode
-from backend.synth_config import DEFAULT_VERSION_NAME, MAX_CHANNEL, \
+    from src.app.gui.editor.node import Node, ProgramNode
+from src.app.utils.constants import DEFAULT_VERSION_NAME, MAX_CHANNEL, \
     DEFAULT_SF2, DEFAULT_BANK, DEFAULT_PATCH
-from model.composition import Composition
-from model.note import Preset, Channel
-from model.project import Project
-from model.track import TrackVersion, Track
+from src.app.model.composition import Composition
+from src.app.model.note import Preset, Channel
+from src.app.model.project import Project
+from src.app.model.track import TrackVersion, Track
 
 if TYPE_CHECKING:
-    from gui.main_frame import MainFrame
+    from src.app.gui.main_frame import MainFrame
 from typing import Optional
 
 from PySide6.QtGui import Qt, QIcon, QColor, QPalette
@@ -32,8 +32,8 @@ from PySide6.QtWidgets import QWidget, QDialog, QBoxLayout, QTabWidget, \
     QListWidgetItem, QToolButton, QLineEdit, QCheckBox, QColorDialog, \
     QFormLayout, QDialogButtonBox, QAbstractButton
 
-from gui.widgets import Box, ChannelBox, DeriveTrackVersionBox, BarBox
-import resources
+from src.app.gui.widgets import Box, ChannelBox, DeriveTrackVersionBox, BarBox
+import src.app.resources
 
 
 class GenericConfigMode(int, Enum):

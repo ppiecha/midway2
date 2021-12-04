@@ -10,14 +10,14 @@ from PySide6.QtWidgets import QWidget, QGraphicsScene, QHBoxLayout, \
     QGraphicsSceneMouseEvent, QGraphicsRectItem, QGraphicsItemGroup
 from pydantic import NonNegativeInt
 
-from src.app.constants import WHITE_KEY_COUNT, KEY_W_HEIGHT, CLR_GRID_BAR, \
+from src.app.utils.constants import WHITE_KEY_COUNT, KEY_W_HEIGHT, CLR_GRID_BAR, \
     CLR_GRID_OCT, CLR_GRID_DEFAULT, CLR_GRID_SELECTION, \
     GRID_DIVIDER, DARK_PALETTE
 from src.app.gui.editor.key import Key, WhiteKey
 from src.app.gui.editor.keyboard import KeyboardView
 from src.app.gui.editor.node import Node, NoteNode, MetaNode
 from src.app.gui.widgets import GraphicsView
-from src.app.lib4py.logger import get_console_logger
+from src.app.utils.logger import get_console_logger
 from src.app.mingus.core import value
 from src.app.model.types import Int
 from src.app.model.note import Event, Channel, EventType, Beat

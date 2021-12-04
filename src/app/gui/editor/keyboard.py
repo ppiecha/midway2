@@ -8,11 +8,12 @@ from PySide6.QtWidgets import QGraphicsWidget, QGraphicsScene, QApplication, \
     QWidget, \
     QHBoxLayout
 
-from constants import KEY_MIN, KEY_MAX, KEY_W_HEIGHT, KEY_B_WIDTH, KEY_B_HEIGHT
-from gui.editor.key import WhiteKey, BlackKey, Key
-from gui.widgets import GraphicsView
-from lib4py.logger import get_console_logger
-from backend.synth import Synth
+from src.app.utils.constants import KEY_MIN, KEY_MAX, KEY_W_HEIGHT, \
+    KEY_B_WIDTH, KEY_B_HEIGHT
+from src.app.gui.editor.key import WhiteKey, BlackKey, Key
+from src.app.gui.widgets import GraphicsView
+from src.app.utils.logger import get_console_logger
+from src.app.backend.synth import Synth
 
 logger = get_console_logger(name=__name__, log_level=logging.INFO)
 

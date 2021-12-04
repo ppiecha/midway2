@@ -11,11 +11,11 @@ from PySide6.QtWidgets import QWidget, QBoxLayout, QGraphicsView, QFrame, \
 
 from typing import TYPE_CHECKING
 
-from lib4py.logger import get_console_logger
+from src.app.utils.logger import get_console_logger
 
 if TYPE_CHECKING:
-    from gui.main_frame import MainFrame
-from src.app.backend.synth_config import CHANNELS
+    from src.app.gui.main_frame import MainFrame
+from src.app.utils.constants import CHANNELS
 from src.app.backend.synth import FS
 from src.app.model.composition import Composition
 from src.app.model.note import Preset

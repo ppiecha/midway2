@@ -7,7 +7,7 @@ from PySide6.QtGui import QIcon, QShowEvent, QCloseEvent
 from PySide6.QtWidgets import QMainWindow, QBoxLayout, QWidget, QStyle, \
     QApplication, QMessageBox
 
-from src.app.constants import SRC_PATH, APP_NAME, SF2_PATH, PROJECT_FILE, \
+from src.app.utils.constants import SRC_PATH, APP_NAME, SF2_PATH, PROJECT_FILE, \
     MAIN_WIN_SIZE, MAIN_WIN_POS
 from src.app.gui.composition_tab import CompositionTab
 from src.app.gui.dialogs.generic_config import GenericConfigDlg, GenericConfig
@@ -21,9 +21,9 @@ from src.app.model.project import Project, sample_project
 class MainFrame(QMainWindow):
     def __init__(self, app: QApplication, config_file: str = 'config.ini'):
         super().__init__()
+        self.synth = FS(mf=self, sf2_path=SF2_PATH)
         self.status_bar = self.statusBar()
         self.app = app
-        self.synth = FS(mf=self, sf2_path=SF2_PATH)
         self.menu = MenuBar(self)
         self.setMenuBar(self.menu)
         self.addToolBar(ToolBar(self))
@@ -39,8 +39,7 @@ class MainFrame(QMainWindow):
             self.project = sample_project()
         self.gen_config_dlg = GenericConfigDlg(mf=self)
         self.composition_tab = CompositionTab(mf=self, parent=self,
-                                              project=self.project,
-                                              synth=self.synth)
+                                              project=self.project)
         self.main_box = Box(direction=QBoxLayout.TopToBottom)
         self.main_box.addWidget(self.composition_tab)
         self.setLayout(self.main_box)

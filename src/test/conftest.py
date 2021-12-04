@@ -1,7 +1,7 @@
 import pytest
 
 from src.app.model.bar import Bar
-from src.app.model.note import Event, EventType
+from src.app.model.note import Event, EventType, Preset
 
 
 @pytest.fixture
@@ -48,3 +48,21 @@ def note3() -> Event:
                  beat=0.5,
                  pitch=81,
                  unit=2)
+
+
+@pytest.fixture
+def program0() -> Event:
+    return Event(type=EventType.program,
+                 channel=0,
+                 beat=0,
+                 # preset=Preset(sf_name='test', bank=0, patch=0),
+                 preset={'sf_name': 'test', 'bank': 0, 'patch': 0})
+
+
+@pytest.fixture
+def program0() -> Event:
+    return Event(type=EventType.program,
+                 channel=0,
+                 beat=0,
+                 # preset=Preset(sf_name='test', bank=0, patch=0),
+                 preset={'sf_name': 'test', 'bank': 0, 'patch': 0})
