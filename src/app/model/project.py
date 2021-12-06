@@ -6,7 +6,7 @@ from src.app.utils.constants import DEFAULT_SF2
 from src.app.model.composition import Composition
 from src.app.model.sequence import Sequence
 from src.app.model.track import TrackVersion, Track
-from src.app.model.types import Bpm
+from src.app.model.event import Bpm
 
 
 class Project(BaseModel):

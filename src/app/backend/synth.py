@@ -43,13 +43,12 @@ from six import binary_type, iteritems, text_type
 
 # Bump this up when changing the interface for users
 from src.app.utils.logger import get_console_logger
-from src.app.backend.synth_config import unit2tick, pos2tick, bpm2time_scale, BarProps
-from src.app.utils.constants import MAX_MIDI, DEFAULT_VELOCITY
+from src.app.utils.constants import MAX_MIDI, DEFAULT_VELOCITY, TICKS_PER_BEAT, \
+    SF2_PATH
 from src.app.model.bar import Bar
 from src.app.model.composition import Composition
-from src.app.model.note import Event, Preset, EventType
+from src.app.model.event import Event, Preset, EventType, Beat, LoopType
 from src.app.model.sequence import Sequence
-from src.app.model.types import LoopType
 
 # Constants
 
@@ -1692,9 +1691,10 @@ class Sequencer:
         fluid_sequencer_unregister_client(self.sequencer, client_id)
         logger.debug(f"client unregistered {client_id}")
 
-    def note(self, time, channel, key, velocity, duration, source=-1, dest=-1,
+    def note(self, time, channel, key, unit, bpm, velocity, source=-1, dest=-1,
              absolute=True):
         evt = self._create_event(source, dest)
+        duration = unit2tick(unit=unit, bpm=bpm)
         fluid_event_note(evt, channel, key, velocity, duration)
         self._schedule_event(evt, time, absolute)
         delete_fluid_event(evt)
@@ -1767,13 +1767,14 @@ class Sequencer:
     -----------------------------------------------------------------------------------------------
     """
 
-    def send_event(self, time: int, event: Event, duration: int,
+    def send_event(self, time: int, event: Event, bpm: int,
                    synth_seq_id):
         if event.type == EventType.note:
             self.note(time=time,
                       channel=event.channel,
                       key=int(event.pitch),
-                      duration=duration,  # unit2tick(unit=note.unit, bpm=bpm),
+                      unit=event.unit,
+                      bpm=bpm,  # unit2tick(unit=note.unit, bpm=bpm),
                       velocity=event.velocity,
                       dest=synth_seq_id)
         elif event.type == EventType.program:
@@ -1797,10 +1798,11 @@ class Sequencer:
         synth_seq_id = self.register_fluidsynth(synth)
         current_tick: int = self.get_tick() + start_tick
         for event in bar.events():
+            logger.debug(event)
             time = current_tick + pos2tick(pos=event.beat, bpm=bpm)
             self.send_event(time=time,
                             event=event,
-                            duration=unit2tick(unit=event.unit, bpm=bpm),
+                            bpm=bpm,
                             synth_seq_id=synth_seq_id)
 
 
@@ -1880,8 +1882,7 @@ class SequencePlayer:
                                                         bpm=self.bpm)
             self.sequencer.send_event(time=time,
                                       event=event,
-                                      duration=unit2tick(unit=event.unit,
-                                                           bpm=self.bpm) - 1,
+                                      bpm=self.bpm,
                                       synth_seq_id=self.synth_seq_id)
         self.schedule_next_callback()
         self.bar_props.bar_num += 1
@@ -1897,18 +1898,19 @@ class FontLoader(QThread):
 
     def run(self):
         for file_name in self.synth.get_sf_files(path=self.sf2_path):
-            self.mf.show_message(f'Loading soundfont {file_name}')
-            # logger.debug(f'loading {file_name}')
+            if self.mf:
+                self.mf.show_message(f'Loading soundfont {file_name}')
             self.synth.load_sf(file_name=file_name)
-        self.mf.show_message(message=f'Fonts loaded')
-        while not hasattr(self.mf, 'composition_tab'):
-            sleep(0.01)
-        self.mf.composition_tab.init_fonts()
+        if self.mf:
+            self.mf.show_message(message=f'Fonts loaded')
+            while not hasattr(self.mf, 'composition_tab'):
+                sleep(0.01)
+            self.mf.composition_tab.init_fonts()
         self.synth.start(driver='dsound')
 
 
 class FS(Synth):
-    def __init__(self, mf, sf2_path: str):
+    def __init__(self, mf=None, sf2_path: str = SF2_PATH):
         super().__init__()
         self.mf = mf
         self.sequence_players: Optional[Dict[LoopType, SequencePlayer]] = {}
@@ -1955,18 +1957,105 @@ class FS(Synth):
         threading.Thread(target=self.play_note,
                          args=(channel, pitch, secs)).start()
 
-    def play_composition(self, composition: Composition, grid_type: LoopType,
+    def play_composition(self,
+                         composition: Composition,
+                         grid_type: LoopType,
                          loop_name: str = '0',
-                         start_bar_num: int = 0):
+                         start_bar_num: int = 0,
+                         bpm: int = None):
         if grid_type not in self.sequence_players:
-            self.sequence_players[grid_type] = SequencePlayer(synth=self,
-                                                              composition=composition,
-                                                              grid_type=grid_type,
-                                                              repeat=grid_type == LoopType.custom)
+            player = SequencePlayer(synth=self,
+                                    composition=composition,
+                                    grid_type=grid_type,
+                                    repeat=grid_type == LoopType.custom)
+            self.sequence_players[grid_type] = player
         player = self.sequence_players[grid_type]
         if player.sequencer:
             player.stop()
         else:
             player.play(loop_name=loop_name,
-                        bpm=self.mf.project.bpm,
+                        bpm=bpm or self.mf.project.bpm,
                         start_bar_num=start_bar_num)
+
+
+def tick2second(tick, ticks_per_beat, tempo):
+    """Convert absolute time in ticks to seconds.
+
+    Returns absolute time in seconds for a chosen MIDI file time
+    resolution (ticks per beat, also called PPQN or pulses per quarter
+    note) and tempo (microseconds per beat).
+    """
+    scale = tempo * 1e-6 / ticks_per_beat
+    return tick * scale
+
+
+def second2tick(second, ticks_per_beat, tempo):
+    """Convert absolute time in seconds to ticks.
+
+    Returns absolute time in ticks for a chosen MIDI file time
+    resolution (ticks per beat, also called PPQN or pulses per quarter
+    note) and tempo (microseconds per beat).
+    """
+    scale = tempo * 1e-6 / ticks_per_beat
+    # print("second2tick", second, scale, tempo, second / scale)
+    return second / scale
+
+
+def bpm2tempo(bpm):
+    """Convert beats per minute to MIDI file tempo.
+
+    Returns microseconds per beat as an integer::
+
+        240 => 250000
+        120 => 500000
+        60 => 1000000
+    """
+    # One minute is 60 million microseconds.
+    return int(round((60 * 1000000) / bpm))
+
+
+def tempo2bpm(tempo):
+    """Convert MIDI file tempo to BPM.
+
+    Returns BPM as an integer or float::
+
+        250000 => 240
+        500000 => 120
+        1000000 => 60
+    """
+    # One minute is 60 million microseconds.
+    return (60 * 1000000) / tempo
+
+
+def unit2tick(unit: float, bpm: float):
+    if unit == 0:
+        return 0
+    qn_length = 60.0 / bpm
+    s = qn_length * (4.0 / unit)
+    tick = round(second2tick(second=s, ticks_per_beat=TICKS_PER_BEAT,
+                             tempo=bpm2tempo(bpm=bpm)))
+    # print("unit2tick", unit, s, tick)
+    return tick
+
+
+def pos2tick(pos: Beat, bpm: float):
+    qn_length = 60.0 / bpm
+    s = 4 * qn_length * pos
+    tick = round(second2tick(second=s, ticks_per_beat=TICKS_PER_BEAT,
+                             tempo=bpm2tempo(bpm=bpm)))
+    # print("pos2tick", pos, s, tick)
+    return tick
+
+
+def bpm2time_scale(bpm: float):
+    time_scale = round(second2tick(second=1, ticks_per_beat=TICKS_PER_BEAT,
+                                   tempo=bpm2tempo(bpm=bpm)))
+    # print("bpm2time_scale", time_scale)
+    return time_scale
+
+
+class BarProps:
+    def __init__(self, bar_num: int, start_tick: int, duration: int):
+        self.bar_num: int = bar_num
+        self.start_tick = start_tick
+        self.duration = duration

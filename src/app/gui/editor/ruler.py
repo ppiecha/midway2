@@ -12,14 +12,13 @@ from pydantic import NonNegativeInt
 from src.app.utils.constants import KEY_W_WIDTH, KEY_W_HEIGHT, RULER_HEIGHT, \
     CLR_RULER, \
     CLR_RULER_TEXT, CLR_RULER_META_NOTES_BACK, \
-    CLR_GRID_BAR, CLR_GRID_OCT, CLR_GRID_DEFAULT, GRID_DIVIDER, DARK_PALETTE, \
-    KEY_MAPPING
+    CLR_GRID_BAR, CLR_GRID_OCT, CLR_GRID_DEFAULT, GRID_DIVIDER, DARK_PALETTE
 from src.app.gui.editor.grid import GridView, GenericGridScene
 from src.app.gui.editor.node import MetaNode
 from src.app.gui.widgets import GraphicsView
 from src.app.utils.logger import get_console_logger
 from src.app.mingus.core import value
-from src.app.model.note import Channel, EventType, Beat
+from src.app.model.event import Channel, EventType, Beat, KEY_MAPPING
 from src.app.model.sequence import Sequence
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)

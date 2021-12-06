@@ -1,7 +1,7 @@
 import pytest
 
 from src.app.model.bar import Bar
-from src.app.model.note import Event, EventType, Preset
+from src.app.model.event import Event, EventType, Preset, Control, Volume
 
 
 @pytest.fixture
@@ -60,9 +60,8 @@ def program0() -> Event:
 
 
 @pytest.fixture
-def program0() -> Event:
-    return Event(type=EventType.program,
+def control0() -> Event:
+    return Event(type=EventType.controls,
                  channel=0,
                  beat=0,
-                 # preset=Preset(sf_name='test', bank=0, patch=0),
-                 preset={'sf_name': 'test', 'bank': 0, 'patch': 0})
+                 controls=[Control(name_code=Volume(), value=100)])

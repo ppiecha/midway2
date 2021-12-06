@@ -1,10 +1,11 @@
+from __future__ import annotations
 import copy
 from typing import Dict, Union, Optional, List
 
 from pydantic import PositiveInt, BaseModel, NonNegativeInt, validator
 
 from src.app.model.bar import Bar
-from src.app.model.note import Event, EventType
+from src.app.model.event import Event, EventType
 
 _bars = Dict[int, Union[Bar, type(None)]]
 
@@ -34,11 +35,12 @@ class Sequence(BaseModel):
                                  denominator=self.denominator, bar_num=bar_num)
 
     def set_num_of_bars(self, value):
+        if value <= 0:
+            raise ValueError(
+                f'Number of bars {value} cannot be negative or zero')
         if value < self.num_of_bars:
-            for bar_num in range(self.num_of_bars):
-                if bar_num > value:
-                    del self.bars[bar_num]
-        if value > self.num_of_bars:
+            self.bars = {k: v for k, v in self.bars.items() if k < value}
+        else:
             for bar_num in range(self.num_of_bars, value):
                 self.bars[bar_num] = Bar(numerator=self.numerator,
                                          denominator=self.denominator,
@@ -73,6 +75,10 @@ class Sequence(BaseModel):
             raise ValueError(
                 f"Bar number outside of range {bar_num} -> {self.num_of_bars}")
 
+    def add_events(self, bar_num: NonNegativeInt, events: List[Event]):
+        for event in events:
+            self.add_event(bar_num=bar_num, event=event)
+
     def remove_event(self, bar_num: NonNegativeInt, event: Event) -> None:
         if bar_num not in self.bars.keys():
             raise ValueError(
@@ -98,7 +104,7 @@ class Sequence(BaseModel):
                 for bar_num in this.keys():
                     this.bars[bar_num] += other.bars[bar_num]
         elif isinstance(other, Bar):
-            if not other.bar_num:
+            if other.bar_num is None:
                 raise ValueError(f"Bar number not defined {vars(other)}")
             else:
                 if other.bar_num in this.bars.keys():
@@ -107,6 +113,7 @@ class Sequence(BaseModel):
                     raise ValueError(f"Incorrect bar number {other.bar_num}")
         else:
             raise ValueError(f"Unsupported type {type(other)}")
+        return this
 
     def __add__(self, other):
         sequence = copy.deepcopy(self)
@@ -125,3 +132,10 @@ class Sequence(BaseModel):
 
     def __repr__(self):
         return str(self.bars)
+
+    @classmethod
+    def from_bars(cls, bars: List[Bar]) -> Sequence:
+        sequence = Sequence(num_of_bars=len(bars))
+        for bar in bars:
+            sequence += bar
+        return sequence

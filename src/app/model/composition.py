@@ -2,13 +2,15 @@ from typing import List, Optional, Dict
 
 from pydantic import BaseModel
 
-from src.app.utils.constants import CHANNELS
+from src.app.model.bar import Bar
+from src.app.model.sequence import Sequence
+from src.app.utils.constants import CHANNELS, DEFAULT_SF2
 from src.app.model.track import Track, Loops, TrackVersion
-from src.app.model.types import LoopType
+from src.app.model.event import LoopType, Channel
 
 
 class Composition(BaseModel):
-    name: str
+    name: Optional[str]
     tracks: List[Track] = []
     loops: Optional[Dict[LoopType, Optional[Loops]]] = {}
 
@@ -62,3 +64,15 @@ class Composition(BaseModel):
             return self.tracks[0]
         else:
             return None
+
+    @classmethod
+    def from_bar(cls, bar: Bar, name: str = '', channel: Channel = 0,
+                 sf_name: str = DEFAULT_SF2):
+        sequence = Sequence(num_of_bars=1, bars={0: bar})
+        track_version = TrackVersion(channel=channel, version_name=name,
+                                     num_of_bars=1, sf_name=sf_name,
+                                     sequence=sequence)
+        track = Track(name=name, versions=[track_version])
+        return cls(tracks=[track])
+
+

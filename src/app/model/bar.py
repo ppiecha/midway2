@@ -5,7 +5,7 @@ from typing import List, Union, Optional
 from pydantic import BaseModel, PositiveInt, NonNegativeInt, NonNegativeFloat
 
 from src.app.utils.logger import get_console_logger
-from src.app.model.note import Event, EventType
+from src.app.model.event import Event, EventType
 import logging
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)

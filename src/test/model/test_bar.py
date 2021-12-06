@@ -2,7 +2,7 @@ from typing import Dict, List
 
 import pytest
 
-from src.app.model.note import Event, EventType
+from src.app.model.event import Event, EventType
 
 
 @pytest.fixture
@@ -118,7 +118,7 @@ def test_remove_events(bar0, note0, note1, note2, note3, two_notes):
 
 
 def test_program(program0):
-    print(str(program0.dict()))
+    print(program0.dict())
     assert program0.dict() == {"type": "program",
                                "channel": 0,
                                "beat": 0.0,
@@ -131,13 +131,34 @@ def test_program(program0):
                                }
 
 
-def test_controls():
-    pass
+def test_controls(control0, capsys):
+    print(control0.dict())
+    assert control0.dict() == {"type": "controls",
+                               "channel": 0,
+                               "beat": 0.0,
+                               "pitch": None,
+                               "unit": None,
+                               "velocity": None,
+                               "preset": None,
+                               "controls": [{'name_code': {'name': 'Volume',
+                                                           'code': 7},
+                                             'value': 100}]
+                               }
 
 
 def test_pitch_bend():
     pass
 
 
-def test_remove_events_by_type_notes():
-    pass
+def test_remove_events_by_type_notes(bar0, note0, note1, note2, note3,
+                                     two_notes, program0, control0):
+    b0 = bar0 + [note0, note1, note2, note3, program0, control0]
+    assert len(b0) == 6
+    b0.remove_events([note2, note3])
+    assert len(b0) == 4
+    b0.remove_events_by_type(EventType.controls)
+    assert len(b0) == 3
+    b0.remove_events_by_type(EventType.program)
+    assert list(b0.events()) == two_notes
+    b0.remove_events_by_type(EventType.note)
+    assert len(b0) == 0

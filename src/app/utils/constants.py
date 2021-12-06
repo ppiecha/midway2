@@ -1,12 +1,10 @@
 import os
-import sys
 from pathlib import Path
 from typing import Dict
 
 from PySide6.QtGui import QColor, QPalette, Qt
 
 from src.app.mingus.core import value
-from src.app.model.note import EventType
 
 APP_NAME = "Midway"
 
@@ -78,12 +76,6 @@ CLR_NODE_SELECTED = QColor(96, 96, 96)
 CLR_NODE_TEMPORARY = QColor(96, 96, 96, 128)
 GRID_DIVIDER = value.eighth
 DARK_PALETTE = QPalette()
-
-KEY_MAPPING = {
-    EventType.program: RULER_HEIGHT,
-    EventType.controls: RULER_HEIGHT + KEY_W_HEIGHT,
-    EventType.pitch_bend: RULER_HEIGHT + 2 * KEY_W_HEIGHT
-}
 
 # Custom sequences
 DEFAULT = 'Default'

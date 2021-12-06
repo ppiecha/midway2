@@ -10,14 +10,14 @@ from PySide6.QtWidgets import QGraphicsItem, QGraphicsSceneMouseEvent, \
 from pydantic import NonNegativeInt
 
 from src.app.utils.constants import KEY_W_HEIGHT, CLR_NODE_START, CLR_NODE_END, \
-    CLR_NODE_SELECTED, KEY_MAPPING
+    CLR_NODE_SELECTED
 
 if TYPE_CHECKING:
     from src.app.gui.editor.grid import GenericGridScene
 from src.app.gui.editor.key import Key, BlackKey
 from src.app.utils.logger import get_console_logger
 from src.app.mingus.core import value
-from src.app.model.note import Event, Beat, EventType, Channel
+from src.app.model.event import Event, Beat, EventType, Channel, KEY_MAPPING
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 

@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 from src.app.utils.constants import DEFAULT_VERSION_NAME, MAX_CHANNEL, \
     DEFAULT_SF2, DEFAULT_BANK, DEFAULT_PATCH
 from src.app.model.composition import Composition
-from src.app.model.note import Preset, Channel
+from src.app.model.event import Preset, Channel
 from src.app.model.project import Project
 from src.app.model.track import TrackVersion, Track
 

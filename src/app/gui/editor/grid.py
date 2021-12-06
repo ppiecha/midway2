@@ -19,8 +19,7 @@ from src.app.gui.editor.node import Node, NoteNode, MetaNode
 from src.app.gui.widgets import GraphicsView
 from src.app.utils.logger import get_console_logger
 from src.app.mingus.core import value
-from src.app.model.types import Int
-from src.app.model.note import Event, Channel, EventType, Beat
+from src.app.model.event import Event, Channel, EventType, Beat, Int
 from src.app.model.sequence import Sequence
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)

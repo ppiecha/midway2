@@ -7,7 +7,7 @@ from pydantic import BaseModel, PositiveInt
 from src.app.utils.constants import CLR_NODE_START
 from src.app.utils.constants import DEFAULT_SF2, DEFAULT_BANK, DEFAULT_PATCH
 
-from src.app.model.note import Channel, MidiValue
+from src.app.model.event import Channel, MidiValue
 from src.app.model.sequence import Sequence
 
 
@@ -19,6 +19,10 @@ class TrackVersion(BaseModel):
     bank: MidiValue = DEFAULT_BANK
     patch: MidiValue = DEFAULT_PATCH
     sequence: Sequence
+
+    @classmethod
+    def from_sequence(cls, sequence: Sequence) -> TrackVersion:
+        pass
 
 
 class Track(BaseModel):
@@ -33,14 +37,14 @@ class Track(BaseModel):
         self.versions.remove(track_version)
 
     def track_version_by_name(self, track_version_name: str,
-                              raise_not_found: bool = True) -> Optional[
-        TrackVersion]:
+                              raise_not_found: bool = True) \
+            -> Optional[TrackVersion]:
         for version in self.versions:
             if version.version_name == track_version_name:
                 return version
         if raise_not_found:
-            raise ValueError(
-                f'Cannot find version {track_version_name} in versions {self.versions}')
+            raise ValueError(f'Cannot find version {track_version_name} '
+                             f'in versions {self.versions}')
         else:
             return None
 
@@ -50,8 +54,8 @@ class Track(BaseModel):
                                              raise_not_found=False)
         return version and version != current_version
 
-    def get_version(self, version_name: str, raise_not_found: bool = False) -> \
-    Optional[TrackVersion]:
+    def get_version(self, version_name: str, raise_not_found: bool = False) \
+            -> Optional[TrackVersion]:
         version = [version for version in self.versions if
                    version_name.lower() == version.version_name.lower()]
         if version:
