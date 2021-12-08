@@ -21,10 +21,10 @@ from __future__ import absolute_import
 import six
 from six.moves import range
 
-from mingus.containers.mt_exceptions import MeterFormatError
-from mingus.containers.note_container import NoteContainer
-from mingus.core import meter as _meter
-from mingus.core import progressions, keys
+from src.app.mingus.containers.mt_exceptions import MeterFormatError
+from src.app.mingus.containers.note_container import NoteContainer
+from src.app.mingus.core import meter as _meter
+from src.app.mingus.core import progressions, keys
 
 
 class Bar(object):

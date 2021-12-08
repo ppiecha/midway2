@@ -29,9 +29,9 @@ vice versa.
 """
 from __future__ import absolute_import
 
-from mingus.core import notes
-from mingus.core import chords
-from mingus.core import intervals
+from src.app.mingus.core import notes
+from src.app.mingus.core import chords
+from src.app.mingus.core import intervals
 import six
 from six.moves import range
 

@@ -96,10 +96,10 @@ from_shorthand (a lot) and their inversions.
 """
 from __future__ import absolute_import
 
-from mingus.core import intervals
-from mingus.core import notes
-from mingus.core import keys
-from mingus.core.mt_exceptions import NoteFormatError, FormatError
+from src.app.mingus.core import intervals
+from src.app.mingus.core import notes
+from src.app.mingus.core import keys
+from src.app.mingus.core.mt_exceptions import NoteFormatError, FormatError
 import six
 from six.moves import range
 

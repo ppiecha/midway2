@@ -18,9 +18,9 @@ from __future__ import absolute_import
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from mingus.containers.note import Note
-from mingus.core import intervals, chords, progressions
-from mingus.containers.mt_exceptions import UnexpectedObjectError
+from src.app.mingus.containers.note import Note
+from src.app.mingus.core import intervals, chords, progressions
+from src.app.mingus.containers.mt_exceptions import UnexpectedObjectError
 import six
 
 

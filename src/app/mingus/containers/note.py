@@ -18,8 +18,8 @@ from __future__ import absolute_import
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from mingus.core import notes, intervals
-from mingus.containers.mt_exceptions import NoteFormatError
+from src.app.mingus.core import notes, intervals
+from src.app.mingus.containers.mt_exceptions import NoteFormatError
 from math import log
 import six
 

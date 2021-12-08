@@ -26,8 +26,8 @@ from itertools import cycle, islice
 
 from six.moves import range
 
-from mingus.core import notes
-from mingus.core.mt_exceptions import NoteFormatError, RangeError
+from src.app.mingus.core import notes
+from src.app.mingus.core.mt_exceptions import NoteFormatError, RangeError
 
 keys = [
     ("Cb", "ab"),  #  7 b

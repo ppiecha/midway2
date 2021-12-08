@@ -1,5 +1,6 @@
 import pytest
 
+from src.app.model.event import EventType
 from src.app.model.sequence import Sequence
 
 
@@ -89,13 +90,33 @@ def test_num_of_bars(bar0, bar1, note0, note1, note2, note3, program0,
     assert list(sequence.events()) == [note0, note1]
 
 
-def test_remove_event():
-    pass
+def test_remove_event(bar0, bar1, note0, note1, note2, note3, program0,
+                      control0, capsys):
+    sequence = Sequence.from_bars([bar0])
+    sequence.add_events(bar_num=0, events=[note0, note1])
+    assert list(sequence.events()) == [note0, note1]
+    sequence.remove_event(bar_num=0, event=note1)
+    assert list(sequence.events()) == [note0]
 
 
-def test_remove_events():
-    pass
+def test_remove_events(bar0, bar1, note0, note1, note2, note3, program0,
+                       control0, capsys):
+    sequence = Sequence.from_bars([bar0])
+    sequence.add_events(bar_num=0, events=[note0, note1])
+    assert list(sequence.events()) == [note0, note1]
+    sequence.remove_events(bar_num=0, events=[note0, note1])
+    assert list(sequence.events()) == []
 
 
-def test_remove_events_by_type():
-    pass
+def test_remove_events_by_type(bar0, bar1, note0, note1, note2, note3, program0,
+                               control0, capsys):
+    sequence = Sequence.from_bars([bar0, bar1])
+    sequence.add_events(bar_num=0, events=[note0, program0])
+    sequence.add_events(bar_num=1, events=[note1, control0])
+    sequence.remove_events_by_type(event_type=EventType.controls)
+    assert list(sequence.events()) == [note0, program0, note1]
+    sequence.remove_events_by_type(event_type=EventType.program)
+    assert list(sequence.events()) == [note0, note1]
+    sequence.remove_events_by_type(event_type=EventType.note)
+    assert list(sequence.events()) == []
+

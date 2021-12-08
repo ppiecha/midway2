@@ -9,8 +9,8 @@ from src.app.utils.constants import DEFAULT, SINGLE_TRACK
 from src.app.gui.menu import Action
 from src.app.gui.widgets import TrackVersionBox, Box
 from src.app.model.composition import Composition
-from src.app.model.track import Loop, TrackLoopItem, CustomLoops, \
-    CompositionLoops
+from src.app.model.loop import Loop, CustomLoops, CompositionLoops, \
+    TrackLoopItem
 from src.app.model.event import LoopType
 
 

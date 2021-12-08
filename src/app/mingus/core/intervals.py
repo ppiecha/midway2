@@ -31,8 +31,8 @@ determine, invert, is_consonant and is_dissonant.
 """
 from __future__ import absolute_import
 
-from mingus.core import notes
-from mingus.core import keys
+from src.app.mingus.core import notes
+from src.app.mingus.core import keys
 
 
 def interval(key, start_note, interval):

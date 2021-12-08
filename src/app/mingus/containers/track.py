@@ -18,10 +18,11 @@ from __future__ import absolute_import
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from mingus.containers.mt_exceptions import InstrumentRangeError, UnexpectedObjectError
-from mingus.containers.note_container import NoteContainer
-from mingus.containers.bar import Bar
-import mingus.core.value as value
+from src.app.mingus.containers.mt_exceptions import InstrumentRangeError, \
+    UnexpectedObjectError
+from src.app.mingus.containers.note_container import NoteContainer
+from src.app.mingus.containers.bar import Bar
+import src.app.mingus.core.value as value
 import six
 from six.moves import range
 

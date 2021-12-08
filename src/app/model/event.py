@@ -4,15 +4,17 @@ from typing import Optional, NewType, List, Union
 
 from pydantic import BaseModel, conint, confloat, PositiveInt
 
+from src.app.mingus.containers.note import Note
 from src.app.utils.constants import DEFAULT_VELOCITY, RULER_HEIGHT, \
     KEY_W_HEIGHT
 
 Int = Union[int, type(None)]
 Float = Union[float, type(None)]
 Bpm = PositiveInt
+Unit = confloat(ge=0)
 MidiValue = NewType('MidiValue', conint(ge=0, le=127))
-Channel = NewType('ChannelValue', conint(ge=0, le=255))
-Beat = NewType('Beat', confloat(ge=0))
+Channel = conint(ge=0, le=255)
+Beat = confloat(ge=0)
 
 
 class LoopType(str, Enum):
@@ -138,7 +140,7 @@ class Event(BaseModel):
     channel: Channel
     beat: Beat
     pitch: Optional[MidiValue]
-    unit: Optional[confloat(ge=0)]
+    unit: Optional[Unit]
     velocity: Optional[MidiValue]
     preset: Optional[Preset]
     controls: Optional[List[Control]]
@@ -148,6 +150,17 @@ class Event(BaseModel):
             raise AttributeError(f'Pitch attribute is not defined {str(self)}')
         else:
             return self.pitch
+
+    def note(self) -> Note:
+        if self.type != EventType.note:
+            raise ValueError(f'Wrong event type {self.type}. It must be a note')
+        return Note().from_int(int(self))
+
+    @classmethod
+    def from_note(cls, note: Note, channel: Channel, beat: Beat,
+                  unit: Unit) -> Event:
+        return Event(type=EventType.note, channel=channel, beat=beat,
+                     unit=unit, pitch=int(note))
 
 
 KEY_MAPPING = {
