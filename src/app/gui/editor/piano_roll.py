@@ -93,7 +93,7 @@ class PianoRoll(QWidget):
         loop.set_single_track_version(track=self.track,
                                       track_version=self.track_version)
         self.synth.play_composition(self.composition,
-                                    grid_type=LoopType.custom,
+                                    loop_type=LoopType.custom,
                                     loop_name=SINGLE_TRACK)
 
     def select_all(self, mf: MainFrame):

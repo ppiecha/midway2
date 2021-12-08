@@ -31,6 +31,6 @@ if __name__ == "__main__":
     print(bar)
     # sequencer.play_bar(synth=fs, bar=bar, bpm=bpm, start_tick=96)
     composition = Composition.from_bar(bar=bar, name='test')
-    fs.play_composition(composition=composition, grid_type=LoopType.custom,
+    fs.play_composition(composition=composition, loop_type=LoopType.custom,
                         bpm=bpm)
     time.sleep(10)

@@ -158,9 +158,9 @@ class Event(BaseModel):
 
     @classmethod
     def from_note(cls, note: Note, channel: Channel, beat: Beat,
-                  unit: Unit) -> Event:
+                  unit: Unit, velocity: MidiValue) -> Event:
         return Event(type=EventType.note, channel=channel, beat=beat,
-                     unit=unit, pitch=int(note))
+                     unit=unit, pitch=int(note), velocity=velocity)
 
 
 KEY_MAPPING = {

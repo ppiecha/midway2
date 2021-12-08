@@ -44,7 +44,7 @@ from six import binary_type, iteritems, text_type
 # Bump this up when changing the interface for users
 from src.app.utils.logger import get_console_logger
 from src.app.utils.constants import MAX_MIDI, DEFAULT_VELOCITY, TICKS_PER_BEAT, \
-    SF2_PATH
+    SF2_PATH, DEFAULT
 from src.app.model.bar import Bar
 from src.app.model.composition import Composition
 from src.app.model.event import Event, Preset, EventType, Beat, LoopType
@@ -1694,7 +1694,9 @@ class Sequencer:
     def note(self, time, channel, key, unit, bpm, velocity, source=-1, dest=-1,
              absolute=True):
         evt = self._create_event(source, dest)
-        duration = unit2tick(unit=unit, bpm=bpm)
+        duration = unit2tick(unit=unit, bpm=bpm) - 1
+        # logger.debug(f'sequencer note {evt} {channel} {key} {velocity} '
+        #              f'{duration} {time}')
         fluid_event_note(evt, channel, key, velocity, duration)
         self._schedule_event(evt, time, absolute)
         delete_fluid_event(evt)
@@ -1757,9 +1759,10 @@ class Sequencer:
 
     def __del__(self):
         self.client_callbacks.clear()
-        self.delete()
-        self.sequencer = None
-        logger.debug(f"Fluid sequencer deleted")
+        # self.delete()
+        if self.sequencer:
+            del self.sequencer
+        # logger.debug(f"Fluid sequencer deleted")
 
     """
     -----------------------------------------------------------------------------------------------
@@ -1767,7 +1770,7 @@ class Sequencer:
     -----------------------------------------------------------------------------------------------
     """
 
-    def send_event(self, time: int, event: Event, bpm: int,
+    def send_event(self, time: int, event: Event, bpm: float,
                    synth_seq_id):
         if event.type == EventType.note:
             self.note(time=time,
@@ -1808,12 +1811,12 @@ class Sequencer:
 
 class SequencePlayer:
     def __init__(self, synth: FS, composition: Composition,
-                 grid_type: LoopType,
-                 repeat: bool = True):
+                 loop_type: LoopType,
+                 repeat: bool = False):
         self.synth = synth
         self.sequencer: Optional[Sequencer] = None
         self.composition = composition
-        self.grid_type = grid_type
+        self.loop_type = loop_type
         self.loop_name: Optional[str] = None
         self.sequence: Optional[Sequence] = None
         self.bpm: Optional[float] = None
@@ -1831,9 +1834,9 @@ class SequencePlayer:
         self.client_id = self.sequencer.register_client("callback",
                                                         self.seq_callback)
         self.sequence = self.composition.loops[
-            self.grid_type].get_loop_by_name(
+            self.loop_type].get_loop_by_name(
             loop_name=loop_name).get_sequence()
-        print('seq', self.sequence)
+        # print('seq', self.sequence)
         self.bar_props = BarProps(bar_num=start_bar_num,
                                   start_tick=self.sequencer.get_tick(),
                                   duration=unit2tick(
@@ -1846,37 +1849,62 @@ class SequencePlayer:
         self.synth.system_reset()
 
     def seq_callback(self, time, event, seq, data):
-        logger.debug("callback active")
-        self.schedule_next_bar()
+        logger.debug(f"callback active {time} {event} {seq} {data}")
+        logger.debug(f"callback active {self.bar_props}")
+        if time >= self.bar_props.start_tick:
+            logger.debug('detected stop')
+            self.stop()
+        # if (self.bar_props.bar_num not in self.sequence.bars.keys() and
+        #         not self.repeat):
+        #
+        elif self.bar_props.bar_num in self.sequence.bars.keys():
+            self.schedule_next_bar()
 
     def schedule_next_callback(self):
-        logger.debug("Scheduling next callback")
-        callback_time = int(
-            self.bar_props.start_tick + self.bar_props.duration / 2)
+        # if (self.bar_props.bar_num not in self.sequence.bars.keys() and
+        #         not self.repeat):
+        #     callback_time = int(self.bar_props.start_tick +
+        #                         self.bar_props.duration)
+        # else:
+        #     callback_time = int(
+        #         self.bar_props.start_tick + self.bar_props.duration / 2)
+        callback_time = int(self.bar_props.start_tick +
+                            self.bar_props.duration / 2)
         self.sequencer.timer(callback_time, dest=self.client_id)
+        logger.debug(f'schedule_next_callback {str(self.bar_props)} '
+                     f'{callback_time}')
+        callback_time = int(self.bar_props.start_tick +
+                            self.bar_props.duration)
+        self.sequencer.timer(callback_time, dest=self.client_id)
+        logger.debug(f'schedule_next_callback {str(self.bar_props)} '
+                     f'{callback_time}')
 
     def schedule_next_bar(self) -> None:
         up2date: bool = False
         if self.bar_props.bar_num not in self.sequence.bars.keys():
-            if self.grid_type == LoopType.custom:
+            if self.loop_type == LoopType.custom:
                 if self.repeat:
                     self.bar_props.bar_num = 0
                 else:
-                    self.stop()
+                    # self.stop()
+                    logger.debug(f'scheduling last callback')
+                    self.schedule_next_callback()
+                    self.bar_props.bar_num += 1
+                    self.bar_props.start_tick += self.bar_props.duration
                     return
             else:
                 self.sequence = self.composition.loops[
-                    self.grid_type].get_next_sequence(self.loop_name)
+                    self.loop_type].get_next_sequence(self.loop_name)
                 up2date = True
                 if not self.sequence:
                     self.stop()
                     return
         if not up2date:
             self.sequence = self.composition.loops[
-                self.grid_type].get_sequence_by_loop_name(
+                self.loop_type].get_sequence_by_loop_name(
                 loop_name=self.loop_name)
         bar = self.sequence[self.bar_props.bar_num]
-        logger.debug(f"Scheduling next bar {self.bar_props.bar_num} {bar}")
+        # logger.debug(f"Scheduling next bar {self.bar_props.bar_num} {bar}")
         for event in bar.events():
             time = self.bar_props.start_tick + pos2tick(pos=event.beat,
                                                         bpm=self.bpm)
@@ -1890,33 +1918,27 @@ class SequencePlayer:
 
 
 class FontLoader(QThread):
-    def __init__(self, mf, synth: FS, sf2_path: str):
+    def __init__(self, mf, synth: FS):
         super().__init__(parent=None)
         self.mf = mf
         self.synth = synth
-        self.sf2_path = sf2_path
 
     def run(self):
-        for file_name in self.synth.get_sf_files(path=self.sf2_path):
-            if self.mf:
-                self.mf.show_message(f'Loading soundfont {file_name}')
-            self.synth.load_sf(file_name=file_name)
-        if self.mf:
-            self.mf.show_message(message=f'Fonts loaded')
-            while not hasattr(self.mf, 'composition_tab'):
-                sleep(0.01)
-            self.mf.composition_tab.init_fonts()
-        self.synth.start(driver='dsound')
+        self.synth.load_soundfonts(mf=self.mf)
 
 
 class FS(Synth):
     def __init__(self, mf=None, sf2_path: str = SF2_PATH):
         super().__init__()
         self.mf = mf
+        self.sf2_path = sf2_path
         self.sequence_players: Optional[Dict[LoopType, SequencePlayer]] = {}
-        self.thread = FontLoader(mf=mf, synth=self, sf2_path=sf2_path)
-        # self.thread.finished.connect(self.finished)
-        self.thread.start()
+        if mf:
+            self.thread = FontLoader(mf=mf, synth=self)
+            # self.thread.finished.connect(self.finished)
+            self.thread.start()
+        else:
+            self.load_soundfonts(mf=mf)
 
     def sfid(self, sf_name: str) -> int:
         return self.sf_map[sf_name]
@@ -1924,12 +1946,30 @@ class FS(Synth):
     def is_loaded(self) -> bool:
         return self.thread.isFinished()
 
+    def is_playing(self) -> bool:
+        for player in self.sequence_players.values():
+            if player.sequencer is not None:
+                return True
+        return False
+
+    def load_soundfonts(self, mf):
+        for file_name in self.get_sf_files(path=self.sf2_path):
+            if self.mf:
+                self.mf.show_message(f'Loading soundfont {file_name}')
+            self.load_sf(file_name=file_name)
+        if self.mf:
+            self.mf.show_message(message=f'Fonts loaded')
+            while not hasattr(self.mf, 'composition_tab'):
+                sleep(0.01)
+            self.mf.composition_tab.init_fonts()
+        self.start(driver='dsound')
+
     def finished(self):
         pass
 
     def get_current_preset(self, channel: int) -> Preset:
         sfid, bank, patch = self.program_info(channel)
-        sf_name = self.synth.sf_name(sfid=sfid)
+        sf_name = self.sf_name(sfid=sfid)
         return Preset(sf_name=sf_name, bank=bank, patch=patch)
 
     def preset_change(self, channel: int, preset: Preset):
@@ -1959,20 +1999,22 @@ class FS(Synth):
 
     def play_composition(self,
                          composition: Composition,
-                         grid_type: LoopType,
-                         loop_name: str = '0',
+                         loop_type: LoopType = LoopType.custom,
+                         loop_name: str = DEFAULT,
                          start_bar_num: int = 0,
-                         bpm: int = None):
-        if grid_type not in self.sequence_players:
+                         bpm: int = None,
+                         repeat: bool = False):
+        if loop_type not in self.sequence_players:
             player = SequencePlayer(synth=self,
                                     composition=composition,
-                                    grid_type=grid_type,
-                                    repeat=grid_type == LoopType.custom)
-            self.sequence_players[grid_type] = player
-        player = self.sequence_players[grid_type]
+                                    loop_type=loop_type,
+                                    repeat=repeat)
+            self.sequence_players[loop_type] = player
+        player = self.sequence_players[loop_type]
         if player.sequencer:
             player.stop()
         else:
+            # logger.debug('starting play')
             player.play(loop_name=loop_name,
                         bpm=bpm or self.mf.project.bpm,
                         start_bar_num=start_bar_num)
@@ -2059,3 +2101,6 @@ class BarProps:
         self.bar_num: int = bar_num
         self.start_tick = start_tick
         self.duration = duration
+
+    def __str__(self):
+        return str(self.__dict__)
