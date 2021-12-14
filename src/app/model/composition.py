@@ -7,7 +7,7 @@ from src.app.model.bar import Bar
 from src.app.model.sequence import Sequence
 from src.app.utils.constants import CHANNELS, DEFAULT_SF2, DEFAULT
 from src.app.model.track import Track, TrackVersion
-from src.app.model.loop import Loops, TrackLoopItem, Loop
+from src.app.model.loop import Loops, TrackLoopItem, Loop, CustomLoops
 from src.app.model.event import LoopType, Channel
 
 
@@ -34,12 +34,16 @@ class Composition(BaseModel):
             else:
                 return None
 
-    def get_default_loop(self, raise_not_found: bool = True) -> Optional[Loop]:
+    @property
+    def default_loop(self, raise_not_found: bool = True) -> Loop:
+        if self.get_custom_loop_by_name(loop_name=DEFAULT,
+                                        raise_not_found=False) is None:
+            self._update_default_loop()
         return self.get_custom_loop_by_name(loop_name=DEFAULT,
-                                            raise_not_found=raise_not_found)
+                                            raise_not_found=True)
 
-    def update_default_loop(self):
-        if self.get_default_loop(raise_not_found=False) is None:
+    def _update_default_loop(self):
+        if self.default_loop is None:
             loop = Loop(name=DEFAULT, tracks=[], checked=True)
             for track in self.tracks:
                 version_name = track.get_default_version().version_name
@@ -47,10 +51,23 @@ class Composition(BaseModel):
                                     loop_track_version=version_name,
                                     loop_track_enabled=True)
                 loop.tracks.append(tli)
-            self.loops[LoopType.custom] = Loops(loops=[loop])
+            self.loops[LoopType.custom] = CustomLoops(loops=[loop])
+
+    def new_track(self, track: Track, enable: bool):
+        if not self.track_name_exists(track_name=track.name,
+                                      current_track=track,
+                                      raise_not_found=False):
+            self.tracks.append(track)
+            for loops in self.loops.values():
+                loops.new_track(track=track, enable=enable)
 
     def delete_track(self, track: Track):
-        self.tracks.remove(track)
+        if self.track_name_exists(track_name=track.name,
+                                  current_track=track,
+                                  raise_not_found=True):
+            self.tracks.remove(track)
+            for loops in self.loops.values():
+                loops.remove_track(track=track)
 
     def get_next_free_channel(self):
         reserved = set()
@@ -76,16 +93,11 @@ class Composition(BaseModel):
         else:
             return None
 
-    def track_name_exists(self, track_name: str, current_track: Track) -> bool:
+    def track_name_exists(self, track_name: str, current_track: Track,
+                          raise_not_found: bool = False) -> bool:
         track = self.track_by_name(track_name=track_name,
-                                   raise_not_found=False)
+                                   raise_not_found=raise_not_found)
         return track and track != current_track
-
-    def new_track(self, track: Track, enable: bool):
-        self.tracks.append(track)
-        for loop_type, loops in self.loops.items():
-            for loop in loops.loops:
-                loop.new_track(track=track, enable=enable)
 
     def get_first_track_version(self) -> Optional[TrackVersion]:
         if self.tracks:
@@ -101,6 +113,21 @@ class Composition(BaseModel):
             return None
 
     @classmethod
+    def from_tracks(cls, tracks: List[Track], name: str = '') -> Composition:
+        composition = cls(name=name,
+                          tracks=[],
+                          loops={
+                              LoopType.custom:
+                                  CustomLoops(loops=[Loop(name=DEFAULT,
+                                                          tracks=[],
+                                                          checked=True)
+                                                     ])
+                          })
+        for track in tracks:
+            composition.new_track(track=track, enable=True)
+        return composition
+
+    @classmethod
     def from_sequence(cls, sequence: Sequence, name: str = '',
                       channel: Channel = 0, sf_name: str = DEFAULT_SF2) \
             -> Composition:
@@ -109,9 +136,7 @@ class Composition(BaseModel):
                                              channel=channel,
                                              sf_name=sf_name)
         track = Track(name=name, versions=[version])
-        composition = cls(name=name, tracks=[track])
-        composition.update_default_loop()
-        return composition
+        return Composition.from_tracks(tracks=[track], name=name)
 
     @classmethod
     def from_bar(cls, bar: Bar, name: str = '', channel: Channel = 0,
@@ -121,6 +146,4 @@ class Composition(BaseModel):
                                      num_of_bars=1, sf_name=sf_name,
                                      sequence=sequence)
         track = Track(name=name, versions=[track_version])
-        composition = cls(tracks=[track])
-        composition.update_default_loop()
-        return composition
+        return Composition.from_tracks(tracks=[track], name=name)

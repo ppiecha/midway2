@@ -14,7 +14,7 @@ from src.app.gui.dialogs.generic_config import GenericConfigDlg, GenericConfig
 from src.app.gui.menu import MenuBar
 from src.app.gui.toolbar import ToolBar
 from src.app.gui.widgets import Box
-from src.app.backend.synth import FS
+from src.app.backend.fs import FS
 from src.app.model.project import Project, sample_project
 
 

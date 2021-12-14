@@ -7,4 +7,4 @@ def test_scale_loop(track_c_major):
                         loop_track_enabled=True)
     print(tli.dict())
     loop = Loop(name='test scale', tracks=[tli])
-    assert len(list(loop.get_sequence().events())) == 16
+    assert len(list(loop.get_compiled_sequence().events())) == 16

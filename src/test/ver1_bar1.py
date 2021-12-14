@@ -1,6 +1,7 @@
 import time
 
-from src.app.backend.synth import bpm2time_scale, FS
+from src.app.backend.synth import bpm2time_scale
+from src.app.backend.fs import FS
 from src.app.backend.synth import Sequencer
 from src.app.model.bar import Bar
 from src.app.model.composition import Composition

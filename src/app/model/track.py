@@ -6,7 +6,8 @@ from pydantic import BaseModel, PositiveInt
 from src.app.utils.constants import CLR_NODE_START
 from src.app.utils.constants import DEFAULT_SF2, DEFAULT_BANK, DEFAULT_PATCH
 
-from src.app.model.event import Channel, MidiValue
+from src.app.model.event import Channel
+from src.app.model.control import MidiValue
 from src.app.model.sequence import Sequence
 
 

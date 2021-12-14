@@ -12,13 +12,13 @@ DRUMS_CHANNEL = 9
 
 SF2_DIR = 'sf2'
 UTILS_PATH = os.path.dirname(os.path.abspath(__file__))
-print(UTILS_PATH)
+# print(UTILS_PATH)
 APP_PATH = str(Path(UTILS_PATH).parent)
-print(APP_PATH)
+# print(APP_PATH)
 SRC_PATH = str(Path(APP_PATH).parent)
-print(SRC_PATH)
+# print(SRC_PATH)
 ROOT_PATH = str(Path(SRC_PATH).parent)
-print(ROOT_PATH)
+# print(ROOT_PATH)
 SF2_PATH = os.path.join(ROOT_PATH, SF2_DIR)
 FS_PATH = os.path.join(ROOT_PATH,
                        os.path.join('ext',
@@ -26,7 +26,7 @@ FS_PATH = os.path.join(ROOT_PATH,
                                                  'bin')))
 os.environ['PATH'] += FS_PATH + ';'
 # sys.path.append(FS_PATH)
-print(os.environ['PATH'])
+# print(os.environ['PATH'])
 
 # Midi
 TICKS_PER_BEAT = 96
@@ -39,6 +39,7 @@ DEFAULT_PATCH = 0
 DEFAULT_VELOCITY = 100
 DEFAULT_VERSION_NAME = "Default"
 CHANNELS = [channel for channel in range(MAX_CHANNEL)]
+DRIVER = 'dsound'
 
 # GUI
 PROJECT_FILE = "project_file"

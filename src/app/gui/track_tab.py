@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from src.app.gui.track_list import TrackListItem
     from src.app.gui.main_frame import MainFrame
 from src.app.gui.widgets import Box, FontBox, PresetBox, ChannelBox
-from src.app.backend.synth import FS
+from src.app.backend.fs import FS
 from src.app.model.composition import Composition
 from src.app.model.event import Preset
 from src.app.model.sequence import Sequence

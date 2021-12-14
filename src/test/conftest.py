@@ -4,7 +4,8 @@ from src.app.backend.composer import Composer
 from src.app.mingus.containers.note import Note
 from src.app.mingus.core.scales import Major
 from src.app.model.bar import Bar
-from src.app.model.event import Event, EventType, Preset, Control, Volume
+from src.app.model.event import Event, EventType, Preset, Control
+from src.app.model.control import Volume
 from src.app.model.sequence import Sequence
 from src.app.model.track import Track, TrackVersion
 

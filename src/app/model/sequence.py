@@ -16,6 +16,11 @@ class Sequence(BaseModel):
     num_of_bars: PositiveInt
     bars: Dict[NonNegativeInt, Bar] = {}
 
+    # def get_total_length(self) -> float:
+    #     if self.num_of_bars == 0:
+    #         raise ValueError(f'Empty bar. Number of bars {self.num_of_bars}')
+    #     return self.num_of_bars * self.bars[0].length
+
     @validator('bars', pre=True, always=True)
     def init_bars(cls, v, values):
         for bar_num in range(values['num_of_bars']):

@@ -2,7 +2,8 @@ from typing import List, Callable
 
 from src.app.mingus.containers.note import Note
 from src.app.mingus.core.value import eighth
-from src.app.model.event import Beat, Event, Unit, MidiValue
+from src.app.model.event import Beat, Event, Unit
+from src.app.model.control import MidiValue
 from src.app.utils.constants import DEFAULT_VELOCITY
 
 STEP = 0.125

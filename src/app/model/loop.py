@@ -26,11 +26,17 @@ class Loop(BaseModel):
     checked: Optional[bool] = None
 
     def new_track(self, track: Track, enable: bool):
-        self.tracks.append(TrackLoopItem(loop_track=track,
-                                         loop_track_version=track.get_default_version().version_name,
-                                         loop_track_enabled=enable))
+        self.tracks.append(
+            TrackLoopItem(loop_track=track,
+                          loop_track_version=track.get_default_version().version_name,
+                          loop_track_enabled=enable))
 
-    def get_sequence(self) -> Sequence:
+    def remove_track(self, track: Track):
+        self.tracks = [track_item for track_item in self.tracks
+                       if track_item.loop_track != track]
+
+    def get_compiled_sequence(self, include_defaults: bool = False) -> Sequence:
+        # raise NotImplementedError
         sequence: Optional[Sequence] = None
         tracks = [track for track in self.tracks if track.loop_track_enabled]
         if len(tracks):
@@ -49,11 +55,22 @@ class Loop(BaseModel):
             else:
                 loop_item.loop_track_enabled = False
 
+    @classmethod
+    def from_tracks(cls, name: str, tracks: List[Track], checked: bool):
+        loop = cls(name=name, tracks=[], checked=checked)
+        for track in tracks:
+            loop.new_track(track=track, enable=checked)
+        return loop
+
 
 class Loops(BaseModel):
     loops: List[Loop]
 
-    def get_next_sequence(self, loop_name: str) -> Optional[Sequence]:
+    def get_next_loop(self, loop_name: str = '') -> Optional[Loop]:
+        self.raise_not_implemented()
+        return None
+
+    def get_next_sequence(self, loop_name: str = '') -> Optional[Sequence]:
         self.raise_not_implemented()
         return None
 
@@ -64,7 +81,8 @@ class Loops(BaseModel):
         raise ValueError(f'Cannot find loop by name {loop_name}')
 
     def get_sequence_by_loop_name(self, loop_name: str) -> Sequence:
-        return self.get_loop_by_name(loop_name=loop_name).get_sequence()
+        return self.get_loop_by_name(
+            loop_name=loop_name).get_compiled_sequence()
 
     def get_first_loop_name(self) -> Optional[str]:
         self.raise_not_implemented()
@@ -74,7 +92,19 @@ class Loops(BaseModel):
         self.raise_not_implemented()
 
     def raise_not_implemented(self):
-        raise NotImplementedError('Method not implemented in base class')
+        raise NotImplementedError('Method not implemented')
+
+    def get_total_num_of_bars(self) -> Optional[int]:
+        self.raise_not_implemented()
+        return None
+
+    def new_track(self, track: Track, enable: bool):
+        for loop in self.loops:
+            loop.new_track(track=track, enable=enable)
+
+    def remove_track(self, track: Track):
+        for loop in self.loops:
+            loop.remove_track(track=track)
 
 
 class CustomLoops(Loops):
@@ -90,8 +120,11 @@ class CustomLoops(Loops):
         for unchecked in [item for item in self.loops if item != loop]:
             unchecked.checked = False
 
-    def get_next_sequence(self, loop_name: str) -> Optional[Sequence]:
-        return self.get_checked_loop().get_sequence()
+    def get_next_sequence(self, loop_name: str = '') -> Optional[Sequence]:
+        return self.get_checked_loop().get_compiled_sequence()
+
+    def get_next_loop(self, loop_name: str = '') -> Optional[Loop]:
+        return self.get_checked_loop()
 
     def get_first_loop_name(self) -> Optional[str]:
         return self.get_checked_loop().name
@@ -99,15 +132,30 @@ class CustomLoops(Loops):
     def get_loop_by_name(self, loop_name: str):
         return self.get_checked_loop()
 
+    def get_total_num_of_bars(self) -> Optional[int]:
+        return self.get_next_loop('').get_compiled_sequence().num_of_bars
+
 
 class CompositionLoops(Loops):
-    def get_next_sequence(self, loop_name: str) -> Optional[Sequence]:
-        loop = self.get_loop_by_name(loop_name=loop_name)
+    def get_next_loop(self, loop_name: str = '') -> Optional[Loop]:
         try:
             next_loop = self.loops[int(loop_name) + 1]
-            return next_loop.get_sequence()
+            return next_loop
         except IndexError:
             return None
 
+    def get_next_sequence(self, loop_name: str = '') -> Optional[Sequence]:
+        next_loop = self.get_next_loop(loop_name=loop_name)
+        if next_loop is None:
+            return None
+        else:
+            return next_loop.get_compiled_sequence()
+
     def get_first_loop_name(self) -> Optional[str]:
         return self.loops[0].name if len(self.loops) > 0 else None
+
+    def get_total_num_of_bars(self) -> Optional[int]:
+        bars_total = 0
+        for loop in self.loops:
+            bars_total += loop.get_compiled_sequence().num_of_bars
+        return bars_total

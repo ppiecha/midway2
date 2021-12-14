@@ -16,7 +16,7 @@ from src.app.utils.logger import get_console_logger
 if TYPE_CHECKING:
     from src.app.gui.main_frame import MainFrame
 from src.app.utils.constants import CHANNELS
-from src.app.backend.synth import FS
+from src.app.backend.fs import FS
 from src.app.model.composition import Composition
 from src.app.model.event import Preset, LoopType
 from src.app.model.track import Track, TrackVersion
