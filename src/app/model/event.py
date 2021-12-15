@@ -16,11 +16,6 @@ Channel = conint(ge=0, le=255)
 Beat = confloat(ge=0)
 
 
-class LoopType(str, Enum):
-    custom = 'custom'
-    composition = 'composition'
-
-
 class Preset(BaseModel):
     sf_name: str
     bank: MidiValue
@@ -33,10 +28,10 @@ class Control(BaseModel):
 
 
 class EventType(str, Enum):
-    note = 'note'
-    program = 'program'
-    controls = 'controls'
-    pitch_bend = 'pitch_end'
+    note = '3-note'
+    program = '0-program'
+    controls = '1-controls'
+    pitch_bend = '2-pitch_end'
 
 
 class Event(BaseModel):

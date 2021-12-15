@@ -7,8 +7,9 @@ from src.app.model.bar import Bar
 from src.app.model.sequence import Sequence
 from src.app.utils.constants import CHANNELS, DEFAULT_SF2, DEFAULT
 from src.app.model.track import Track, TrackVersion
-from src.app.model.loop import Loops, TrackLoopItem, Loop, CustomLoops
-from src.app.model.event import LoopType, Channel
+from src.app.model.loop import Loops, TrackLoopItem, Loop, CustomLoops, \
+    LoopType
+from src.app.model.event import Channel
 
 
 class Composition(BaseModel):

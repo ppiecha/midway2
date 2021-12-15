@@ -1,10 +1,16 @@
 import copy
+from enum import Enum
 from typing import List, Optional
 
 from pydantic import BaseModel
 
 from src.app.model.sequence import Sequence
 from src.app.model.track import Track, TrackVersion
+
+
+class LoopType(str, Enum):
+    custom = 'custom'
+    composition = 'composition'
 
 
 class TrackLoopItem(BaseModel):
@@ -35,15 +41,17 @@ class Loop(BaseModel):
         self.tracks = [track_item for track_item in self.tracks
                        if track_item.loop_track != track]
 
-    def get_compiled_sequence(self, include_defaults: bool = False) -> Sequence:
-        # raise NotImplementedError
+    def get_compiled_sequence(self,
+                              include_defaults: bool = False) -> Sequence:
         sequence: Optional[Sequence] = None
         tracks = [track for track in self.tracks if track.loop_track_enabled]
         if len(tracks):
             sequence = copy.deepcopy(
-                tracks.pop(0).get_track_version().sequence)
+                tracks.pop(0).get_track_version().get_sequence(
+                    include_defaults=include_defaults))
             for track in tracks:
-                sequence += track.get_track_version().sequence
+                sequence += track.get_track_version().get_sequence(
+                    include_defaults=include_defaults)
         return sequence
 
     def set_single_track_version(self, track: Track,

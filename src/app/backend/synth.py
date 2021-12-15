@@ -1658,12 +1658,12 @@ class Sequencer:
         self.client_callbacks = []
         self.sequencer = new_fluid_sequencer2(use_system_timer)
         fluid_sequencer_set_time_scale(self.sequencer, time_scale)
-        self.synth: Optional[Synth] = None
+        self.synth: Optional[Any] = None
 
     def register_fluidsynth(self, synth):
         response = fluid_sequencer_register_fluidsynth(self.sequencer,
                                                        synth.synth)
-
+        self.synth = synth
         if response == FLUID_FAILED:
             raise OSError("Registering fluid synth failed")
 

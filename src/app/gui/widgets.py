@@ -18,9 +18,9 @@ if TYPE_CHECKING:
 from src.app.utils.constants import CHANNELS
 from src.app.backend.fs import FS
 from src.app.model.composition import Composition
-from src.app.model.event import Preset, LoopType
+from src.app.model.event import Preset
 from src.app.model.track import Track, TrackVersion
-from src.app.model.loop import Loop, TrackLoopItem
+from src.app.model.loop import Loop, TrackLoopItem, LoopType
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 

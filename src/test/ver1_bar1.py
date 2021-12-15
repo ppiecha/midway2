@@ -5,7 +5,8 @@ from src.app.backend.fs import FS
 from src.app.backend.synth import Sequencer
 from src.app.model.bar import Bar
 from src.app.model.composition import Composition
-from src.app.model.event import Event, EventType, LoopType
+from src.app.model.event import Event, EventType
+from src.app.model.loop import LoopType
 from src.app.model.sequence import Sequence
 from src.app.utils.constants import DEFAULT_SF2
 

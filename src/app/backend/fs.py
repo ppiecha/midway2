@@ -11,8 +11,8 @@ from PySide6.QtCore import QThread
 
 from src.app.backend.synth import Sequencer, Synth
 from src.app.model.composition import Composition
-from src.app.model.event import Event, LoopType, Preset
-from src.app.model.loop import Loops
+from src.app.model.event import Event, Preset
+from src.app.model.loop import Loops, LoopType
 from src.app.utils.constants import SF2_PATH, DEFAULT_VELOCITY, DRIVER
 from src.app.utils.logger import get_console_logger
 from src.app.utils.units import unit2tick, bpm2time_scale, pos2tick
@@ -166,11 +166,11 @@ class EventProvider:
         self.bar_num = start_bar_num
         self.repeat = repeat
         loop = loops.get_loop_by_name(loop_name=start_loop_name)
-        self.sequence = loop.get_compiled_sequence()
+        self.sequence = loop.get_compiled_sequence(include_defaults=True)
         self.bar_length = self.sequence.bars[start_bar_num].length
         self.bar_duration = unit2tick(unit=self.bar_length, bpm=bpm)
         self._sequencer = Sequencer(time_scale=bpm2time_scale(bpm=bpm),
-                                   use_system_timer=False)
+                                    use_system_timer=False)
         self.sequencer = weakref.ref(self._sequencer)
         self.synth_seq_id = self.sequencer().register_fluidsynth(synth)
         self.client_id = self.sequencer().register_client("callback", callback)
@@ -178,7 +178,6 @@ class EventProvider:
         self.stop_time = (loops.get_total_num_of_bars() * self.bar_duration +
                           self.tick)
         self.skip_time = self.stop_time - int(self.bar_duration / 2)
-        self.is_first_loop: bool = True
 
     def events(self) -> List[TimedEvent]:
         if self.sequence is None:
@@ -196,12 +195,10 @@ class EventProvider:
             self.bar_num += 1
         next_loop = self.loops.get_next_loop(self.loop_name)
         if next_loop:
-            self.sequence = next_loop.get_compiled_sequence(
-                include_defaults=self.is_first_loop)
+            self.sequence = next_loop.get_compiled_sequence()
             self.loop_name = next_loop.name
         else:
             self.sequence = None
-        self.is_first_loop = False
         self.tick = self.tick + self.bar_duration
 
     def next_callback_time(self) -> int:

@@ -10,8 +10,7 @@ from src.app.gui.menu import Action
 from src.app.gui.widgets import TrackVersionBox, Box
 from src.app.model.composition import Composition
 from src.app.model.loop import Loop, CustomLoops, CompositionLoops, \
-    TrackLoopItem
-from src.app.model.event import LoopType
+    TrackLoopItem, LoopType
 
 
 class FinalMeta(type(QWidget), type(ABC)):

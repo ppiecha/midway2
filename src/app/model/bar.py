@@ -27,7 +27,7 @@ class Bar(BaseModel):
         if event.beat >= self.length:
             raise ValueError(f"Item outside of bar range {event.beat}")
         self.bar.append(event)
-        self.bar.sort(key=lambda x: x.beat)
+        self.bar.sort(key=lambda e: (e.beat, e.type))
 
     def add_events(self, events: List[Event]):
         for event in events:

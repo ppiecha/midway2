@@ -3,10 +3,11 @@ from typing import List, Optional
 
 from pydantic import BaseModel, PositiveInt
 
+from src.app.model.bar import Bar
 from src.app.utils.constants import CLR_NODE_START
 from src.app.utils.constants import DEFAULT_SF2, DEFAULT_BANK, DEFAULT_PATCH
 
-from src.app.model.event import Channel
+from src.app.model.event import Channel, Event, EventType, Preset
 from src.app.model.control import MidiValue
 from src.app.model.sequence import Sequence
 
@@ -27,6 +28,24 @@ class TrackVersion(BaseModel):
         return cls(channel=channel, version_name=version_name,
                    num_of_bars=sequence.num_of_bars, sf_name=sf_name,
                    sequence=sequence)
+
+    def get_sequence(self, include_defaults: bool = False) -> Sequence:
+        if include_defaults:
+            bars: List[Bar] = [bar for bar in self.sequence.bars.values()]
+            if bars:
+                first_bar, *rest = bars
+                event = Event(type=EventType.program,
+                              channel=self.channel,
+                              beat=0,
+                              preset=Preset(sf_name=self.sf_name,
+                                            bank=self.bank,
+                                            patch=self.patch))
+                first_bar.add_event(event=event)
+                return Sequence.from_bars(bars=bars)
+            else:
+                raise ValueError(f'No bars in sequence {self.sequence}')
+        else:
+            return self.sequence
 
 
 class Track(BaseModel):
@@ -69,10 +88,14 @@ class Track(BaseModel):
     def get_version(self, version_name: str, raise_not_found: bool = False) \
             -> Optional[TrackVersion]:
         version = [version for version in self.versions if
-                   version_name.lower() == version.version_name.lower()]
+                   version_name == version.version_name]
         if version:
-            version, *rest = version
-            return version
+            if len(version) > 1:
+                raise ValueError(f'Found more than one version with name '
+                                 f'{version_name} in track {self.name}')
+            else:
+                version, *rest = version
+                return version
         else:
             if raise_not_found:
                 raise ValueError(
@@ -89,5 +112,3 @@ class Track(BaseModel):
                     f'Cannot get default track version. No version defined')
             else:
                 return None
-
-
