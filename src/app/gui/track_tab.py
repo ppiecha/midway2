@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from src.app.gui.track_list import TrackListItem
     from src.app.gui.main_frame import MainFrame
 from src.app.gui.widgets import Box, FontBox, PresetBox, ChannelBox
-from src.app.backend.fs import FS
+from src.app.backend.midway_synth import MidwaySynth
 from src.app.model.composition import Composition
 from src.app.model.event import Preset
 from src.app.model.sequence import Sequence
@@ -30,7 +30,7 @@ class MelodyTrackVersion(QWidget):
     """
 
     def __init__(self, mf: MainFrame, parent, track_version: TrackVersion,
-                 synth: FS, composition: Composition,
+                 synth: MidwaySynth, composition: Composition,
                  track: Track):
         super().__init__(parent=parent)
         self.mf = mf
@@ -101,7 +101,7 @@ class MelodyTrackVersion(QWidget):
             self._preset.populate_preset_combo(sfid=sfid)
 
     @property
-    def synth(self) -> FS:
+    def synth(self) -> MidwaySynth:
         return self.piano_roll.synth
 
     @property
@@ -200,7 +200,7 @@ class DrumsTrackVersion(QWidget):
     """Widgets contains drums track version controls"""
 
     def __init__(self, mf: MainFrame, parent, track_version: TrackVersion,
-                 synth: FS, composition: Composition,
+                 synth: MidwaySynth, composition: Composition,
                  track: Track):
         super().__init__(parent=parent)
         self.mf = mf
@@ -215,7 +215,7 @@ class TrackVersionMidiEvents(QWidget):
     HEADERS = ['Beat', 'Pitch', 'Unit', 'Velocity', 'Preset', 'Control']
 
     def __init__(self, mf: MainFrame, parent, track_version: TrackVersion,
-                 synth: FS, composition: Composition,
+                 synth: MidwaySynth, composition: Composition,
                  track: Track):
         super().__init__(parent=parent)
         self.mf = mf
@@ -238,7 +238,7 @@ class TrackVersionMidiEvents(QWidget):
 class TrackTab(QWidget):
     """This tab control contains tab with piano roll and track version info"""
 
-    def __init__(self, mf, parent, track_version: TrackVersion, synth: FS,
+    def __init__(self, mf, parent, track_version: TrackVersion, synth: MidwaySynth,
                  composition: Composition, track: Track):
         super().__init__(parent=parent)
         self.composition = composition
@@ -268,7 +268,7 @@ class TrackVersionTab(QWidget):
     """Control tab of track versions"""
 
     def __init__(self, mf: MainFrame, list_item: TrackListItem, track: Track,
-                 synth: FS, composition: Composition):
+                 synth: MidwaySynth, composition: Composition):
         super().__init__(parent=list_item)
         self.mf = mf
         self.synth = synth

@@ -2,14 +2,17 @@ from typing import Dict, List
 
 import pytest
 
-from src.app.model.event import Event, EventType
+from src.app.backend.midway_synth import MidwaySynth
+from src.app.model.bar import Bar
+from src.app.model.event import Event, EventType, Preset
+from src.app.utils.constants import DEFAULT_SF2
 
 
 @pytest.fixture
 def two_notes() -> List:
     return [
         {
-            "type": "note",
+            "type": "3-note",
             "channel": 0,
             "beat": 0.0,
             "pitch": 79,
@@ -19,7 +22,7 @@ def two_notes() -> List:
             "controls": None
         },
         {
-            "type": "note",
+            "type": "3-note",
             "channel": 0,
             "beat": 0.125,
             "pitch": 80,
@@ -42,7 +45,7 @@ def bar_result(two_notes) -> Dict:
 
 def test_note(note0, capsys):
     print(str(note0.dict()))
-    assert note0.dict() == {"type": "note",
+    assert note0.dict() == {"type": "3-note",
                             "channel": 0,
                             "beat": 0.0,
                             "pitch": 79,
@@ -119,7 +122,7 @@ def test_remove_events(bar0, note0, note1, note2, note3, two_notes):
 
 def test_program(program0):
     print(program0.dict())
-    assert program0.dict() == {"type": "program",
+    assert program0.dict() == {"type": "0-program",
                                "channel": 0,
                                "beat": 0.0,
                                "pitch": None,
@@ -133,7 +136,7 @@ def test_program(program0):
 
 def test_controls(control0, capsys):
     print(control0.dict())
-    assert control0.dict() == {"type": "controls",
+    assert control0.dict() == {"type": "1-controls",
                                "channel": 0,
                                "beat": 0.0,
                                "pitch": None,
@@ -162,3 +165,19 @@ def test_remove_events_by_type_notes(bar0, note0, note1, note2, note3,
     assert list(b0.events()) == two_notes
     b0.remove_events_by_type(EventType.note)
     assert len(b0) == 0
+
+
+def test_play_bar_changing_programs(bar_c_major, capsys):
+    bar = Bar(bar_num=0)
+    for index, event in enumerate(bar_c_major):
+        prog_event = Event(type=EventType.program,
+                           channel=0,
+                           beat=event.beat,
+                           preset=Preset(sf_name=DEFAULT_SF2,
+                                         bank=0,
+                                         patch=index))
+        bar.add_events([prog_event, event])
+    print(bar)
+    MidwaySynth.play_bar(bar=bar, bpm=120)
+    assert 1 == 0
+

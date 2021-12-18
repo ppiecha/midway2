@@ -14,14 +14,14 @@ from src.app.gui.dialogs.generic_config import GenericConfigDlg, GenericConfig
 from src.app.gui.menu import MenuBar
 from src.app.gui.toolbar import ToolBar
 from src.app.gui.widgets import Box
-from src.app.backend.fs import FS
+from src.app.backend.midway_synth import MidwaySynth
 from src.app.model.project import Project, sample_project
 
 
 class MainFrame(QMainWindow):
     def __init__(self, app: QApplication, config_file: str = 'config.ini'):
         super().__init__()
-        self.synth = FS(mf=self, sf2_path=SF2_PATH)
+        self.synth = MidwaySynth(mf=self, sf2_path=SF2_PATH)
         self.status_bar = self.statusBar()
         self.app = app
         self.menu = MenuBar(self)

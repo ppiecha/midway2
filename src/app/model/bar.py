@@ -1,6 +1,6 @@
 from __future__ import annotations
 import copy
-from typing import List, Union, Optional
+from typing import List, Union, Optional, Iterator
 
 from pydantic import BaseModel, PositiveInt, NonNegativeInt, NonNegativeFloat
 
@@ -71,7 +71,7 @@ class Bar(BaseModel):
         """Enable the  '[]' notation on Bars to get the item at the index."""
         return self.bar[index]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Event]:
         return iter(self.bar)
 
     def events(self):

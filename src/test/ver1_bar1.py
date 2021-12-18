@@ -1,7 +1,7 @@
 import time
 
 from src.app.backend.synth import bpm2time_scale
-from src.app.backend.fs import FS
+from src.app.backend.midway_synth import MidwaySynth
 from src.app.backend.synth import Sequencer
 from src.app.model.bar import Bar
 from src.app.model.composition import Composition
@@ -12,7 +12,7 @@ from src.app.utils.constants import DEFAULT_SF2
 
 if __name__ == "__main__":
     bpm = 60
-    fs = FS()
+    fs = MidwaySynth()
     time.sleep(5)
     # fs = Synth()
     # sfid = fs.sfload(r'C:\Users\piotr\_piotr_\__GIT__\Python\midway\sf2\FluidR3.sf2')  # replace path as needed

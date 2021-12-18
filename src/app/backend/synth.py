@@ -34,7 +34,7 @@ from ctypes import (CDLL, CFUNCTYPE, POINTER, Structure, byref, c_char,
 from ctypes.util import find_library
 # Third-party modules
 from pathlib import Path
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 
 from six import binary_type, iteritems, text_type
 
@@ -1646,7 +1646,8 @@ class Synth:
 
 
 class Sequencer:
-    def __init__(self, time_scale=1000, use_system_timer=True):
+    def __init__(self, synth, time_scale=1000, use_system_timer=True,
+                 callback=None):
         """Create new sequencer object to control and schedule timing of backend events.
 
         Optional keyword arguments:
@@ -1659,6 +1660,10 @@ class Sequencer:
         self.sequencer = new_fluid_sequencer2(use_system_timer)
         fluid_sequencer_set_time_scale(self.sequencer, time_scale)
         self.synth: Optional[Any] = None
+        self.synth_seq_id = self.register_fluidsynth(synth)
+        if callback:
+            self.client_id = self.register_client("callback",
+                                                  callback)
 
     def register_fluidsynth(self, synth):
         response = fluid_sequencer_register_fluidsynth(self.sequencer,
@@ -1753,11 +1758,10 @@ class Sequencer:
         delete_fluid_sequencer(self.sequencer)
 
     def __del__(self):
+        self.unregister_client(client_id=self.client_id)
         self.client_callbacks.clear()
-        # self.delete()
         if self.sequencer:
             del self.sequencer
-        # logger.debug(f"Fluid sequencer deleted")
 
     """
     -----------------------------------------------------------------------------------------------
@@ -1767,36 +1771,36 @@ class Sequencer:
 
     def send_event(self, time: int, event: Event, bpm: float,
                    synth_seq_id):
-        if event.type == EventType.note:
-            self.note(time=time,
-                      channel=event.channel,
-                      key=int(event.pitch),
-                      unit=event.unit,
-                      bpm=bpm,  # unit2tick(unit=note.unit, bpm=bpm),
-                      velocity=event.velocity,
-                      dest=synth_seq_id)
-        elif event.type == EventType.program:
-            self.program_change(time=time,
-                                channel=event.channel,
-                                preset=event.preset,
-                                dest=synth_seq_id)
-        elif event.type == EventType.controls:
-            pass
-            # self.control_change(time=time,
-            #                     channel=event.channel,
-            #                     control=event.control,
-            #                     value=event.value,
-            #                     dest=synth_seq_id)
-        elif event.type == EventType.pitch_bend:
-            pass
-        else:
-            raise ValueError(f'Event type {event.type} not supported')
+        match event.type:
+            case EventType.note:
+                self.note(time=time,
+                          channel=event.channel,
+                          key=int(event.pitch),
+                          unit=event.unit,
+                          bpm=bpm,  # unit2tick(unit=note.unit, bpm=bpm),
+                          velocity=event.velocity,
+                          dest=synth_seq_id)
+            case EventType.program:
+                self.program_change(time=time,
+                                    channel=event.channel,
+                                    preset=event.preset,
+                                    dest=synth_seq_id)
+            case EventType.controls:
+                pass
+                # self.control_change(time=time,
+                #                     channel=event.channel,
+                #                     control=event.control,
+                #                     value=event.value,
+                #                     dest=synth_seq_id)
+            case EventType.pitch_bend:
+                pass
+            case _:
+                raise ValueError(f'Event type {event.type} not supported')
 
-    def play_bar(self, synth: Synth, bar: Bar, bpm: int, start_tick: int = 0):
+    def play_bar(self, synth: Synth, bar: Bar, bpm: float, start_tick: int = 0):
         synth_seq_id = self.register_fluidsynth(synth)
         current_tick: int = self.get_tick() + start_tick
         for event in bar.events():
-            logger.debug(event)
             time = current_tick + pos2tick(pos=event.beat, bpm=bpm)
             self.send_event(time=time,
                             event=event,

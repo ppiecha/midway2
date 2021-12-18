@@ -10,18 +10,21 @@ from typing import List, Optional, Dict, Callable, NamedTuple
 from PySide6.QtCore import QThread
 
 from src.app.backend.synth import Sequencer, Synth
+from src.app.model.bar import Bar
 from src.app.model.composition import Composition
 from src.app.model.event import Event, Preset
 from src.app.model.loop import Loops, LoopType
-from src.app.utils.constants import SF2_PATH, DEFAULT_VELOCITY, DRIVER
+from src.app.utils.constants import SF2_PATH, DEFAULT_VELOCITY, DRIVER, \
+    FIRST_COMPOSITION_LOOP, DEFAULT_SF2
 from src.app.utils.logger import get_console_logger
-from src.app.utils.units import unit2tick, bpm2time_scale, pos2tick
+from src.app.utils.units import unit2tick, bpm2time_scale, pos2tick, \
+    tick2second
 
 logger = get_console_logger(name=__name__, log_level=DEBUG)
 
 
 class FontLoader(QThread):
-    def __init__(self, mf, synth: FS):
+    def __init__(self, mf, synth: MidwaySynth):
         super().__init__(parent=None)
         self.mf = mf
         self.synth = synth
@@ -30,12 +33,11 @@ class FontLoader(QThread):
         self.synth.load_sound_fonts(mf=self.mf)
 
 
-class FS(Synth):
+class MidwaySynth(Synth):
     def __init__(self, mf=None, sf2_path: str = SF2_PATH):
         super().__init__()
         self.mf = mf
         self.sf2_path = sf2_path
-        # self.loop_players: Optional[Dict[LoopType, LoopPlayer]] = {}
         self.loop_player: Optional[LoopPlayer] = None
         if mf:
             self.thread = FontLoader(mf=mf, synth=self)
@@ -104,6 +106,19 @@ class FS(Synth):
         if self.loop_player:
             self.loop_player.stop()
 
+    @staticmethod
+    def play_bar(bar: Bar, bpm: float):
+        fs = Synth()
+        sfid = fs.sfload(DEFAULT_SF2)
+        fs.program_select(0, sfid, 0, 0)
+        fs.start(driver=DRIVER)
+        sequencer = Sequencer(synth=fs,
+                              time_scale=bpm2time_scale(bpm=bpm),
+                              use_system_timer=False)
+        sequencer.play_bar(synth=fs, bar=bar, bpm=bpm)
+        # unit2tick(unit=note.unit, bpm=bpm)
+        # tick2second
+
     def play_loop(self, loops: Loops, loop_name: str, bpm: float,
                   start_bar_num: int = 0, repeat: bool = False):
         if self.loop_player:
@@ -131,23 +146,18 @@ class FS(Synth):
                               start_bar_num=start_bar_num,
                               repeat=repeat)
 
-    # def play_composition(self,
-    #                      composition: Composition,
-    #                      loop_type: LoopType,
-    #                      loop_name: str,
-    #                      bpm: float,
-    #                      start_bar_num: int = 0):
-    #     self.stop_loop_players()
-    #     if loop_type not in self.loop_players:
-    #         player = LoopPlayer(synth=self,
-    #                             loops=composition.loops[loop_type],
-    #                             repeat=False)
-    #         # repeat=loop_type == LoopType.custom)
-    #         self.loop_players[loop_type] = player
-    #     player = self.loop_players[loop_type]
-    #     player.play(bpm=bpm,
-    #                 start_loop_name=loop_name,
-    #                 start_bar_num=start_bar_num)
+    def play_composition_loop(self,
+                              composition: Composition,
+                              bpm: float,
+                              loop_name: str = FIRST_COMPOSITION_LOOP,
+                              start_bar_num: int = 0,
+                              repeat: bool = False):
+        self.play_composition(composition=composition,
+                              loop_type=LoopType.composition,
+                              loop_name=loop_name,
+                              bpm=bpm,
+                              start_bar_num=start_bar_num,
+                              repeat=repeat)
 
 
 class TimedEvent(NamedTuple):
@@ -156,8 +166,9 @@ class TimedEvent(NamedTuple):
 
 
 class EventProvider:
-    def __init__(self, synth: FS, loops: Loops, bpm: float,
-                 start_loop_name: str, start_bar_num: int, callback: Callable,
+    def __init__(self, synth: MidwaySynth, loops: Loops, bpm: float,
+                 start_loop_name: str, start_bar_num: int,
+                 callback: Callable,
                  repeat: bool):
         self.synth = synth
         self.loops = loops
@@ -169,14 +180,15 @@ class EventProvider:
         self.sequence = loop.get_compiled_sequence(include_defaults=True)
         self.bar_length = self.sequence.bars[start_bar_num].length
         self.bar_duration = unit2tick(unit=self.bar_length, bpm=bpm)
-        self._sequencer = Sequencer(time_scale=bpm2time_scale(bpm=bpm),
-                                    use_system_timer=False)
+        self._sequencer = Sequencer(synth=synth,
+                                    time_scale=bpm2time_scale(bpm=bpm),
+                                    use_system_timer=False,
+                                    callback=callback)
         self.sequencer = weakref.ref(self._sequencer)
-        self.synth_seq_id = self.sequencer().register_fluidsynth(synth)
-        self.client_id = self.sequencer().register_client("callback", callback)
         self.tick = self.sequencer().get_tick()
-        self.stop_time = (loops.get_total_num_of_bars() * self.bar_duration +
-                          self.tick)
+        self.stop_time = (
+                    loops.get_total_num_of_bars() * self.bar_duration +
+                    self.tick)
         self.skip_time = self.stop_time - int(self.bar_duration / 2)
 
     def events(self) -> List[TimedEvent]:
@@ -189,16 +201,21 @@ class EventProvider:
                     for event in self.sequence.bars[self.bar_num].events()]
 
     def move_to_next_bar(self):
-        if self.bar_num + 1 not in self.sequence.bars.keys():
+        if (not self.sequence or
+                self.bar_num + 1 not in self.sequence.bars.keys()):
             self.bar_num = 0
         else:
             self.bar_num += 1
-        next_loop = self.loops.get_next_loop(self.loop_name)
-        if next_loop:
-            self.sequence = next_loop.get_compiled_sequence()
-            self.loop_name = next_loop.name
-        else:
-            self.sequence = None
+        logger.debug(f'next bar is {self.bar_num}')
+        if self.bar_num == 0:
+            next_loop = self.loops.get_next_loop(self.loop_name)
+            if next_loop:
+                logger.debug(f'Found next loop {next_loop.name}')
+                self.sequence = next_loop.get_compiled_sequence()
+                self.loop_name = next_loop.name
+            else:
+                logger.debug('No next loop')
+                self.sequence = None
         self.tick = self.tick + self.bar_duration
 
     def next_callback_time(self) -> int:
@@ -206,7 +223,7 @@ class EventProvider:
 
 
 class LoopPlayer:
-    def __init__(self, synth: FS, loops: Loops):
+    def __init__(self, synth: MidwaySynth, loops: Loops):
         self.synth = synth
         self.loops = loops
         self._event_provider: Optional[EventProvider] = None
@@ -215,12 +232,6 @@ class LoopPlayer:
 
     def is_playing(self) -> bool:
         return self.event_provider() is not None
-
-    def schedule_init_programs(self, loop_name: str):
-        pass
-
-    def schedule_init_controls(self, loop_name: str):
-        pass
 
     def play(self, bpm: float, start_loop_name: str, start_bar_num: int,
              repeat: bool):
@@ -234,13 +245,9 @@ class LoopPlayer:
                                              repeat=repeat)
         self.event_provider = weakref.ref(self._event_provider)
         self.schedule_stop_callback()
-        self.schedule_init_programs(loop_name=start_loop_name)
-        self.schedule_init_controls(loop_name=start_loop_name)
         self.schedule_next_bar()
 
     def stop(self):
-        self.event_provider().sequencer().unregister_client(
-            client_id=self.event_provider().client_id)
         if self.event_provider() and self.event_provider().sequencer():
             self.event_provider()._sequencer = None
         if self.event_provider():
@@ -276,12 +283,15 @@ class LoopPlayer:
             logger.debug(f'time {time} in callbacks {self.callbacks}')
 
     def schedule_callback(self, time):
+        if not self.event_provider().sequencer().client_id:
+            raise ValueError('Client callback not registered')
         self.event_provider().sequencer().timer(
             time=time,
-            dest=self.event_provider().client_id)
+            dest=self.event_provider().sequencer().client_id)
 
     def schedule_next_callback(self):
-        self.schedule_callback(time=self.event_provider().next_callback_time())
+        self.schedule_callback(
+            time=self.event_provider().next_callback_time())
 
     def schedule_stop_callback(self):
         logger.debug(f'stop time {self.event_provider().stop_time}')
@@ -293,6 +303,6 @@ class LoopPlayer:
                 time=timed_event.time,
                 event=timed_event.event,
                 bpm=self.event_provider().bpm,
-                synth_seq_id=self.event_provider().synth_seq_id)
+                synth_seq_id=self.event_provider().sequencer().synth_seq_id)
         self.schedule_next_callback()
         self.event_provider().move_to_next_bar()

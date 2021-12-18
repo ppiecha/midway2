@@ -145,9 +145,17 @@ class CustomLoops(Loops):
 
 
 class CompositionLoops(Loops):
+
+    # TODO sort loops by name after insertion
+
     def get_next_loop(self, loop_name: str = '') -> Optional[Loop]:
         try:
-            next_loop = self.loops[int(loop_name) + 1]
+            loop_index = int(loop_name)
+        except ValueError as e:
+            raise ValueError(f'Cannot get next composition loop. '
+                             f'Wrong previous loop name {loop_name} {str(e)}')
+        try:
+            next_loop = self.loops[loop_index + 1]
             return next_loop
         except IndexError:
             return None
@@ -160,10 +168,22 @@ class CompositionLoops(Loops):
             return next_loop.get_compiled_sequence()
 
     def get_first_loop_name(self) -> Optional[str]:
-        return self.loops[0].name if len(self.loops) > 0 else None
+        if self.loops and len(self.loops) > 0:
+            return self.loops[0].name
+        else:
+            raise ValueError(f'No loops in composition')
 
     def get_total_num_of_bars(self) -> Optional[int]:
         bars_total = 0
         for loop in self.loops:
             bars_total += loop.get_compiled_sequence().num_of_bars
         return bars_total
+
+    @classmethod
+    def from_list(cls, loop_lst: List[Loop]):
+        loops = []
+        for index, loop in enumerate(loop_lst):
+            loop_copy = loop.copy(deep=True)
+            loop_copy.name = str(index)
+            loops.append(loop_copy)
+        return cls(loops=loops)

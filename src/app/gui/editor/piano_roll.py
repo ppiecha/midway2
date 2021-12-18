@@ -14,7 +14,7 @@ from src.app.gui.editor.keyboard import KeyboardView
 from src.app.gui.editor.ruler import RulerView, HeaderView
 from src.app.gui.widgets import Box
 from src.app.utils.logger import get_console_logger
-from src.app.backend.fs import FS
+from src.app.backend.midway_synth import MidwaySynth
 from src.app.model.event import Bpm
 from src.app.model.loop import LoopType
 from src.app.model.composition import Composition
@@ -31,7 +31,7 @@ logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
 class PianoRoll(QWidget):
     def __init__(self, mf: MainFrame, parent, track_version: TrackVersion,
-                 synth: FS, composition: Composition,
+                 synth: MidwaySynth, composition: Composition,
                  track: Track):
         super().__init__(parent=parent)
         self.mf = mf

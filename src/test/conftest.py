@@ -82,6 +82,14 @@ def sequence(bar0, bar1, note0, note1, program0, control0) -> Sequence:
 
 
 @pytest.fixture()
+def bar_c_major(bar0) -> Bar:
+    cmp = Composer(note=Note(name='C'))
+    bar0_events = cmp.scale(cls=Major)
+    bar0.add_events(events=bar0_events)
+    return bar0
+
+
+@pytest.fixture()
 def track_c_major(bar0, bar1) -> Track:
     sequence = Sequence.from_bars([bar0, bar1])
     cmp = Composer(note=Note(name='C'))

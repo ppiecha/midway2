@@ -81,6 +81,9 @@ DARK_PALETTE = QPalette()
 DEFAULT = 'Default'
 SINGLE_TRACK = 'Single'
 
+# Composition loop
+FIRST_COMPOSITION_LOOP = '0'
+
 DARK_PALETTE.setColor(QPalette.Window, QColor(53, 53, 53))
 DARK_PALETTE.setColor(QPalette.WindowText, Qt.white)
 DARK_PALETTE.setColor(QPalette.Base, QColor(25, 25, 25))

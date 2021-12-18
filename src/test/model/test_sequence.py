@@ -81,7 +81,7 @@ def test_events(bar0, bar1, note0, note1, note2, note3, program0, control0):
 
 def test_total_length(bar0, bar1):
     sequence = Sequence.from_bars([bar0, bar1])
-    assert sequence.get_total_length() == 2
+    assert sequence.num_of_bars == 2
 
 
 def test_num_of_bars(bar0, bar1, note0, note1, note2, note3, program0,
@@ -119,7 +119,7 @@ def test_remove_events_by_type(bar0, bar1, note0, note1, note2, note3, program0,
     sequence.add_events(bar_num=0, events=[note0, program0])
     sequence.add_events(bar_num=1, events=[note1, control0])
     sequence.remove_events_by_type(event_type=EventType.controls)
-    assert list(sequence.events()) == [note0, program0, note1]
+    assert list(sequence.events()) == [program0, note0, note1]
     sequence.remove_events_by_type(event_type=EventType.program)
     assert list(sequence.events()) == [note0, note1]
     sequence.remove_events_by_type(event_type=EventType.note)

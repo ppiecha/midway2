@@ -17,6 +17,15 @@ class Composition(BaseModel):
     tracks: List[Track] = []
     loops: Optional[Dict[LoopType, Optional[Loops]]] = {}
 
+    def insert_composition_loop(self, loop: Loop, loop_no: int):
+        pass
+
+    def delete_composition_loop(self, loop_no: int):
+        pass
+
+    def clear_composition_loops(self):
+        self.loops[LoopType.composition] = Loops(loops=[])
+
     def get_custom_loop_by_name(self, loop_name: str,
                                 raise_not_found: bool = True) \
             -> Optional[Loop]:
@@ -28,6 +37,9 @@ class Composition(BaseModel):
         default = [loop for loop in loops.loops if loop.name == loop_name]
         if len(default) == 1:
             return default[0]
+        elif len(default) > 1:
+            raise ValueError(f'Found more than one custom loop with name '
+                             f'{loop_name} in composition {self.name}')
         else:
             if raise_not_found:
                 raise ValueError(
