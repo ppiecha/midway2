@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from src.app.model.sequence import Sequence
 from src.app.model.track import Track, TrackVersion
+from src.app.utils.constants import FIRST_COMPOSITION_LOOP
 
 
 class LoopType(str, Enum):
@@ -158,7 +159,7 @@ class CompositionLoops(Loops):
             next_loop = self.loops[loop_index + 1]
             return next_loop
         except IndexError:
-            return None
+            return self.loops[int(FIRST_COMPOSITION_LOOP)]
 
     def get_next_sequence(self, loop_name: str = '') -> Optional[Sequence]:
         next_loop = self.get_next_loop(loop_name=loop_name)

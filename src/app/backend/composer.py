@@ -23,7 +23,6 @@ class Composer:
             note.change_octave(index // 7)
         if descending:
             scale = scale[::-1]
-        print([(note.name, note.octave) for note in scale])
         beats = [start_beat + ind * step for ind, _ in enumerate(scale)]
         return [Event.from_note(note=note, channel=channel, beat=beat,
                                 unit=unit, velocity=velocity)

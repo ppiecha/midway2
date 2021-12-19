@@ -24,18 +24,17 @@ def test_play_custom_loop(track_c_major, capsys):
                                           tracks=[track_c_major])
     ms = MidwaySynth()
     ms.play_loop(loops=composition.loops[LoopType.custom], loop_name=DEFAULT,
-                 bpm=120, repeat=True)
+                 bpm=120, repeat=False)
     while ms.is_playing():
         sleep(0.1)
 
 
-def test_play_composition_loop(track_c_major, capsys):
+def test_play_loop_composition(track_c_major, capsys):
     composition = Composition.from_tracks(name='test_scale',
                                           tracks=[track_c_major])
     composition_loops = CompositionLoops.from_list(
         loop_lst=[composition.default_loop,
                   composition.default_loop])
-    print(composition_loops)
     assert composition_loops.get_first_loop_name() == '0'
     assert composition_loops.get_next_loop(
         loop_name=FIRST_COMPOSITION_LOOP).name == '1'
@@ -47,7 +46,6 @@ def test_play_composition_loop(track_c_major, capsys):
                  repeat=False)
     while ms.is_playing():
         sleep(0.1)
-    assert 1 == 0
 
 
 def test_play_compiled_loop(track_c_major, capsys):
