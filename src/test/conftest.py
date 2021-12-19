@@ -93,8 +93,8 @@ def bar_c_major(bar0) -> Bar:
 def track_c_major(bar0, bar1) -> Track:
     sequence = Sequence.from_bars([bar0, bar1])
     cmp = Composer(note=Note(name='C'))
-    bar0_events = cmp.scale(cls=Major)
-    bar1_events = cmp.scale(cls=Major, descending=True)
+    bar0_events = cmp.scale(cls=Major, octaves=2)[:8]
+    bar1_events = cmp.scale(cls=Major, octaves=2, descending=True)[:8]
     sequence.add_events(bar_num=0, events=bar0_events)
     sequence.add_events(bar_num=1, events=bar1_events)
     return Track(name='c major',

@@ -101,7 +101,7 @@ class Sequence(BaseModel):
                 raise ValueError(
                     f"Sequence has different number of bars {this.num_of_bars} -> {other.num_of_bars}")
             else:
-                for bar_num in this.keys():
+                for bar_num in this.bars.keys():
                     this.bars[bar_num] += other.bars[bar_num]
         elif isinstance(other, Bar):
             if other.bar_num is None:

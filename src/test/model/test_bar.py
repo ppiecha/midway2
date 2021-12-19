@@ -177,7 +177,15 @@ def test_play_bar_changing_programs(bar_c_major, capsys):
                                          bank=0,
                                          patch=index))
         bar.add_events([prog_event, event])
-    print(bar)
-    MidwaySynth.play_bar(bar=bar, bpm=120)
-    assert 1 == 0
+    MidwaySynth.play_bar(bar=bar, bpm=90)
+    bar = Bar(bar_num=0)
+    for index, event in enumerate(bar_c_major):
+        prog_event = Event(type=EventType.program,
+                           channel=0,
+                           beat=event.beat,
+                           preset=Preset(sf_name=DEFAULT_SF2,
+                                         bank=0,
+                                         patch=index+64))
+        bar.add_events([prog_event, event])
+    MidwaySynth.play_bar(bar=bar, bpm=90)
 

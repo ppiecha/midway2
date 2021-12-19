@@ -15,10 +15,10 @@ from src.app.model.composition import Composition
 from src.app.model.event import Event, Preset
 from src.app.model.loop import Loops, LoopType
 from src.app.utils.constants import SF2_PATH, DEFAULT_VELOCITY, DRIVER, \
-    FIRST_COMPOSITION_LOOP, DEFAULT_SF2
+    FIRST_COMPOSITION_LOOP, DEFAULT_SF2, TICKS_PER_BEAT, DEFAULT
 from src.app.utils.logger import get_console_logger
 from src.app.utils.units import unit2tick, bpm2time_scale, pos2tick, \
-    tick2second
+    tick2second, bpm2tempo
 
 logger = get_console_logger(name=__name__, log_level=DEBUG)
 
@@ -116,8 +116,11 @@ class MidwaySynth(Synth):
                               time_scale=bpm2time_scale(bpm=bpm),
                               use_system_timer=False)
         sequencer.play_bar(synth=fs, bar=bar, bpm=bpm)
-        # unit2tick(unit=note.unit, bpm=bpm)
-        # tick2second
+        end_tick = unit2tick(unit=bar.length, bpm=bpm)
+        sec = tick2second(tick=end_tick,
+                          ticks_per_beat=TICKS_PER_BEAT,
+                          tempo=bpm2tempo(bpm=bpm))
+        sleep(sec)
 
     def play_loop(self, loops: Loops, loop_name: str, bpm: float,
                   start_bar_num: int = 0, repeat: bool = False):
@@ -159,6 +162,19 @@ class MidwaySynth(Synth):
                               start_bar_num=start_bar_num,
                               repeat=repeat)
 
+    def play_custom_loop(self,
+                         composition: Composition,
+                         bpm: float,
+                         loop_name: str = DEFAULT,
+                         start_bar_num: int = 0,
+                         repeat: bool = False):
+        self.play_composition(composition=composition,
+                              loop_type=LoopType.custom,
+                              loop_name=loop_name,
+                              bpm=bpm,
+                              start_bar_num=start_bar_num,
+                              repeat=repeat)
+
 
 class TimedEvent(NamedTuple):
     time: int
@@ -187,8 +203,8 @@ class EventProvider:
         self.sequencer = weakref.ref(self._sequencer)
         self.tick = self.sequencer().get_tick()
         self.stop_time = (
-                    loops.get_total_num_of_bars() * self.bar_duration +
-                    self.tick)
+                loops.get_total_num_of_bars() * self.bar_duration +
+                self.tick)
         self.skip_time = self.stop_time - int(self.bar_duration / 2)
 
     def events(self) -> List[TimedEvent]:
