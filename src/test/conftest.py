@@ -4,8 +4,8 @@ from src.app.backend.composer import Composer
 from src.app.mingus.containers.note import Note
 from src.app.mingus.core.scales import Major
 from src.app.model.bar import Bar
-from src.app.model.event import Event, EventType, Preset, Control
-from src.app.model.control import Volume
+from src.app.model.event import Event, EventType, Preset
+from src.app.model.control import Volume, Control, Chorus, Reverb, Expression
 from src.app.model.sequence import Sequence
 from src.app.model.track import Track, TrackVersion
 
@@ -70,7 +70,15 @@ def control0() -> Event:
     return Event(type=EventType.controls,
                  channel=0,
                  beat=0,
-                 controls=[Control(name_code=Volume(), value=100)])
+                 controls=[Control(class_=Volume(), value=100)])
+
+
+@pytest.fixture
+def control1() -> Event:
+    return Event(type=EventType.controls,
+                 channel=0,
+                 beat=0.25,
+                 controls=[Control(class_=Expression(), value=100)])
 
 
 @pytest.fixture()

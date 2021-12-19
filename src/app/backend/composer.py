@@ -28,3 +28,7 @@ class Composer:
                                 unit=unit, velocity=velocity)
                 for beat, note in zip(beats, scale)]
 
+    def chord(self, cls: Callable, start_beat: Beat = 0, step: float = STEP,
+              unit: Unit = eighth, velocity: MidiValue = DEFAULT_VELOCITY,
+              channel=0) -> List[Event]:
+        events = cls()

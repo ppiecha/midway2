@@ -5,7 +5,7 @@ from typing import Optional, List, Union
 from pydantic import BaseModel, conint, confloat, PositiveInt
 
 from src.app.mingus.containers.note import Note
-from src.app.model.control import ControlNameCode, MidiValue
+from src.app.model.control import MidiValue, Control
 from src.app.utils.constants import RULER_HEIGHT, KEY_W_HEIGHT
 
 Int = Union[int, type(None)]
@@ -20,11 +20,6 @@ class Preset(BaseModel):
     sf_name: str
     bank: MidiValue
     patch: MidiValue
-
-
-class Control(BaseModel):
-    name_code: ControlNameCode
-    value: MidiValue
 
 
 class EventType(str, Enum):

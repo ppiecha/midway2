@@ -251,6 +251,7 @@ class LoopPlayer:
 
     def play(self, bpm: float, start_loop_name: str, start_bar_num: int,
              repeat: bool):
+        self.synth.system_reset()
         self.callbacks = set()
         self._event_provider = EventProvider(synth=self.synth,
                                              loops=self.loops,

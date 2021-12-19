@@ -1787,12 +1787,13 @@ class Sequencer:
                                     preset=event.preset,
                                     dest=synth_seq_id)
             case EventType.controls:
-                pass
-                # self.control_change(time=time,
-                #                     channel=event.channel,
-                #                     control=event.control,
-                #                     value=event.value,
-                #                     dest=synth_seq_id)
+                for control in event.controls:
+                    print('controls', event.beat, control.class_, control.value)
+                    self.control_change(time=time,
+                                        channel=event.channel,
+                                        control=control.class_.code,
+                                        value=control.value,
+                                        dest=synth_seq_id)
             case EventType.pitch_bend:
                 pass
             case _:

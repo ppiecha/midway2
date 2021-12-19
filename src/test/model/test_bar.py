@@ -149,6 +149,13 @@ def test_controls(control0, capsys):
                                }
 
 
+def test_play_change_control(bar_c_major, control1, capsys):
+    bar_c_major.add_event(event=control1)
+    print(bar_c_major)
+    MidwaySynth.play_bar(bar=bar_c_major, bpm=90)
+    assert 1 == 0
+
+
 def test_pitch_bend():
     pass
 
