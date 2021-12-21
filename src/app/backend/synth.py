@@ -45,7 +45,7 @@ from src.app.model.bar import Bar
 from src.app.model.event import Event, Preset, EventType
 
 # Constants
-from src.app.utils.units import unit2tick, pos2tick
+from src.app.utils.units import unit2tick, beat2tick
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
@@ -1803,7 +1803,7 @@ class Sequencer:
         synth_seq_id = self.register_fluidsynth(synth)
         current_tick: int = self.get_tick() + start_tick
         for event in bar.events():
-            time = current_tick + pos2tick(pos=event.beat, bpm=bpm)
+            time = current_tick + beat2tick(beat=event.beat, bpm=bpm)
             self.send_event(time=time,
                             event=event,
                             bpm=bpm,

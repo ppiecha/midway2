@@ -4,7 +4,7 @@ from typing import List, Optional
 from pydantic import BaseModel, PositiveInt
 
 from src.app.model.bar import Bar
-from src.app.utils.constants import CLR_NODE_START
+from src.app.utils.constants import CLR_NODE_START, DRUM_CHANNEL
 from src.app.utils.constants import DEFAULT_SF2, DEFAULT_BANK, DEFAULT_PATCH
 
 from src.app.model.event import Channel, Event, EventType, Preset
@@ -46,6 +46,10 @@ class TrackVersion(BaseModel):
                 raise ValueError(f'No bars in sequence {self.sequence}')
         else:
             return self.sequence
+
+
+class DrumTrackVersion(TrackVersion):
+    channel: Channel = DRUM_CHANNEL
 
 
 class Track(BaseModel):
@@ -112,3 +116,7 @@ class Track(BaseModel):
                     f'Cannot get default track version. No version defined')
             else:
                 return None
+
+
+class DrumTrack(Track):
+    versions: List[DrumTrackVersion]

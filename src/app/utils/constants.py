@@ -8,7 +8,7 @@ from src.app.mingus.core import value
 
 APP_NAME = "Midway"
 
-DRUMS_CHANNEL = 9
+DRUM_CHANNEL = 9
 
 SF2_DIR = 'sf2'
 UTILS_PATH = os.path.dirname(os.path.abspath(__file__))

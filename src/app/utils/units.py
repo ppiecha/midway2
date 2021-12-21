@@ -1,8 +1,18 @@
-from src.app.model.event import Beat
+from math import floor, ceil
+from typing import NamedTuple
+
+from pydantic import NonNegativeInt
+
+from src.app.model.event import Beat, Unit, Bpm
 from src.app.utils.constants import TICKS_PER_BEAT
 
 
-def tick2second(tick, ticks_per_beat, tempo):
+class BarBeat(NamedTuple):
+    bar: NonNegativeInt
+    beat: Beat
+
+
+def tick2second(tick, ticks_per_beat, tempo) -> float:
     """Convert absolute time in ticks to seconds.
 
     Returns absolute time in seconds for a chosen MIDI file time
@@ -13,7 +23,7 @@ def tick2second(tick, ticks_per_beat, tempo):
     return tick * scale
 
 
-def second2tick(second, ticks_per_beat, tempo):
+def second2tick(second, ticks_per_beat, tempo) -> int:
     """Convert absolute time in seconds to ticks.
 
     Returns absolute time in ticks for a chosen MIDI file time
@@ -21,11 +31,10 @@ def second2tick(second, ticks_per_beat, tempo):
     note) and tempo (microseconds per beat).
     """
     scale = tempo * 1e-6 / ticks_per_beat
-    # print("second2tick", second, scale, tempo, second / scale)
     return second / scale
 
 
-def bpm2tempo(bpm):
+def bpm2tempo(bpm) -> int:
     """Convert beats per minute to MIDI file tempo.
 
     Returns microseconds per beat as an integer::
@@ -38,7 +47,7 @@ def bpm2tempo(bpm):
     return int(round((60 * 1000000) / bpm))
 
 
-def tempo2bpm(tempo):
+def tempo2bpm(tempo) -> Bpm:
     """Convert MIDI file tempo to BPM.
 
     Returns BPM as an integer or float::
@@ -51,28 +60,45 @@ def tempo2bpm(tempo):
     return (60 * 1000000) / tempo
 
 
-def unit2tick(unit: float, bpm: float):
+def unit2tick(unit: Unit, bpm: Bpm) -> int:
     if unit == 0:
         return 0
     qn_length = 60.0 / bpm
-    s = qn_length * (4.0 / unit)
-    tick = round(second2tick(second=s, ticks_per_beat=TICKS_PER_BEAT,
+    second = qn_length * (4.0 / unit)
+    tick = round(second2tick(second=second, ticks_per_beat=TICKS_PER_BEAT,
                              tempo=bpm2tempo(bpm=bpm)))
-    # print("unit2tick", unit, s, tick)
     return tick
 
 
-def pos2tick(pos: Beat, bpm: float):
+def beat2tick(beat: Beat, bpm: Bpm) -> int:
     qn_length = 60.0 / bpm
-    s = 4 * qn_length * pos
-    tick = round(second2tick(second=s, ticks_per_beat=TICKS_PER_BEAT,
+    second = 4 * qn_length * beat
+    tick = round(second2tick(second=second, ticks_per_beat=TICKS_PER_BEAT,
                              tempo=bpm2tempo(bpm=bpm)))
-    # print("pos2tick", pos, s, tick)
     return tick
 
 
 def bpm2time_scale(bpm: float):
     time_scale = round(second2tick(second=1, ticks_per_beat=TICKS_PER_BEAT,
                                    tempo=bpm2tempo(bpm=bpm)))
-    # print("bpm2time_scale", time_scale)
     return time_scale
+
+
+def bar_beat2pos(bar_beat: BarBeat, cell_unit: Unit, cell_width: int) -> float:
+    return (bar_beat.bar + bar_beat.beat) * cell_unit * cell_width
+
+
+def pos2bar_beat(pos: float, cell_unit: Unit, cell_width: int) -> BarBeat:
+    bar_width = cell_unit + cell_width
+    bar = floor(pos / bar_width)
+    pos = pos - (bar * bar_width)
+    beat_width = ceil(pos / cell_width) * cell_width
+    beat = beat_width / bar_width
+    return BarBeat(bar=bar, beat=beat)
+
+
+def round2cell(pos: float, cell_width: int) -> float:
+    return floor(pos / cell_width) * cell_width
+
+
+def

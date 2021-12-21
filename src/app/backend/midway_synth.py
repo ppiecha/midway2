@@ -17,7 +17,7 @@ from src.app.model.loop import Loops, LoopType
 from src.app.utils.constants import SF2_PATH, DEFAULT_VELOCITY, DRIVER, \
     FIRST_COMPOSITION_LOOP, DEFAULT_SF2, TICKS_PER_BEAT, DEFAULT
 from src.app.utils.logger import get_console_logger
-from src.app.utils.units import unit2tick, bpm2time_scale, pos2tick, \
+from src.app.utils.units import unit2tick, bpm2time_scale, beat2tick, \
     tick2second, bpm2tempo
 
 logger = get_console_logger(name=__name__, log_level=DEBUG)
@@ -211,8 +211,8 @@ class EventProvider:
         if self.sequence is None:
             return []
         else:
-            return [TimedEvent(time=self.tick + pos2tick(pos=event.beat,
-                                                         bpm=self.bpm),
+            return [TimedEvent(time=self.tick + beat2tick(beat=event.beat,
+                                                          bpm=self.bpm),
                                event=event)
                     for event in self.sequence.bars[self.bar_num].events()]
 
