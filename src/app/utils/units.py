@@ -102,7 +102,7 @@ def bar_beat2pos(bar_beat: BarBeat, cell_unit: Unit, cell_width: int) -> float:
 
 
 def pos2bar_beat(pos: float, cell_unit: Unit, cell_width: int) -> BarBeat:
-    bar_width = cell_unit + cell_width
+    bar_width = cell_unit * cell_width
     bar = floor(pos / bar_width)
     pos = pos - (bar * bar_width)
     beat_width = ceil(pos / cell_width) * cell_width

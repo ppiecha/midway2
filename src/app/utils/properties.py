@@ -40,7 +40,7 @@ class GuiAttr:
     DEFAULT_NUM_OF_BARS = 16
     # Grid
     RULER_HEIGHT = 20
-    GRID_DIVIDER = value.eighth
+    GRID_DIV_UNIT = value.eighth
     # Custom sequences
     DEFAULT = "Default"
     SINGLE_TRACK = "Single"

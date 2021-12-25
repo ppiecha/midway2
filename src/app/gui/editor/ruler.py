@@ -18,6 +18,7 @@ from src.app.utils.logger import get_console_logger
 from src.app.mingus.core import value
 from src.app.model.event import Channel, EventType, Beat, KEY_MAPPING
 from src.app.model.sequence import Sequence
+from src.app.utils.units import pos2bar_beat, round2cell
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
@@ -207,8 +208,15 @@ class RulerScene(GenericGridScene):
             # logger.debug("meta scene not acceted")
             if e.button() == Qt.LeftButton:
                 if e.modifiers() == Qt.NoModifier:
-                    bar, beat = self.x2bar_beat(
-                        x=floor(e.scenePos().x() / KeyAttr.W_HEIGHT) * KeyAttr._W_HEIGHT
+                    # bar, beat = self.x2bar_beat(
+                    #     x=floor(e.scenePos().x() / KeyAttr.W_HEIGHT) * KeyAttr._W_HEIGHT
+                    # )
+                    bar, beat = pos2bar_beat(
+                        pos=round2cell(
+                            pos=e.scenePos().x(), cell_width=KeyAttr.W_HEIGHT
+                        ),
+                        cell_unit=GuiAttr.GRID_DIV_UNIT,
+                        cell_width=KeyAttr.W_HEIGHT
                     )
                     self.add_note(
                         bar=bar, beat=beat, key=e.scenePos().y(), unit=value.eighth
@@ -238,8 +246,8 @@ class Ruler(QGraphicsItem):
     def get_rect(self):
         meta_notes_height = 3 * KeyAttr.W_HEIGHT
         width = (
-            self.num_of_bars * GuiAttr.GRID_DIVIDER * KeyAttr.W_HEIGHT
-            + self.scroll_diff
+                self.num_of_bars * GuiAttr.GRID_DIV_UNIT * KeyAttr.W_HEIGHT
+                + self.scroll_diff
         )
         height = (
             (GuiAttr.RULER_HEIGHT + meta_notes_height)
@@ -324,7 +332,7 @@ class Ruler(QGraphicsItem):
                 self.rect.width() - self.scroll_diff,
                 KEY_MAPPING[EventType.pitch_bend],
             )
-        for tick in range(self.num_of_bars * GuiAttr.GRID_DIVIDER):
+        for tick in range(self.num_of_bars * GuiAttr.GRID_DIV_UNIT):
             x = (tick + 1) * KeyAttr.W_HEIGHT
             if self.show_meta_notes:
                 pen.setWidth(1)
@@ -332,8 +340,8 @@ class Ruler(QGraphicsItem):
                 painter.drawLine(x, GuiAttr.RULER_HEIGHT, x, self.rect.height())
             pen.setColor(Color.RULER)
             if (
-                tick % GuiAttr.GRID_DIVIDER == (GuiAttr.GRID_DIVIDER - 1)
-                and tick != self.num_of_bars * GuiAttr.GRID_DIVIDER - 1
+                tick % GuiAttr.GRID_DIV_UNIT == (GuiAttr.GRID_DIV_UNIT - 1)
+                and tick != self.num_of_bars * GuiAttr.GRID_DIV_UNIT - 1
             ):
                 pen.setWidth(2)
                 painter.setPen(pen)
@@ -347,11 +355,11 @@ class Ruler(QGraphicsItem):
                 painter.setPen(pen)
                 painter.drawLine(x, GuiAttr.RULER_HEIGHT - 5, x, GuiAttr.RULER_HEIGHT)
             if (
-                tick % GuiAttr.GRID_DIVIDER == 0
-                and tick != self.num_of_bars * GuiAttr.GRID_DIVIDER - 1
+                tick % GuiAttr.GRID_DIV_UNIT == 0
+                and tick != self.num_of_bars * GuiAttr.GRID_DIV_UNIT - 1
             ):
                 x -= KeyAttr.W_HEIGHT
-                bar = int((tick + 1) / GuiAttr.GRID_DIVIDER)
+                bar = int((tick + 1) / GuiAttr.GRID_DIV_UNIT)
                 painter.setPen(Color.RULER_TEXT)
                 painter.drawText(x + 5, GuiAttr.RULER_HEIGHT - 6, str(bar + 1))
 

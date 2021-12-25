@@ -21,6 +21,7 @@ from src.app.utils.logger import get_console_logger
 from src.app.mingus.core import value
 from src.app.model.event import Event, Channel, EventType, Beat, Int
 from src.app.model.sequence import Sequence
+from src.app.utils.units import pos2bar_beat, round2cell
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
@@ -57,7 +58,7 @@ class GenericGridScene(QGraphicsScene):
         channel: Channel,
         numerator: int = 4,
         denominator: int = 4,
-        grid_divider=GuiAttr.GRID_DIVIDER,
+        grid_divider=GuiAttr.GRID_DIV_UNIT,
         num_of_bars: Int = None,
     ):
         super().__init__()
@@ -154,16 +155,6 @@ class GenericGridScene(QGraphicsScene):
             self.grid_divider / self.denominator
         )
 
-    def x2bar_beat(self, x: int) -> Tuple[NonNegativeInt, Beat]:
-        bar = floor(x / self.width_bar)
-        x = x - (bar * self.width_bar)
-        beat_width = ceil(x / KeyAttr.W_HEIGHT) * KeyAttr.W_HEIGHT
-        beat = beat_width / self.width_bar
-        return bar, beat
-
-    def bar_beat2x(self, bar: int, beat: float):
-        return (bar + beat) * self.grid_divider * KeyAttr.W_HEIGHT
-
     @property
     def is_copying(self) -> bool:
         return self._is_copying
@@ -256,7 +247,7 @@ class GridScene(GenericGridScene):
         channel: Channel,
         numerator: int = 4,
         denominator: int = 4,
-        grid_divider=GuiAttr.GRID_DIVIDER,
+        grid_divider=GuiAttr.GRID_DIV_UNIT,
         num_of_bars: Int = None,
     ):
         super().__init__(
@@ -411,8 +402,15 @@ class GridScene(GenericGridScene):
                 elif e.modifiers() == Qt.NoModifier:
                     self.is_selecting = False
                     key: Key = self.keyboard.get_key_by_pos(e.scenePos().y())
-                    bar, beat = self.x2bar_beat(
-                        x=floor(e.scenePos().x() / KeyAttr.W_HEIGHT) * KeyAttr.W_HEIGHT
+                    # bar, beat = self.x2bar_beat(
+                    #     x=floor(e.scenePos().x() / KeyAttr.W_HEIGHT) * KeyAttr.W_HEIGHT
+                    # )
+                    bar, beat = pos2bar_beat(
+                        pos=round2cell(
+                            pos=e.scenePos().x(), cell_width=KeyAttr.W_HEIGHT
+                        ),
+                        cell_unit=GuiAttr.GRID_DIV_UNIT,
+                        cell_width=KeyAttr.W_HEIGHT
                     )
                     self.add_note(bar_num=bar, beat=beat, key=key, unit=8)
                     key.play_note_in_thread(secs=0.3)

@@ -13,7 +13,8 @@ from PySide6.QtWidgets import (
 )
 from pydantic import NonNegativeInt
 
-from src.app.utils.properties import Color, KeyAttr
+from src.app.utils.properties import Color, KeyAttr, GuiAttr
+from src.app.utils.units import bar_beat2pos, BarBeat
 
 if TYPE_CHECKING:
     from src.app.gui.editor.grid import GenericGridScene
@@ -398,7 +399,9 @@ class NoteNode(Node):
 
     def set_pos(self):
         self.setPos(
-            self.grid_scene.bar_beat2x(bar=self.bar_num, beat=self.event.beat),
+            bar_beat2pos(bar_beat=BarBeat(bar=self.bar_num, beat=self.event.beat),
+                         cell_unit=GuiAttr.GRID_DIV_UNIT,
+                         cell_width=KeyAttr.W_HEIGHT),
             self.key.y_pos_grid if isinstance(self.key, BlackKey) else self.key.y_pos,
         )
 
@@ -474,7 +477,9 @@ class MetaNode(Node):
 
     def set_pos(self):
         self.setPos(
-            self.grid_scene.bar_beat2x(bar=self.bar_num, beat=self.event.beat),
+            bar_beat2pos(bar_beat=BarBeat(bar=self.bar_num, beat=self.event.beat),
+                         cell_unit=GuiAttr.GRID_DIV_UNIT,
+                         cell_width=KeyAttr.W_HEIGHT),
             self._key,
         )
 
