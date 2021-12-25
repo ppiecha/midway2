@@ -1,8 +1,8 @@
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import QToolBar
 
-from src.app.utils.constants import NEW_PROJECT
 from src.app.gui.menu import MenuBar
+from src.app.utils.properties import GuiAttr
 
 
 class ToolBar(QToolBar):
@@ -11,4 +11,4 @@ class ToolBar(QToolBar):
         self.setToolButtonStyle(Qt.ToolButtonIconOnly)
         self.setIconSize(QSize(16, 16))
         self.menu: MenuBar = parent.menuBar()
-        self.addAction(self.menu.actions[NEW_PROJECT])
+        self.addAction(self.menu.actions[GuiAttr.NEW_PROJECT])

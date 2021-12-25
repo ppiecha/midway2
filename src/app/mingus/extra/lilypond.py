@@ -29,9 +29,9 @@ import subprocess
 
 from six.moves import range
 
-import mingus.core.value as value
-from mingus.containers import Note
-from mingus.core.keys import Key
+import src.app.mingus.core.value as value
+from src.app.mingus.containers import Note
+from src.app.mingus.core.keys import Key
 
 
 def from_Note(note, process_octaves=True, standalone=True):

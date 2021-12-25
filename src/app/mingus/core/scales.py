@@ -55,8 +55,7 @@ from __future__ import absolute_import
 from src.app.mingus.core import intervals
 from src.app.mingus.core.notes import augment, diminish, reduce_accidentals
 from src.app.mingus.core.keys import keys, get_notes
-from src.app.mingus.core.mt_exceptions import NoteFormatError, FormatError, \
-    RangeError
+from src.app.mingus.core.mt_exceptions import NoteFormatError, FormatError, RangeError
 from six.moves import range
 
 

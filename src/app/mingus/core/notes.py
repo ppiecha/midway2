@@ -26,8 +26,7 @@ enables simple calculations.
 """
 from __future__ import absolute_import
 
-from src.app.mingus.core.mt_exceptions import NoteFormatError, RangeError, \
-    FormatError
+from src.app.mingus.core.mt_exceptions import NoteFormatError, RangeError, FormatError
 from six.moves import range
 
 _note_dict = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}

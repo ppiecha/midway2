@@ -4,6 +4,7 @@ from typing import List, Union, Optional, Iterator
 
 from pydantic import BaseModel, PositiveInt, NonNegativeInt, NonNegativeFloat
 
+from src.app.utils.exceptions import BeatOutsideOfBar
 from src.app.utils.logger import get_console_logger
 from src.app.model.event import Event, EventType
 import logging
@@ -25,7 +26,7 @@ class Bar(BaseModel):
 
     def add_event(self, event: Event) -> None:
         if event.beat >= self.length:
-            raise ValueError(f"Item outside of bar range {event.beat}")
+            raise BeatOutsideOfBar(f"Item outside of bar range {event.beat}")
         self.bar.append(event)
         self.bar.sort(key=lambda e: (e.beat, e.type))
 
@@ -45,8 +46,7 @@ class Bar(BaseModel):
             self.remove_event(event=event)
 
     def remove_events_by_type(self, event_type: EventType) -> None:
-        self.remove_events(
-            [event for event in self.bar if event.type == event_type])
+        self.remove_events([event for event in self.bar if event.type == event_type])
 
     def add(self, this, other):
         if isinstance(other, Event):

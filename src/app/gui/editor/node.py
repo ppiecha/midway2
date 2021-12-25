@@ -5,12 +5,15 @@ from typing import Optional, TYPE_CHECKING
 
 from PySide6.QtCore import QRectF, QPoint, Qt
 from PySide6.QtGui import QColor, QPainter, QPainterPath, QLinearGradient
-from PySide6.QtWidgets import QGraphicsItem, QGraphicsSceneMouseEvent, \
-    QGraphicsSceneHoverEvent, QGraphicsItemGroup
+from PySide6.QtWidgets import (
+    QGraphicsItem,
+    QGraphicsSceneMouseEvent,
+    QGraphicsSceneHoverEvent,
+    QGraphicsItemGroup,
+)
 from pydantic import NonNegativeInt
 
-from src.app.utils.constants import KEY_W_HEIGHT, CLR_NODE_START, CLR_NODE_END, \
-    CLR_NODE_SELECTED
+from src.app.utils.properties import Color, KeyAttr
 
 if TYPE_CHECKING:
     from src.app.gui.editor.grid import GenericGridScene
@@ -25,10 +28,16 @@ logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 class Node(QGraphicsItem):
     copied_grp: QGraphicsItemGroup = None
 
-    def __init__(self, channel: Channel, grid_scene: GenericGridScene,
-                 bar_num: NonNegativeInt, beat: Beat,
-                 color: QColor = CLR_NODE_START, parent=None,
-                 is_temporary: bool = False):
+    def __init__(
+        self,
+        channel: Channel,
+        grid_scene: GenericGridScene,
+        bar_num: NonNegativeInt,
+        beat: Beat,
+        color: QColor = Color.NODE_START,
+        parent=None,
+        is_temporary: bool = False,
+    ):
         super().__init__(parent=parent)
         self.sibling: Optional[Node] = None
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
@@ -47,11 +56,12 @@ class Node(QGraphicsItem):
         self.is_resizing: bool = False
         self.is_temporary: bool = is_temporary
         self.is_copying: bool = False
-        self.rect = QRectF(0, 0, KEY_W_HEIGHT, KEY_W_HEIGHT)
+        self.rect = QRectF(0, 0, KeyAttr.W_HEIGHT, KeyAttr.W_HEIGHT)
 
     def copy_node(self):
-        self.sibling = self.grid_scene.node_from_event(event=self.event,
-                                                       bar_num=self.bar_num)
+        self.sibling = self.grid_scene.node_from_event(
+            event=self.event, bar_num=self.bar_num
+        )
         return self.sibling
 
     def set_moving(self, moving: bool = True) -> None:
@@ -88,12 +98,13 @@ class Node(QGraphicsItem):
         if value:
             self.is_moving = False
             self.is_resizing = False
-            self.copied_grp = self.grid_scene.createItemGroup([node.copy_node()
-                                                               for node in
-                                                               self.grid_scene.selected_notes])
+            self.copied_grp = self.grid_scene.createItemGroup(
+                [node.copy_node() for node in self.grid_scene.selected_notes]
+            )
             for copied in self.copied_grp.childItems():
-                self.grid_scene._add_note(meta_node=copied,
-                                          including_sequence=not copied.is_temporary)
+                self.grid_scene._add_note(
+                    meta_node=copied, including_sequence=not copied.is_temporary
+                )
                 logger.debug(f"copied notes {self.copied_grp.childItems()}")
         self._is_copying = value
 
@@ -104,8 +115,7 @@ class Node(QGraphicsItem):
     @event.setter
     def event(self, new_event: Event):
         del self.event
-        self.grid_scene.sequence.add_event(bar_num=self.bar_num,
-                                           event=new_event)
+        self.grid_scene.sequence.add_event(bar_num=self.bar_num, event=new_event)
         self._event = new_event
 
     @event.deleter
@@ -138,12 +148,15 @@ class Node(QGraphicsItem):
                     if beat >= self.grid_scene.sequence[self.bar_num].length:
                         if self.bar_num < self.grid_scene.num_of_bars - 1:
                             self.grid_scene.sequence.remove_event(
-                                bar_num=self.bar_num, event=self.event)
-                            self.event.beat = beat - self.grid_scene.sequence[
-                                self.bar_num].length
+                                bar_num=self.bar_num, event=self.event
+                            )
+                            self.event.beat = (
+                                beat - self.grid_scene.sequence[self.bar_num].length
+                            )
                             self.bar_num += 1
                             self.grid_scene.sequence.add_event(
-                                bar_num=self.bar_num, event=self.event)
+                                bar_num=self.bar_num, event=self.event
+                            )
                     else:
                         self.event.beat = beat
                 elif beat == 0:
@@ -151,15 +164,19 @@ class Node(QGraphicsItem):
                 elif beat < 0:
                     if self.bar_num > 0:
                         self.grid_scene.sequence.remove_event(
-                            bar_num=self.bar_num, event=self.event)
-                        self.event.beat = self.grid_scene.sequence[
-                                              self.bar_num].length + beat
+                            bar_num=self.bar_num, event=self.event
+                        )
+                        self.event.beat = (
+                            self.grid_scene.sequence[self.bar_num].length + beat
+                        )
                         self.bar_num -= 1
                         self.grid_scene.sequence.add_event(
-                            bar_num=self.bar_num, event=self.event)
+                            bar_num=self.bar_num, event=self.event
+                        )
             else:
                 raise ValueError(
-                    f"Bar not in sequence. Sequence {self.grid_scene.sequence}")
+                    f"Bar not in sequence. Sequence {self.grid_scene.sequence}"
+                )
             self.set_pos()
 
     def set_pos(self):
@@ -167,31 +184,40 @@ class Node(QGraphicsItem):
 
     def __del__(self):
         if not self.is_temporary:
-            self.grid_scene.sequence.remove_event(bar_num=self.bar_num,
-                                                  event=self.event)
+            self.grid_scene.sequence.remove_event(
+                bar_num=self.bar_num, event=self.event
+            )
             logger.debug(
-                f"__DEL__ instance of {type(self)} {self} {type(self.event)} {self.event.__repr__()}")
+                f"__DEL__ instance of {type(self)} {self} {type(self.event)} {self.event.__repr__()}"
+            )
         else:
             logger.debug(
-                f"temporary (not deleting) instance of {type(self)} {self} {type(self.event)} {self.event.__repr__()}")
+                f"temporary (not deleting) instance of {type(self)} {self} {type(self.event)} {self.event.__repr__()}"
+            )
 
     def paint(self, painter: QPainter, option, widget=None):
         painter.setPen(QColor(32, 32, 32))
-        gradient = QLinearGradient(self.boundingRect().topLeft(),
-                                   self.boundingRect().bottomLeft())
+        gradient = QLinearGradient(
+            self.boundingRect().topLeft(), self.boundingRect().bottomLeft()
+        )
         color: QColor = self.color
         if self.isSelected():
-            color = CLR_NODE_SELECTED
+            color = Color.NODE_SELECTED
         elif self.is_temporary:
             color = Qt.red  # CLR_NODE_TEMPORARY
         gradient.setColorAt(0.0, color)
-        gradient.setColorAt(1.0, CLR_NODE_END)
+        gradient.setColorAt(1.0, Color.NODE_END)
         path = QPainterPath()
-        path.addRoundedRect(QRectF(self.rect.left() + 1,
-                                   self.rect.top() + 1,
-                                   self.rect.width() - 1,
-                                   self.rect.height() - 1),
-                            5, 5)
+        path.addRoundedRect(
+            QRectF(
+                self.rect.left() + 1,
+                self.rect.top() + 1,
+                self.rect.width() - 1,
+                self.rect.height() - 1,
+            ),
+            5,
+            5,
+        )
         painter.fillPath(path, gradient)
 
     def boundingRect(self):
@@ -219,17 +245,36 @@ class Node(QGraphicsItem):
 
 
 class NoteNode(Node):
-    def __init__(self, channel: Channel, grid_scene: GenericGridScene,
-                 bar_num: NonNegativeInt, beat: Beat, key: Key,
-                 unit: float = value.eighth, color: QColor = CLR_NODE_START,
-                 parent=None, is_temporary: bool = False):
-        super().__init__(channel=channel, grid_scene=grid_scene,
-                         bar_num=bar_num, beat=beat, color=color,
-                         parent=parent, is_temporary=is_temporary)
+    def __init__(
+        self,
+        channel: Channel,
+        grid_scene: GenericGridScene,
+        bar_num: NonNegativeInt,
+        beat: Beat,
+        key: Key,
+        unit: float = value.eighth,
+        color: QColor = Color.NODE_START,
+        parent=None,
+        is_temporary: bool = False,
+    ):
+        super().__init__(
+            channel=channel,
+            grid_scene=grid_scene,
+            bar_num=bar_num,
+            beat=beat,
+            color=color,
+            parent=parent,
+            is_temporary=is_temporary,
+        )
         self._key: Key = key
         # logger.debug(f'NoteNode key {self._key}')
-        self._event = Event(type=EventType.note, pitch=int(key.note),
-                            channel=key.note.channel, beat=beat, unit=unit)
+        self._event = Event(
+            type=EventType.note,
+            pitch=int(key.note),
+            channel=key.note.channel,
+            beat=beat,
+            unit=unit,
+        )
         self.set_pos()
 
     def corner_rect(self):
@@ -264,16 +309,17 @@ class NoteNode(Node):
 
     def adjust_size(self, cur_pos: QPoint):
         if self.is_resizing:
-            if cur_pos.x() > 0 and \
-                    abs(cur_pos.x() - ceil(
-                        self.rect.right())) >= self.grid_scene.min_unit_width:
+            if (
+                cur_pos.x() > 0
+                and abs(cur_pos.x() - ceil(self.rect.right()))
+                >= self.grid_scene.min_unit_width
+            ):
                 if cur_pos.x() - self.rect.right() > 0:
                     self.resize(diff=self.grid_scene.min_unit_width)
                 else:
                     self.resize(diff=-self.grid_scene.min_unit_width)
 
     def adjust_pos(self, e: QGraphicsSceneMouseEvent):
-
         def calc_unit(node: Node) -> float:
             unit_ = 0
             center = node.scenePos().x() + node.rect.width() / 2
@@ -304,27 +350,34 @@ class NoteNode(Node):
             if unit_ != 0 and not node is self:
                 logger.debug(
                     f"center {center} diff {diff} dist {dist} copy {node.is_copying} move {node.is_moving}"
-                    f" temp {node.is_temporary} calc unit {unit_}")
+                    f" temp {node.is_temporary} calc unit {unit_}"
+                )
                 logger.debug(
-                    f"note {node} cursor vs copied {e.scenePos().x()} {node.scenePos().x()}")
+                    f"note {node} cursor vs copied {e.scenePos().x()} {node.scenePos().x()}"
+                )
             return unit_
 
         if self.is_moving or self.is_copying:
-            key_: Key = self.grid_scene.keyboard.get_key_by_pos(
-                e.scenePos().y())
-            nodes = self.grid_scene.selected_notes if self.is_moving else self.copied_grp.childItems()
+            key_: Key = self.grid_scene.keyboard.get_key_by_pos(e.scenePos().y())
+            nodes = (
+                self.grid_scene.selected_notes
+                if self.is_moving
+                else self.copied_grp.childItems()
+            )
             logger.debug(f"notes to move {nodes}")
             self_key = int(self.key.note)
             moving_diff = calc_unit(node=self)
             for node in nodes:
                 if node.is_temporary:
-                    node.move(unit_diff=calc_unit(node=node),
-                              key_diff=int(
-                                  key_.note) - self_key if key_ else 0)
+                    node.move(
+                        unit_diff=calc_unit(node=node),
+                        key_diff=int(key_.note) - self_key if key_ else 0,
+                    )
                 else:
-                    node.move(unit_diff=moving_diff,
-                              key_diff=int(
-                                  key_.note) - self_key if key_ else 0)
+                    node.move(
+                        unit_diff=moving_diff,
+                        key_diff=int(key_.note) - self_key if key_ else 0,
+                    )
 
     def mouseMoveEvent(self, e: QGraphicsSceneMouseEvent):
         self.adjust_size(cur_pos=e.pos())
@@ -346,8 +399,8 @@ class NoteNode(Node):
     def set_pos(self):
         self.setPos(
             self.grid_scene.bar_beat2x(bar=self.bar_num, beat=self.event.beat),
-            self.key.y_pos_grid if isinstance(self.key,
-                                              BlackKey) else self.key.y_pos)
+            self.key.y_pos_grid if isinstance(self.key, BlackKey) else self.key.y_pos,
+        )
 
     def move(self, unit_diff: float, key_diff: int):
         # notes = []
@@ -359,7 +412,8 @@ class NoteNode(Node):
                     self.beat = self.beat + unit_diff
                 if key_diff != 0:
                     self.key = self.grid_scene.keyboard.get_key_by_pitch(
-                        int(self.key.note) + key_diff)
+                        int(self.key.note) + key_diff
+                    )
             else:
                 logger.debug(f"not moved")
             # if self.is_moving:
@@ -377,8 +431,12 @@ class NoteNode(Node):
     @key.setter
     def key(self, key_: Key):
         self._key = key_
-        self.event = Event(pitch=int(key_.note), channel=key_.note.channel,
-                           beat=self.beat, unit=self.unit)
+        self.event = Event(
+            pitch=int(key_.note),
+            channel=key_.note.channel,
+            beat=self.beat,
+            unit=self.unit,
+        )
         self.set_pos()
 
     @property
@@ -392,12 +450,24 @@ class NoteNode(Node):
 
 
 class MetaNode(Node):
-    def __init__(self, event_type: EventType, channel: Channel, grid_scene,
-                 bar_num: NonNegativeInt, beat: Beat,
-                 color: QColor = CLR_NODE_START, parent=None):
-        super().__init__(channel=channel, grid_scene=grid_scene,
-                         bar_num=bar_num, beat=beat, color=color,
-                         parent=parent)
+    def __init__(
+        self,
+        event_type: EventType,
+        channel: Channel,
+        grid_scene,
+        bar_num: NonNegativeInt,
+        beat: Beat,
+        color: QColor = Color.NODE_START,
+        parent=None,
+    ):
+        super().__init__(
+            channel=channel,
+            grid_scene=grid_scene,
+            bar_num=bar_num,
+            beat=beat,
+            color=color,
+            parent=parent,
+        )
         self._event = Event(type=event_type, channel=channel, beat=beat)
         self._key: int = KEY_MAPPING[event_type]
         self.set_pos()
@@ -405,7 +475,8 @@ class MetaNode(Node):
     def set_pos(self):
         self.setPos(
             self.grid_scene.bar_beat2x(bar=self.bar_num, beat=self.event.beat),
-            self._key)
+            self._key,
+        )
 
     def move(self, unit: float):
         if unit != 0:
@@ -422,14 +493,14 @@ class MetaNode(Node):
         if self.is_moving:
             unit = 0
             x_center = self.rect.right() / 2
-            if abs(e.pos().x() - ceil(
-                    x_center)) >= self.grid_scene.min_unit_width:
+            if abs(e.pos().x() - ceil(x_center)) >= self.grid_scene.min_unit_width:
                 if e.pos().x() - ceil(x_center) > 0:
                     unit = 1 / self.grid_scene.min_unit
                 else:
                     unit = -1 / self.grid_scene.min_unit
                 logger.debug(
-                    f"bar/beat {self.bar_num} {self.beat} {self.grid_scene.sequence} {unit}")
+                    f"bar/beat {self.bar_num} {self.beat} {self.grid_scene.sequence} {unit}"
+                )
             self.move(unit=unit)
 
     def mouseReleaseEvent(self, e: QGraphicsSceneMouseEvent):

@@ -27,7 +27,7 @@ import math
 import wave
 import struct
 import numpy
-from mingus.containers.note import Note
+from src.app.mingus.containers.note import Note
 from numpy.fft import fft as _fft
 import operator
 from six.moves import range

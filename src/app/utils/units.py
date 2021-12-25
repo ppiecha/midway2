@@ -4,7 +4,7 @@ from typing import NamedTuple
 from pydantic import NonNegativeInt
 
 from src.app.model.event import Beat, Unit, Bpm
-from src.app.utils.constants import TICKS_PER_BEAT
+from src.app.utils.properties import MidiAttr
 
 
 class BarBeat(NamedTuple):
@@ -65,22 +65,35 @@ def unit2tick(unit: Unit, bpm: Bpm) -> int:
         return 0
     qn_length = 60.0 / bpm
     second = qn_length * (4.0 / unit)
-    tick = round(second2tick(second=second, ticks_per_beat=TICKS_PER_BEAT,
-                             tempo=bpm2tempo(bpm=bpm)))
+    tick = round(
+        second2tick(
+            second=second,
+            ticks_per_beat=MidiAttr.TICKS_PER_BEAT,
+            tempo=bpm2tempo(bpm=bpm),
+        )
+    )
     return tick
 
 
 def beat2tick(beat: Beat, bpm: Bpm) -> int:
     qn_length = 60.0 / bpm
     second = 4 * qn_length * beat
-    tick = round(second2tick(second=second, ticks_per_beat=TICKS_PER_BEAT,
-                             tempo=bpm2tempo(bpm=bpm)))
+    tick = round(
+        second2tick(
+            second=second,
+            ticks_per_beat=MidiAttr.TICKS_PER_BEAT,
+            tempo=bpm2tempo(bpm=bpm),
+        )
+    )
     return tick
 
 
 def bpm2time_scale(bpm: float):
-    time_scale = round(second2tick(second=1, ticks_per_beat=TICKS_PER_BEAT,
-                                   tempo=bpm2tempo(bpm=bpm)))
+    time_scale = round(
+        second2tick(
+            second=1, ticks_per_beat=MidiAttr.TICKS_PER_BEAT, tempo=bpm2tempo(bpm=bpm)
+        )
+    )
     return time_scale
 
 
@@ -99,6 +112,3 @@ def pos2bar_beat(pos: float, cell_unit: Unit, cell_width: int) -> BarBeat:
 
 def round2cell(pos: float, cell_width: int) -> float:
     return floor(pos / cell_width) * cell_width
-
-
-def

@@ -1,22 +1,20 @@
 from __future__ import annotations
 
-from enum import auto, Flag, Enum
+from enum import auto, Enum
 from pathlib import Path
 from typing import Any, NamedTuple
 
 from PySide6.QtCore import QSize
 
-from src.app.utils.constants import EVENT_WIN_SIZE, EVENT_WIN_POS, \
-    CLR_NODE_START, DEFAULT, GENERAL, PRESET
 from src.app.gui.editor.keyboard import KeyboardView
 from typing import TYPE_CHECKING
 
 from src.app.model.sequence import Sequence
+from src.app.utils.properties import Color, GuiAttr, IniAttr, MidiAttr
 
 if TYPE_CHECKING:
-    from src.app.gui.editor.node import Node, ProgramNode
-from src.app.utils.constants import DEFAULT_VERSION_NAME, MAX_CHANNEL, \
-    DEFAULT_SF2, DEFAULT_BANK, DEFAULT_PATCH
+    from src.app.gui.editor.node import Node
+
 from src.app.model.composition import Composition
 from src.app.model.event import Preset, Channel
 from src.app.model.project import Project
@@ -27,10 +25,22 @@ if TYPE_CHECKING:
 from typing import Optional
 
 from PySide6.QtGui import Qt, QIcon, QColor, QPalette
-from PySide6.QtWidgets import QWidget, QDialog, QBoxLayout, QTabWidget, \
-    QSplitter, QListWidget, \
-    QListWidgetItem, QToolButton, QLineEdit, QCheckBox, QColorDialog, \
-    QFormLayout, QDialogButtonBox, QAbstractButton
+from PySide6.QtWidgets import (
+    QWidget,
+    QDialog,
+    QBoxLayout,
+    QTabWidget,
+    QSplitter,
+    QListWidget,
+    QListWidgetItem,
+    QToolButton,
+    QLineEdit,
+    QCheckBox,
+    QColorDialog,
+    QFormLayout,
+    QDialogButtonBox,
+    QAbstractButton,
+)
 
 from src.app.gui.widgets import Box, ChannelBox, DeriveTrackVersionBox, BarBox
 import src.app.resources
@@ -63,11 +73,12 @@ class GenericConfigDlg(QDialog):
         self.general = GeneralTab(gen_conf_dlg=self)
         self.preset = PresetTab(gen_conf_dlg=self)
         self.tab_map = {
-            GENERAL: self.tab_box.addTab(self.general, GENERAL),
-            PRESET: self.tab_box.addTab(self.preset, PRESET)
+            GuiAttr.GENERAL: self.tab_box.addTab(self.general, GuiAttr.GENERAL),
+            GuiAttr.PRESET: self.tab_box.addTab(self.preset, GuiAttr.PRESET),
         }
         self.buttons = QDialogButtonBox(
-            QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal)
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal
+        )
         self.main_box = Box(direction=QBoxLayout.TopToBottom)
         self.main_box.setContentsMargins(10, 10, 10, 10)
         self.main_box.setSpacing(10)
@@ -88,41 +99,45 @@ class GenericConfigDlg(QDialog):
     def apply_changes(self):
         if self.config.mode == GenericConfigMode.new_track:
             self.mf.project.composition_by_name(
-                composition_name=self.config.composition.name,
-                raise_not_found=True).new_track(track=self.general.track,
-                                                enable=True)
+                composition_name=self.config.composition.name, raise_not_found=True
+            ).new_track(track=self.general.track, enable=True)
             self.config.mf.menu.post_new_track(
-                composition=self.config.composition, track=self.general.track)
+                composition=self.config.composition, track=self.general.track
+            )
 
     def load_config(self, config: GenericConfig):
-        self.config = GenericConfig(mf=config.mf, mode=config.mode,
-                                    project=config.project,
-                                    composition=config.composition,
-                                    track=config.track,
-                                    track_version=config.track_version,
-                                    node=config.node)
+        self.config = GenericConfig(
+            mf=config.mf,
+            mode=config.mode,
+            project=config.project,
+            composition=config.composition,
+            track=config.track,
+            track_version=config.track_version,
+            node=config.node,
+        )
         self.setWindowTitle(
-            f'Node settings' if self.config.node else f'General settings')
+            f"Node settings" if self.config.node else f"General settings"
+        )
         self.load_window_geometry(config=self.config)
         if self.config.node:
-            self.tab_box.setTabEnabled(self.tab_map[GENERAL], False)
+            self.tab_box.setTabEnabled(self.tab_map[GuiAttr.GENERAL], False)
         else:
-            self.tab_box.setTabEnabled(self.tab_map[GENERAL], True)
+            self.tab_box.setTabEnabled(self.tab_map[GuiAttr.GENERAL], True)
             self.general.load_config(config=self.config)
         self.preset.load_config(config=self.config)
 
     def load_window_geometry(self, config: GenericConfig):
         if not self.isVisible():
-            size = config.mf.config.value(EVENT_WIN_SIZE, QSize(500, 400))
-            pos = config.mf.config.value(EVENT_WIN_POS, None)
+            size = config.mf.config.value(IniAttr.EVENT_WIN_SIZE, QSize(500, 400))
+            pos = config.mf.config.value(IniAttr.EVENT_WIN_POS, None)
             if pos:
                 self.setGeometry(pos.x(), pos.y(), size.width(), size.height())
             else:
                 self.resize(size)
 
     def closeEvent(self, e):
-        self.config.mf.config.setValue(EVENT_WIN_SIZE, self.size())
-        self.config.mf.config.setValue(EVENT_WIN_POS, self.pos())
+        self.config.mf.config.setValue(IniAttr.EVENT_WIN_SIZE, self.size())
+        self.config.mf.config.setValue(IniAttr.EVENT_WIN_POS, self.pos())
 
 
 class PresetTab(QWidget):
@@ -134,8 +149,7 @@ class PresetTab(QWidget):
         self.bank_list = QListWidget()
         self.bank_list.resize(50, self.bank_list.height())
         self.prog_list = QListWidget()
-        self.keyboard = KeyboardView(synth=None, channel=self.channel,
-                                     callback=None)
+        self.keyboard = KeyboardView(synth=None, channel=self.channel, callback=None)
         self.splitter_right = QSplitter(Qt.Horizontal)
         self.splitter_right.addWidget(self.bank_list)
         self.splitter_right.addWidget(self.prog_list)
@@ -154,18 +168,15 @@ class PresetTab(QWidget):
 
     @property
     def channel(self) -> Channel:
-        return MAX_CHANNEL - 1
+        return MidiAttr.MAX_CHANNEL - 1
 
     def load_config(self, config: GenericConfig):
         self.config = config
-        self.keyboard.set_synth_and_channel(synth=config.mf.synth,
-                                            channel=self.channel)
+        self.keyboard.set_synth_and_channel(synth=config.mf.synth, channel=self.channel)
         self.populate_fonts()
 
     def set_initial_preset(self) -> None:
-        if self.config.node and type(self.config.node) == ProgramNode:
-            pass
-        elif self.config.track_version:
+        if self.config.track_version:
             init_sf_name = self.config.track_version.sf_name
             init_bank = self.config.track_version.bank
             init_patch = self.config.track_version.patch
@@ -174,9 +185,9 @@ class PresetTab(QWidget):
             init_bank = self.config.track.default_bank
             init_patch = self.config.track.default_patch
         else:
-            init_sf_name = DEFAULT_SF2
-            init_bank = DEFAULT_BANK
-            init_patch = DEFAULT_PATCH
+            init_sf_name = MidiAttr.DEFAULT_SF2
+            init_bank = MidiAttr.DEFAULT_BANK
+            init_patch = MidiAttr.DEFAULT_PATCH
         self.select_data(lst=self.sf_list, data=init_sf_name)
         items = self.bank_list.findItems(str(init_bank), Qt.MatchExactly)
         if items:
@@ -187,10 +198,10 @@ class PresetTab(QWidget):
             self.bank_list.setCurrentRow(bank)
             self.bank_list.scrollToItem(self.bank_list.currentItem())
             if self.prog_list.count():
-                self.select_data(self.prog_list,
-                                 Preset(sf_name=init_sf_name,
-                                        bank=bank,
-                                        patch=init_patch))
+                self.select_data(
+                    self.prog_list,
+                    Preset(sf_name=init_sf_name, bank=bank, patch=init_patch),
+                )
 
     @staticmethod
     def select_data(lst: QListWidget, data: Any) -> None:
@@ -200,11 +211,15 @@ class PresetTab(QWidget):
                 lst.setCurrentItem(item)
                 lst.scrollToItem(item)
                 return
-        raise ValueError(f'Cannot find data {data} in list {lst}')
+        raise ValueError(f"Cannot find data {data} in list {lst}")
 
     def on_sf_change(self):
         if self.sf_list.currentItem():
-            last_bank = self.bank_list.currentItem().text() if self.bank_list.currentItem() else None
+            last_bank = (
+                self.bank_list.currentItem().text()
+                if self.bank_list.currentItem()
+                else None
+            )
             sf_name = self.sf_list.currentItem().data(Qt.UserRole)
             sfid = self.config.mf.synth.sfid(sf_name)
             # print('on_sf_change', sf_name, sfid)
@@ -212,8 +227,7 @@ class PresetTab(QWidget):
             if self.bank_list.count() > 0:
                 self.bank_list.setCurrentRow(0)
                 if last_bank is not None:
-                    if items := self.bank_list.findItems(last_bank,
-                                                         Qt.MatchExactly):
+                    if items := self.bank_list.findItems(last_bank, Qt.MatchExactly):
                         item, *rest = items
                         self.bank_list.setCurrentItem(item)
             self.bank_list.scrollToItem(self.bank_list.currentItem())
@@ -224,8 +238,7 @@ class PresetTab(QWidget):
             sfid = self.config.mf.synth.sfid(sf_name)
             bank = self.bank_list.currentItem().text()
             # print('on_bank_change', sf_name, sfid, bank)
-            self.populate_programs(sfid=sfid,
-                                   bank=int(bank))
+            self.populate_programs(sfid=sfid, bank=int(bank))
             if self.prog_list.count() > 0:
                 self.prog_list.setCurrentRow(0)
                 self.prog_list.scrollToItem(self.prog_list.currentItem())
@@ -234,12 +247,10 @@ class PresetTab(QWidget):
         preset = item.data(Qt.UserRole)
         # self.config.track_version
 
-    def on_prog_selected(self, current: QListWidgetItem,
-                         previous: QListWidgetItem):
+    def on_prog_selected(self, current: QListWidgetItem, previous: QListWidgetItem):
         if current:
             preset = current.data(Qt.UserRole)
-            self.config.mf.synth.preset_change(channel=self.channel,
-                                               preset=preset)
+            self.config.mf.synth.preset_change(channel=self.channel, preset=preset)
 
     @property
     def current_preset(self) -> Preset:
@@ -275,13 +286,13 @@ class PresetTab(QWidget):
         if bank == int(self.bank_list.currentItem().text()):
             self.prog_list.clear()
             # print('populate_programs', sfid, bank)
-            for patch, preset in self.config.mf.synth.preset_map[sfid][
-                bank].items():
+            for patch, preset in self.config.mf.synth.preset_map[sfid][bank].items():
                 item = QListWidgetItem(f"{str(patch)}: {preset}")
                 item.setIcon(QIcon(":/icons/preset.png"))
                 sf_name = self.config.mf.synth.sf_name(sfid=sfid)
-                item.setData(Qt.UserRole,
-                             Preset(sf_name=sf_name, bank=bank, patch=patch))
+                item.setData(
+                    Qt.UserRole, Preset(sf_name=sf_name, bank=bank, patch=patch)
+                )
                 self.prog_list.addItem(item)
         self.prog_list.currentItemChanged.connect(self.on_prog_selected)
 
@@ -301,72 +312,84 @@ class GeneralTab(QWidget):
         self.version_name_box = QLineEdit()
         self.version_channel_box = ChannelBox()
         self.version_bars_box = BarBox()
-        self.enable_inheritance_box = QCheckBox('Enable inheritance')
+        self.enable_inheritance_box = QCheckBox("Enable inheritance")
         self.inheritance_box = Box(QBoxLayout.LeftToRight)
         self.inheritance_box.addWidget(self.enable_inheritance_box)
-        self.derive_form_box = DeriveTrackVersionBox(parent=self,
-                                                     mf=gen_conf_dlg.mf)
+        self.derive_form_box = DeriveTrackVersionBox(parent=self, mf=gen_conf_dlg.mf)
         self.derive_form_box.frame.hide()
-        self.enable_in_loops_box = QCheckBox('Enable track in loops')
+        self.enable_in_loops_box = QCheckBox("Enable track in loops")
 
         # Form
-        self.form.addRow('Project name', self.project_name_box)
-        self.form.addRow('Composition name', self.composition_name_box)
-        self.form.addRow('Track name', self.track_name_box)
-        self.form.addRow('Track color', self.track_color_box)
-        self.form.addRow('Version name', self.version_name_box)
-        self.form.addRow('Version channel', self.version_channel_box)
-        self.form.addRow('Number of bars', self.version_bars_box)
-        self.form.addRow('Derive from track', self.inheritance_box)
-        self.form.addRow('', self.derive_form_box)
-        self.form.addRow('', self.enable_in_loops_box)
+        self.form.addRow("Project name", self.project_name_box)
+        self.form.addRow("Composition name", self.composition_name_box)
+        self.form.addRow("Track name", self.track_name_box)
+        self.form.addRow("Track color", self.track_color_box)
+        self.form.addRow("Version name", self.version_name_box)
+        self.form.addRow("Version channel", self.version_channel_box)
+        self.form.addRow("Number of bars", self.version_bars_box)
+        self.form.addRow("Derive from track", self.inheritance_box)
+        self.form.addRow("", self.derive_form_box)
+        self.form.addRow("", self.enable_in_loops_box)
 
         self.setLayout(self.form)
 
         self.track_color_box.clicked.connect(self.get_track_color)
-        self.enable_inheritance_box.stateChanged.connect(
-            self.on_enable_inheritance)
+        self.enable_inheritance_box.stateChanged.connect(self.on_enable_inheritance)
 
     @property
     def preset(self) -> Preset:
         return self.gen_conf_dlg.preset.current_preset
 
     def on_enable_inheritance(self):
-        self.derive_form_box.frame.setVisible(
-            self.enable_inheritance_box.isChecked())
+        self.derive_form_box.frame.setVisible(self.enable_inheritance_box.isChecked())
 
     def load_config(self, config: GenericConfig):
         self.config = config
         self.project_name_box.setText(config.mf.project.name)
         self.composition_name_box.setText(config.composition.name)
-        self.track_name_box.setText(config.track.name if config.track else '')
-        self.show_track_color(color=QColor.fromRgba(
-            config.track.default_color) if config.track else CLR_NODE_START)
+        self.track_name_box.setText(config.track.name if config.track else "")
+        self.show_track_color(
+            color=QColor.fromRgba(config.track.default_color)
+            if config.track
+            else Color.NODE_START
+        )
         self.version_name_box.setText(
-            config.track_version.version_name if config.track_version else DEFAULT_VERSION_NAME)
+            config.track_version.version_name
+            if config.track_version
+            else GuiAttr.DEFAULT_VERSION_NAME
+        )
         self.version_channel_box.setCurrentIndex(
-            config.track_version.channel if config.track_version
-            else self.default_channel)
+            config.track_version.channel
+            if config.track_version
+            else self.default_channel
+        )
         self.version_channel_box.setEnabled(False)
         self.version_bars_box.setValue(
-            config.track_version.num_of_bars if config.track_version
-            else self.default_num_of_bars)
+            config.track_version.num_of_bars
+            if config.track_version
+            else self.default_num_of_bars
+        )
         self.enable_inheritance_box.setChecked(False)
         self.enable_inheritance_box.setEnabled(
-            config.mode == (GenericConfigMode.new_track or
-                            GenericConfigMode.new_track_version))
+            config.mode
+            == (GenericConfigMode.new_track or GenericConfigMode.new_track_version)
+        )
         self.derive_form_box.load_composition(
-            selected_value=self.config.composition.name)
+            selected_value=self.config.composition.name
+        )
         self.enable_in_loops_box.setChecked(
-            True if not config.track and config.mode == GenericConfigMode.new_track
-            else False)
-        self.enable_in_loops_box.setEnabled(
-            config.mode == GenericConfigMode.new_track)
+            True
+            if not config.track and config.mode == GenericConfigMode.new_track
+            else False
+        )
+        self.enable_in_loops_box.setEnabled(config.mode == GenericConfigMode.new_track)
 
     def get_track_color(self):
-        color = QColorDialog.getColor(self.track_color_box.default
-                                      if hasattr(self.track_color_box,
-                                                 DEFAULT) else CLR_NODE_START)
+        color = QColorDialog.getColor(
+            self.track_color_box.default
+            if hasattr(self.track_color_box, GuiAttr.DEFAULT)
+            else Color.NODE_START
+        )
         if color:
             self.track_color_box.default = color.rgba()
             self.show_track_color(color=color)
@@ -378,31 +401,34 @@ class GeneralTab(QWidget):
         self.track_color_box.setPalette(pal)
 
     def validate_track_name(self) -> bool:
-        valid = self.track_name != ''
+        valid = self.track_name != ""
         if not valid:
-            self.config.mf.show_message_box('Track name is empty')
+            self.config.mf.show_message_box("Track name is empty")
             return valid
         if self.config.composition:
             valid = not self.config.composition.track_name_exists(
-                track_name=self.track_name,
-                current_track=self.config.track)
+                track_name=self.track_name, current_track=self.config.track
+            )
         if not valid:
             self.config.mf.show_message_box(
-                f'Track name {self.track_name} exists in composition')
+                f"Track name {self.track_name} exists in composition"
+            )
         return valid
 
     def validate_version_name(self) -> bool:
-        valid = self.version_name != ''
+        valid = self.version_name != ""
         if not valid:
-            self.config.mf.show_message_box('Version name is empty')
+            self.config.mf.show_message_box("Version name is empty")
             return valid
         if self.config.track:
             valid = not self.config.track.track_version_exists(
                 version_name=self.version_name,
-                current_version=self.config.track_version)
+                current_version=self.config.track_version,
+            )
         if not valid:
             self.config.mf.show_message_box(
-                f'Track name {self.track_name} exists in composition')
+                f"Track name {self.track_name} exists in composition"
+            )
         return valid
 
     def is_valid(self) -> bool:
@@ -446,23 +472,25 @@ class GeneralTab(QWidget):
 
     @property
     def version(self) -> TrackVersion:
-        return TrackVersion(channel=self.channel,
-                            version_name=self.version_name,
-                            num_of_bars=self.bars,
-                            sf_name=self.config.mf.synth.sf_name(
-                                self.preset.sfid),
-                            bank=self.preset.bank,
-                            patch=self.preset.patch,
-                            sequence=self.derive_form_box.get_derived_version()
-                            if self.enable_inheritance_box.isChecked() else Sequence(
-                                num_of_bars=self.bars))
+        return TrackVersion(
+            channel=self.channel,
+            version_name=self.version_name,
+            num_of_bars=self.bars,
+            sf_name=self.config.mf.synth.sf_name(self.preset.sfid),
+            bank=self.preset.bank,
+            patch=self.preset.patch,
+            sequence=self.derive_form_box.get_derived_version()
+            if self.enable_inheritance_box.isChecked()
+            else Sequence(num_of_bars=self.bars),
+        )
 
     @property
     def track(self) -> Track:
-        return Track(name=self.track_name,
-                     versions=[self.version],
-                     default_color=self.track_color,
-                     default_sf=self.config.mf.synth.sf_name(
-                         sfid=self.preset.sfid),
-                     default_bank=self.preset.bank,
-                     default_patch=self.preset.patch)
+        return Track(
+            name=self.track_name,
+            versions=[self.version],
+            default_color=self.track_color,
+            default_sf=self.config.mf.synth.sf_name(sfid=self.preset.sfid),
+            default_bank=self.preset.bank,
+            default_patch=self.preset.patch,
+        )

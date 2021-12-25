@@ -809,7 +809,7 @@ def from_shorthand(shorthand_string, slash=None):
     Recognised abbreviations: the letters "m" and "M" in the following
     abbreviations can always be substituted by respectively "min", "mi" or
     "-" and "maj" or "ma".
-    
+
     Example:
     >>> from_shorthand('Amin7') == from_shorthand('Am7')
     True
@@ -1190,7 +1190,11 @@ def determine_extended_chord6(
         return False
 
     def inversion_exhauster(
-        chord, shorthand, tries, result, polychords,
+        chord,
+        shorthand,
+        tries,
+        result,
+        polychords,
     ):
         """Recursive helper function"""
 
@@ -1298,7 +1302,7 @@ def int_desc(tries):
 
 def determine_polychords(chord, shorthand=False):
     """Determine the polychords in chord.
-    
+
     This function can handle anything from polychords based on two triads to
     6 note extended chords.
     """

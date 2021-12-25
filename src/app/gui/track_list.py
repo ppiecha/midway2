@@ -4,18 +4,22 @@ It controls adding and deleting tracks in composition
 """
 
 from __future__ import annotations
-import sys
 from typing import Optional, Dict
 
 from PySide6.QtCore import QSize
-from PySide6.QtGui import QIcon, QPixmap, Qt
-from PySide6.QtWidgets import QWidget, QBoxLayout, QComboBox, QListWidget, \
-    QListWidgetItem, QApplication, \
-    QSpinBox, QLabel, QStackedWidget, QFrame, QToolBar
+from PySide6.QtGui import QPixmap, Qt
+from PySide6.QtWidgets import (
+    QWidget,
+    QBoxLayout,
+    QListWidget,
+    QListWidgetItem,
+    QLabel,
+    QStackedWidget,
+    QFrame,
+    QToolBar,
+)
 from pubsub import pub
 
-from src.app.utils.constants import DARK_PALETTE, NEW_TRACK, EDIT_TRACK, \
-    DELETE_TRACK
 from src.app.gui.dialogs.generic_config import GenericConfig, GenericConfigMode
 from src.app.gui.track_tab import TrackVersionTab
 from src.app.gui.widgets import Box
@@ -23,21 +27,29 @@ from src.app.model.composition import Composition
 from src.app.model.track import Track, TrackVersion
 from typing import TYPE_CHECKING
 
+from src.app.utils.properties import GuiAttr
+
 if TYPE_CHECKING:
     from src.app.gui.main_frame import MainFrame
 
-import resources
+import src.app.resources
 
 
 class TrackListItem(QWidget):
-    def __init__(self, mf: MainFrame, parent, track: Track,
-                 list_item: QListWidgetItem, composition: Composition):
+    def __init__(
+        self,
+        mf: MainFrame,
+        parent,
+        track: Track,
+        list_item: QListWidgetItem,
+        composition: Composition,
+    ):
         super().__init__(parent=parent)
         self.track = track
         self.list_item = list_item
-        self.version_tab = TrackVersionTab(mf=mf, list_item=self, track=track,
-                                           synth=mf.synth,
-                                           composition=composition)
+        self.version_tab = TrackVersionTab(
+            mf=mf, list_item=self, track=track, synth=mf.synth, composition=composition
+        )
         self.icon = QLabel()
         self.icon.setPixmap(QPixmap(":/icons/track_item.png"))
         self.name = QLabel(track.name)
@@ -85,8 +97,9 @@ class TrackListItem(QWidget):
 
 
 class TrackList(QListWidget):
-    def __init__(self, mf: MainFrame, parent, stack: QStackedWidget,
-                 composition: Composition):
+    def __init__(
+        self, mf: MainFrame, parent, stack: QStackedWidget, composition: Composition
+    ):
         super().__init__(parent=parent)
         self.mf = mf
         self.composition = composition
@@ -112,7 +125,8 @@ class TrackList(QListWidget):
         current_item = self.list.currentItem()
         if not current_item:
             raise ValueError(
-                f'Cannot determine current item in track list in composition {self.composition}')
+                f"Cannot determine current item in track list in composition {self.composition}"
+            )
         return self.list.itemWidget(current_item)
 
     def select_first_item(self):
@@ -121,10 +135,13 @@ class TrackList(QListWidget):
 
     def _new_track(self, track: Track):
         widget_item = QListWidgetItem(self.list)
-        self.map[track.name] = TrackListItem(mf=self.mf, parent=self,
-                                             track=track,
-                                             list_item=widget_item,
-                                             composition=self.composition)
+        self.map[track.name] = TrackListItem(
+            mf=self.mf,
+            parent=self,
+            track=track,
+            list_item=widget_item,
+            composition=self.composition,
+        )
         self.stack.addWidget(self.map[track.name].version_tab)
         widget_item.setSizeHint(self.map[track.name].sizeHint())
         self.list.addItem(widget_item)
@@ -132,34 +149,39 @@ class TrackList(QListWidget):
 
     def edit_track(self, item: QListWidgetItem):
         track_list_item: TrackListItem = self.list.itemWidget(item)
-        config = GenericConfig(mf=self.mf, mode=GenericConfigMode.edit_track,
-                               composition=self.composition,
-                               track=track_list_item.track)
+        config = GenericConfig(
+            mf=self.mf,
+            mode=GenericConfigMode.edit_track,
+            composition=self.composition,
+            track=track_list_item.track,
+        )
         self.mf.show_config_dlg(config=config)
 
     def _delete_track(self, track: Track):
         if not self.composition.track_name_exists(track_name=track.name):
             raise ValueError(
-                f'Track with name {track.name} does not exist in composition {self.composition.name}')
+                f"Track with name {track.name} does not exist in composition {self.composition.name}"
+            )
         else:
             track_list_item: TrackListItem = self.map.pop(track.name)
             self.list.removeItemWidget(track_list_item.list_item)
             self.stack.removeWidget(track_list_item)
-            for track_version_name in list(
-                    track_list_item.version_tab.map.keys()):
+            for track_version_name in list(track_list_item.version_tab.map.keys()):
                 track_list_item.version_tab._delete_track_version(
                     track_version=track_list_item.track.get_version(
-                        version_name=track_version_name))
+                        version_name=track_version_name
+                    )
+                )
             self.composition.delete_track(track=track)
             track_list_item.deleteLater()
 
     def register_listeners(self):
-        if not pub.subscribe(self.new_track, NEW_TRACK):
-            raise Exception(f"Cannot register listener {NEW_TRACK}")
-        if not pub.subscribe(self.rename_track, EDIT_TRACK):
-            raise Exception(f"Cannot register listener {EDIT_TRACK}")
-        if not pub.subscribe(self.delete_track, DELETE_TRACK):
-            raise Exception(f"Cannot register listener {DELETE_TRACK}")
+        if not pub.subscribe(self.new_track, GuiAttr.NEW_TRACK):
+            raise Exception(f"Cannot register listener {GuiAttr.NEW_TRACK}")
+        if not pub.subscribe(self.rename_track, GuiAttr.EDIT_TRACK):
+            raise Exception(f"Cannot register listener {GuiAttr.EDIT_TRACK}")
+        if not pub.subscribe(self.delete_track, GuiAttr.DELETE_TRACK):
+            raise Exception(f"Cannot register listener {GuiAttr.DELETE_TRACK}")
 
     def unregister_listener(self, topic):
         pass
@@ -169,8 +191,7 @@ class TrackList(QListWidget):
             self._new_track(track=track)
             self.mf.menu.post_refresh_loops(composition=composition)
 
-    def rename_track(self, composition: Composition, track: Track,
-                     new_name: str):
+    def rename_track(self, composition: Composition, track: Track, new_name: str):
         pass
 
     def delete_track(self, composition: Composition, track: Track):
@@ -199,14 +220,4 @@ class TrackListToolbar(QToolBar):
         super().__init__("Track list", track_list)
         self.setToolButtonStyle(Qt.ToolButtonIconOnly)
         self.setIconSize(QSize(16, 16))
-        self.addAction(mf.menu.actions[NEW_TRACK])
-
-
-if __name__ == '__main__':
-    app = QApplication([])
-    app.setStyle('Fusion')  # Style needed for palette to work
-    app.setPalette(DARK_PALETTE)
-    window = TrackList(None)
-    window.setGeometry(100, 100, 300, 300)
-    window.show()
-    sys.exit(app.exec_())
+        self.addAction(mf.menu.actions[GuiAttr.NEW_TRACK])

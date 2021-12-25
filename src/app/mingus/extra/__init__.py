@@ -18,7 +18,7 @@ from __future__ import absolute_import
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from mingus.extra import lilypond
-from mingus.extra.tunings import StringTuning
+from src.app.mingus.extra import lilypond
+from src.app.mingus.extra.tunings import StringTuning
 
 __all__ = ["lilypond", "fft", "musicxml", "tunings", "tablature", "StringTuning"]

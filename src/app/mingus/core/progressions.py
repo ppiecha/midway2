@@ -50,13 +50,13 @@ def to_chords(progression, key="C"):
 
     Any number of accidentals can be used as prefix to augment or diminish;
     for example: bIV or #I.
-    
+
     All the chord abbreviations in the chord module can be used as suffixes;
     for example: Im7, IVdim7, etc.
-    
+
     You can combine prefixes and suffixes to manage complex progressions:
     #vii7, #iidim7, iii7, etc.
-    
+
     Using 7 as suffix is ambiguous, since it is classicly used to denote the
     seventh chord when talking about progressions instead of just the
     dominant seventh chord. We have taken the classic route; I7 will get

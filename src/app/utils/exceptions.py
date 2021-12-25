@@ -1,0 +1,2 @@
+class BeatOutsideOfBar(Exception):
+    pass

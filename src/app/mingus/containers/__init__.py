@@ -23,4 +23,9 @@ from src.app.mingus.containers.bar import Bar
 from src.app.mingus.containers.track import Track
 from src.app.mingus.containers.composition import Composition
 from src.app.mingus.containers.suite import Suite
-from src.app.mingus.containers.instrument import Instrument, Piano, Guitar, MidiInstrument
+from src.app.mingus.containers.instrument import (
+    Instrument,
+    Piano,
+    Guitar,
+    MidiInstrument,
+)
