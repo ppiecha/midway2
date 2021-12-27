@@ -21,7 +21,8 @@ if TYPE_CHECKING:
 from src.app.gui.editor.key import Key, BlackKey
 from src.app.utils.logger import get_console_logger
 from src.app.mingus.core import value
-from src.app.model.event import Event, Beat, EventType, Channel, KEY_MAPPING
+from src.app.model.event import Event, EventType, KEY_MAPPING
+from src.app.model.types import Channel, Beat, NoteUnit
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
@@ -253,7 +254,7 @@ class NoteNode(Node):
         bar_num: NonNegativeInt,
         beat: Beat,
         key: Key,
-        unit: float = value.eighth,
+        unit: float = NoteUnit.EIGHTH,
         color: QColor = Color.NODE_START,
         parent=None,
         is_temporary: bool = False,
@@ -402,7 +403,8 @@ class NoteNode(Node):
             bar_beat2pos(bar_beat=BarBeat(bar=self.bar_num, beat=self.event.beat),
                          cell_unit=GuiAttr.GRID_DIV_UNIT,
                          cell_width=KeyAttr.W_HEIGHT),
-            self.key.y_pos_grid if isinstance(self.key, BlackKey) else self.key.y_pos,
+            self.key.y_pos_black_key if isinstance(self.key, BlackKey)
+            else self.key.y_pos,
         )
 
     def move(self, unit_diff: float, key_diff: int):

@@ -784,7 +784,27 @@ fluid_event_control_change = cfunc(
     ("control", c_short, 1),
     ("value", c_int, 1),
 )
-
+fluid_event_pitch_bend = cfunc(
+    "fluid_event_pitch_bend",
+    None,
+    ("evt", c_void_p, 1),
+    ("channel", c_int, 1),
+    ("pitch", c_int, 1),
+)
+fluid_event_chorus_send = cfunc(
+    "fluid_event_chorus_send",
+    None,
+    ("evt", c_void_p, 1),
+    ("channel", c_int, 1),
+    ("val", c_int, 1),
+)
+fluid_event_reverb_send = cfunc(
+    "fluid_event_reverb_send",
+    None,
+    ("evt", c_void_p, 1),
+    ("channel", c_int, 1),
+    ("val", c_int, 1),
+)
 
 # (Internal) Helper functions
 
@@ -1696,6 +1716,12 @@ class Sequencer:
         self._schedule_event(evt, time, absolute)
         delete_fluid_event(evt)
 
+    def pitch_bend(self, time, channel, value, source=-1, dest=-1, absolute=True):
+        evt = self._create_event(source, dest)
+        fluid_event_pitch_bend(evt, channel, value)
+        self._schedule_event(evt, time, absolute)
+        delete_fluid_event(evt)
+
     def timer(self, time, data=None, source=-1, dest=-1, absolute=True):
         evt = self._create_event(source, dest)
         fluid_event_timer(evt, data)
@@ -1757,7 +1783,6 @@ class Sequencer:
                 )
             case EventType.controls:
                 for control in event.controls:
-                    print("controls", event.beat, control.class_, control.value)
                     self.control_change(
                         time=time,
                         channel=event.channel,
@@ -1766,7 +1791,13 @@ class Sequencer:
                         dest=synth_seq_id,
                     )
             case EventType.pitch_bend:
-                pass
+                for bend in event.pitch_bend_chain.__root__:
+                    self.pitch_bend(
+                        time=time + bend.time,
+                        channel=event.channel,
+                        value=bend.value,
+                        dest=synth_seq_id
+                    )
             case _:
                 raise ValueError(f"Event type {event.type} not supported")
 

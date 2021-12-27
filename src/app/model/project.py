@@ -5,7 +5,7 @@ from pydantic import BaseModel, PositiveInt
 from src.app.model.composition import Composition
 from src.app.model.sequence import Sequence
 from src.app.model.track import TrackVersion, Track
-from src.app.model.event import Bpm
+from src.app.model.types import Bpm
 from src.app.utils.properties import MidiAttr
 
 

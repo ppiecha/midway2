@@ -1,19 +1,13 @@
 from __future__ import annotations
 from enum import Enum
-from typing import Optional, List, Union
+from typing import Optional, List
 
-from pydantic import BaseModel, conint, confloat, PositiveInt
+from pydantic import BaseModel
 
 from src.app.mingus.containers.note import Note
-from src.app.model.control import MidiValue, Control
+from src.app.model.control import MidiValue, Control, PitchBendChain
+from src.app.model.types import Unit, Channel, Beat, NoteUnit
 from src.app.utils.properties import KeyAttr, GuiAttr
-
-Int = Union[int, type(None)]
-Float = Union[float, type(None)]
-Bpm = PositiveInt
-Unit = confloat(ge=0)
-Channel = conint(ge=0, le=255)
-Beat = confloat(ge=0)
 
 
 class Preset(BaseModel):
@@ -34,10 +28,11 @@ class Event(BaseModel):
     channel: Channel
     beat: Beat
     pitch: Optional[MidiValue]
-    unit: Optional[Unit]
+    unit: Optional[NoteUnit]
     velocity: Optional[MidiValue]
     preset: Optional[Preset]
     controls: Optional[List[Control]]
+    pitch_bend_chain: Optional[PitchBendChain]
 
     def __int__(self) -> int:
         if not hasattr(self, "pitch"):

@@ -30,7 +30,6 @@ class Key(QGraphicsItem):
         self.color_off: Optional[QColor] = None
         self.color_pressed: Optional[QColor] = None
         self.color: Optional[QColor] = None
-        # self.y_pos = None
         self.callback = callback
         self.setAcceptHoverEvents(True)
         # self.setAcceptTouchEvents(True)
@@ -163,7 +162,7 @@ class BlackKey(Key):
         self.color_pressed = Color.BK_PRESSED
         self.setPos(QPoint(0, y_pos))
         self.y_pos = y_pos
-        self.y_pos_grid = floor(y_pos / KeyAttr.W_HEIGHT) * KeyAttr.W_HEIGHT + (
+        self.y_pos_black_key = floor(y_pos / KeyAttr.W_HEIGHT) * KeyAttr.W_HEIGHT + (
             KeyAttr.W_HEIGHT / 2
         )
 

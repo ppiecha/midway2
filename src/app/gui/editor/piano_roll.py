@@ -14,7 +14,7 @@ from src.app.gui.editor.ruler import RulerView, HeaderView
 from src.app.gui.widgets import Box
 from src.app.utils.logger import get_console_logger
 from src.app.backend.midway_synth import MidwaySynth
-from src.app.model.event import Bpm
+from src.app.model.types import Bpm
 from src.app.model.loop import LoopType
 from src.app.model.composition import Composition
 from src.app.model.sequence import Sequence

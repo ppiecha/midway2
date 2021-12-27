@@ -19,7 +19,8 @@ from src.app.gui.widgets import GraphicsView
 from src.app.utils.properties import KeyAttr, Color, GuiAttr
 from src.app.utils.logger import get_console_logger
 from src.app.mingus.core import value
-from src.app.model.event import Event, Channel, EventType, Beat, Int
+from src.app.model.event import Event, EventType
+from src.app.model.types import Int, Channel, Beat, NoteUnit
 from src.app.model.sequence import Sequence
 from src.app.utils.units import pos2bar_beat, round2cell
 
@@ -341,9 +342,8 @@ class GridScene(GenericGridScene):
             QBrush(self.mark_col),
         )
 
-    def add_note(
-        self, bar_num: NonNegativeInt, beat: Beat, key: Key, unit: float = value.eighth
-    ) -> None:
+    def add_note(self, bar_num: NonNegativeInt, beat: Beat, key: Key,
+                 unit: float = NoteUnit.EIGHTH) -> None:
         note_node = NoteNode(
             channel=self.channel,
             grid_scene=self,

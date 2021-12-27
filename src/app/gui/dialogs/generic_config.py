@@ -16,7 +16,8 @@ if TYPE_CHECKING:
     from src.app.gui.editor.node import Node
 
 from src.app.model.composition import Composition
-from src.app.model.event import Preset, Channel
+from src.app.model.event import Preset
+from src.app.model.types import Channel
 from src.app.model.project import Project
 from src.app.model.track import TrackVersion, Track
 

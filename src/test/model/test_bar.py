@@ -4,7 +4,9 @@ import pytest
 
 from src.app.backend.midway_synth import MidwaySynth
 from src.app.model.bar import Bar
+from src.app.model.control import PitchBendChain
 from src.app.model.event import Event, EventType, Preset
+from src.app.model.types import NoteUnit
 from src.app.utils.properties import MidiAttr
 
 
@@ -20,6 +22,7 @@ def two_notes() -> List:
             "velocity": None,
             "preset": None,
             "controls": None,
+            "pitch_bend_chain": None,
         },
         {
             "type": "3-note",
@@ -30,6 +33,7 @@ def two_notes() -> List:
             "velocity": None,
             "preset": None,
             "controls": None,
+            "pitch_bend_chain": None,
         },
     ]
 
@@ -56,6 +60,7 @@ def test_note(note0, capsys):
         "velocity": None,
         "preset": None,
         "controls": None,
+        "pitch_bend_chain": None,
     }
 
 
@@ -134,6 +139,7 @@ def test_program(program0):
         "velocity": None,
         "preset": {"sf_name": "test", "bank": 0, "patch": 0},
         "controls": None,
+        "pitch_bend_chain": None
     }
 
 
@@ -148,6 +154,7 @@ def test_controls(control0, capsys):
         "velocity": None,
         "preset": None,
         "controls": [{"class_": {"name": "Volume", "code": 7}, "value": 100}],
+        "pitch_bend_chain": None,
     }
 
 
@@ -157,8 +164,31 @@ def test_play_change_control(bar_c_major, control1, capsys):
     MidwaySynth.play_bar(bar=bar_c_major, bpm=120)
 
 
-def test_pitch_bend():
-    pass
+def test_play_pitch_bend(bar_c_major, capsys):
+    bpm = 30
+    pitch_bend_chain1 = PitchBendChain.gen_chain(bend_fun=PitchBendChain.fun_slide_up,
+                                                 bpm=bpm)
+    pitch_bend_chain2 = PitchBendChain.gen_chain(bend_fun=PitchBendChain.fun_parabola_neq,
+                                                 bpm=bpm,
+                                                 duration=NoteUnit.SIXTEENTH,
+                                                 start_time=None,
+                                                 stop_time=None
+                                                 )
+    event1 = Event(
+        type=EventType.pitch_bend,
+        channel=0,
+        beat=0.25,
+        pitch_bend_chain=pitch_bend_chain1,
+    )
+    event2 = Event(
+        type=EventType.pitch_bend,
+        channel=0,
+        beat=0.5,
+        pitch_bend_chain=pitch_bend_chain2,
+    )
+    print('pitch bend event', event1)
+    bar_c_major.add_events(events=[event1, event2])
+    MidwaySynth.play_bar(bar=bar_c_major, bpm=bpm)
 
 
 def test_remove_events_by_type_notes(

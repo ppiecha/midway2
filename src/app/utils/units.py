@@ -1,15 +1,24 @@
 from math import floor, ceil
-from typing import NamedTuple
+from typing import NamedTuple, Any
 
 from pydantic import NonNegativeInt
 
-from src.app.model.event import Beat, Unit, Bpm
+from src.app.model.types import Bpm, Unit, Beat
 from src.app.utils.properties import MidiAttr
 
 
 class BarBeat(NamedTuple):
     bar: NonNegativeInt
     beat: Beat
+
+
+def nvn(value: Any, default_value: Any) -> Any:
+    if value is None and default_value is None:
+        raise ValueError(f"No default value defined for NVN function")
+    if value is None:
+        return default_value
+    else:
+        return value
 
 
 def tick2second(tick, ticks_per_beat, tempo) -> float:

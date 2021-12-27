@@ -16,7 +16,8 @@ from src.app.gui.widgets import GraphicsView
 from src.app.utils.properties import KeyAttr, Color, GuiAttr
 from src.app.utils.logger import get_console_logger
 from src.app.mingus.core import value
-from src.app.model.event import Channel, EventType, Beat, KEY_MAPPING
+from src.app.model.event import EventType, KEY_MAPPING
+from src.app.model.types import Unit, Channel, Beat, NoteUnit
 from src.app.model.sequence import Sequence
 from src.app.utils.units import pos2bar_beat, round2cell
 
@@ -176,9 +177,8 @@ class RulerScene(GenericGridScene):
         self.setSceneRect(self.ruler.rect)
         self.addItem(self.ruler)
 
-    def add_note(
-        self, bar: NonNegativeInt, beat: Beat, key: int, unit: float = value.eighth
-    ) -> None:
+    def add_note(self, bar: NonNegativeInt, beat: Beat, key: int,
+                 unit: NoteUnit = NoteUnit.EIGHTH) -> None:
         meta_node = None
         if KEY_MAPPING[EventType.program] <= key <= KEY_MAPPING[EventType.controls]:
             meta_node = MetaNode(
@@ -219,7 +219,7 @@ class RulerScene(GenericGridScene):
                         cell_width=KeyAttr.W_HEIGHT
                     )
                     self.add_note(
-                        bar=bar, beat=beat, key=e.scenePos().y(), unit=value.eighth
+                        bar=bar, beat=beat, key=e.scenePos().y(), unit=NoteUnit.EIGHTH
                     )
                     # key.play_note_in_thread(secs=0.3)
             elif e.button() == Qt.RightButton:
