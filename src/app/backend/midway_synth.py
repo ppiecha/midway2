@@ -126,7 +126,7 @@ class MidwaySynth(Synth):
             synth=fs, time_scale=bpm2time_scale(bpm=bpm), use_system_timer=False
         )
         sequencer.play_bar(synth=fs, bar=bar, bpm=bpm)
-        end_tick = unit2tick(unit=bar.length, bpm=bpm)
+        end_tick = unit2tick(unit=bar.length(), bpm=bpm)
         sec = tick2second(
             tick=end_tick,
             ticks_per_beat=MidiAttr.TICKS_PER_BEAT,
@@ -230,7 +230,7 @@ class EventProvider:
         self.repeat = repeat
         loop = loops.get_loop_by_name(loop_name=start_loop_name)
         self.sequence = loop.get_compiled_sequence(include_defaults=True)
-        self.bar_length = self.sequence.bars[start_bar_num].length
+        self.bar_length = self.sequence.bars[start_bar_num].length()
         self.bar_duration = unit2tick(unit=self.bar_length, bpm=bpm)
         self._sequencer = Sequencer(
             synth=synth,

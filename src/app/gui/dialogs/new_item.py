@@ -213,7 +213,7 @@ class NewTrackForm(NewNameForm):
         return self.composition.get_first_track_version().channel
 
     def get_default_num_of_bars(self):
-        return self.composition.get_first_track_version().num_of_bars
+        return self.composition.get_first_track_version().num_of_bars()
 
 
 class NewTrackDlg(NewItemDlg):
@@ -254,9 +254,8 @@ class NewTrackDlg(NewItemDlg):
         track_version = TrackVersion(
             channel=ml.version_channel.get_channel(),
             version_name=ml.get_version_name(),
-            num_of_bars=ml.get_default_num_of_bars(),
             sf_name=DEFAULT_SF2,
-            sequence=Sequence(num_of_bars=ml.get_default_num_of_bars()),
+            sequence=Sequence.from_num_of_bars(num_of_bars=ml.get_default_num_of_bars()),
         )
         return Track(
             name=ml.get_name(),

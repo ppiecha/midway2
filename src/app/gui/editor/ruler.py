@@ -10,7 +10,8 @@ from PySide6.QtWidgets import (
 )
 from pydantic import NonNegativeInt
 
-from src.app.gui.editor.grid import GridView, GenericGridScene
+from src.app.gui.editor.grid import GridView
+from src.app.gui.editor.generic_grid import GenericGridScene
 from src.app.gui.editor.node import MetaNode
 from src.app.gui.widgets import GraphicsView
 from src.app.utils.properties import KeyAttr, Color, GuiAttr
@@ -332,7 +333,7 @@ class Ruler(QGraphicsItem):
                 self.rect.width() - self.scroll_diff,
                 KEY_MAPPING[EventType.pitch_bend],
             )
-        for tick in range(self.num_of_bars * GuiAttr.GRID_DIV_UNIT):
+        for tick in range(self.num_of_bars * int(GuiAttr.GRID_DIV_UNIT)):
             x = (tick + 1) * KeyAttr.W_HEIGHT
             if self.show_meta_notes:
                 pen.setWidth(1)

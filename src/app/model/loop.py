@@ -148,7 +148,7 @@ class CustomLoops(Loops):
         return self.get_checked_loop()
 
     def get_total_num_of_bars(self) -> Optional[int]:
-        return self.get_next_loop("").get_compiled_sequence().num_of_bars
+        return self.get_next_loop("").get_compiled_sequence().num_of_bars()
 
 
 class CompositionLoops(Loops):
@@ -185,7 +185,7 @@ class CompositionLoops(Loops):
     def get_total_num_of_bars(self) -> Optional[int]:
         bars_total = 0
         for loop in self.loops:
-            bars_total += loop.get_compiled_sequence().num_of_bars
+            bars_total += loop.get_compiled_sequence().num_of_bars()
         return bars_total
 
     @classmethod

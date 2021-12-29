@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import List, Optional, Dict
 
-from pydantic import BaseModel
+from pydantic import BaseModel, PositiveInt
 
 from src.app.model.bar import Bar
 from src.app.model.sequence import Sequence
@@ -15,6 +15,13 @@ class Composition(BaseModel):
     name: Optional[str]
     tracks: List[Track] = []
     loops: Optional[Dict[LoopType, Optional[Loops]]] = {}
+
+    def num_of_bars(self) -> PositiveInt:
+        track_version = self.get_first_track_version()
+        if track_version:
+            return track_version.num_of_bars()
+        else:
+            raise ValueError(f"Firs track version is not defined. Tracks {self.tracks}")
 
     def insert_composition_loop(self, loop: Loop, loop_no: int):
         pass
@@ -173,11 +180,10 @@ class Composition(BaseModel):
         channel: Channel = 0,
         sf_name: str = MidiAttr.DEFAULT_SF2,
     ):
-        sequence = Sequence(num_of_bars=1, bars={0: bar})
+        sequence = Sequence(bars={0: bar})
         track_version = TrackVersion(
             channel=channel,
             version_name=name,
-            num_of_bars=1,
             sf_name=sf_name,
             sequence=sequence,
         )

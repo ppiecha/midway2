@@ -366,7 +366,7 @@ class GeneralTab(QWidget):
         )
         self.version_channel_box.setEnabled(False)
         self.version_bars_box.setValue(
-            config.track_version.num_of_bars
+            config.track_version.num_of_bars()
             if config.track_version
             else self.default_num_of_bars
         )

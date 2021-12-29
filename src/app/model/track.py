@@ -15,11 +15,14 @@ from src.app.utils.properties import Color, MidiAttr
 class TrackVersion(BaseModel):
     channel: Channel
     version_name: str
-    num_of_bars: PositiveInt
+    # num_of_bars: PositiveInt
     sf_name: str
     bank: MidiValue = MidiAttr.DEFAULT_BANK
     patch: MidiValue = MidiAttr.DEFAULT_PATCH
     sequence: Sequence
+
+    def num_of_bars(self) -> PositiveInt:
+        return self.sequence.num_of_bars()
 
     @classmethod
     def from_sequence(

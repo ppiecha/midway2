@@ -20,7 +20,7 @@ from src.app.gui.menu import MenuBar
 from src.app.gui.toolbar import ToolBar
 from src.app.gui.widgets import Box
 from src.app.backend.midway_synth import MidwaySynth
-from src.app.model.project import Project, sample_project
+from src.app.model.project import Project, empty_project
 from src.app.utils.properties import IniAttr, AppAttr
 
 
@@ -43,7 +43,7 @@ class MainFrame(QMainWindow):
             with open(self.project_file) as json_file:
                 self.project = Project(**json.load(json_file))
         else:
-            self.project = sample_project()
+            self.project = empty_project()
         self.gen_config_dlg = GenericConfigDlg(mf=self)
         self.composition_tab = CompositionTab(
             mf=self, parent=self, project=self.project

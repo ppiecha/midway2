@@ -17,7 +17,7 @@ from src.app.utils.properties import Color, KeyAttr, GuiAttr
 from src.app.utils.units import bar_beat2pos, BarBeat
 
 if TYPE_CHECKING:
-    from src.app.gui.editor.grid import GenericGridScene
+    from src.app.gui.editor.generic_grid import GenericGridScene
 from src.app.gui.editor.key import Key, BlackKey
 from src.app.utils.logger import get_console_logger
 from src.app.mingus.core import value
@@ -147,13 +147,13 @@ class Node(QGraphicsItem):
             logger.debug(f"MOVING {self}")
             if self.bar_num in self.grid_scene.sequence.bars.keys():
                 if beat > 0:
-                    if beat >= self.grid_scene.sequence[self.bar_num].length:
+                    if beat >= self.grid_scene.sequence[self.bar_num].length():
                         if self.bar_num < self.grid_scene.num_of_bars - 1:
                             self.grid_scene.sequence.remove_event(
                                 bar_num=self.bar_num, event=self.event
                             )
                             self.event.beat = (
-                                beat - self.grid_scene.sequence[self.bar_num].length
+                                beat - self.grid_scene.sequence[self.bar_num].length()
                             )
                             self.bar_num += 1
                             self.grid_scene.sequence.add_event(
@@ -169,7 +169,7 @@ class Node(QGraphicsItem):
                             bar_num=self.bar_num, event=self.event
                         )
                         self.event.beat = (
-                            self.grid_scene.sequence[self.bar_num].length + beat
+                            self.grid_scene.sequence[self.bar_num].length() + beat
                         )
                         self.bar_num -= 1
                         self.grid_scene.sequence.add_event(

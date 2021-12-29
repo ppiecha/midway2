@@ -5,24 +5,17 @@ from src.app.model.sequence import Sequence
 
 
 @pytest.fixture()
-def seq_empty_bars():
+def seq_empty_bars() -> Sequence:
     return {
-        "numerator": 4,
-        "denominator": 4,
-        "num_of_bars": 2,
         "bars": {
             0: {
-                "numerator": 4,
-                "denominator": 4,
+                "meter": {"numerator": 4, "denominator": 4},
                 "bar_num": 0,
-                "length": 1.0,
                 "bar": [],
             },
             1: {
-                "numerator": 4,
-                "denominator": 4,
+                "meter": {"numerator": 4, "denominator": 4},
                 "bar_num": 1,
-                "length": 1.0,
                 "bar": [],
             },
         },
@@ -30,18 +23,13 @@ def seq_empty_bars():
 
 
 def test_constructor(capsys):
-    seq = Sequence(num_of_bars=1)
+    seq = Sequence.from_num_of_bars(num_of_bars=1)
     print(seq.dict())
     assert seq.dict() == {
-        "numerator": 4,
-        "denominator": 4,
-        "num_of_bars": 1,
         "bars": {
             0: {
-                "numerator": 4,
-                "denominator": 4,
+                "meter": {"numerator": 4, "denominator": 4},
                 "bar_num": 0,
-                "length": 1.0,
                 "bar": [],
             }
         },
@@ -95,7 +83,7 @@ def test_events(bar0, bar1, note0, note1, note2, note3, program0, control0):
 
 def test_total_length(bar0, bar1):
     sequence = Sequence.from_bars([bar0, bar1])
-    assert sequence.num_of_bars == 2
+    assert sequence.num_of_bars() == 2
 
 
 def test_num_of_bars(
@@ -106,7 +94,7 @@ def test_num_of_bars(
     sequence.add_events(bar_num=1, events=[note2, note3, program0, control0])
     sequence.set_num_of_bars(value=1)
     print(sequence)
-    assert sequence.num_of_bars == 1
+    assert sequence.num_of_bars() == 1
     assert list(sequence.events()) == [note0, note1]
 
 

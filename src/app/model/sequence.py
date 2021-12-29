@@ -4,52 +4,40 @@ from typing import Dict, Union, Optional, List
 
 from pydantic import PositiveInt, BaseModel, NonNegativeInt, validator
 
-from src.app.model.bar import Bar
+from src.app.model.bar import Bar, Meter
 from src.app.model.event import Event, EventType
 
 _bars = Dict[int, Union[Bar, type(None)]]
 
 
 class Sequence(BaseModel):
-    numerator: PositiveInt = 4
-    denominator: PositiveInt = 4
-    num_of_bars: PositiveInt
     bars: Dict[NonNegativeInt, Bar] = {}
 
-    @validator("bars", pre=True, always=True)
-    def init_bars(cls, v, values):
-        for bar_num in range(values["num_of_bars"]):
-            v[bar_num] = Bar(
-                numerator=values["numerator"],
-                denominator=values["denominator"],
-                bar_num=bar_num,
-            )
-        return v
+    def meter(self) -> Meter:
+        if self.num_of_bars():
+            return self.bars[0].meter
+        else:
+            raise ValueError(f"No bar in the sequence {self!r}")
+
+    def num_of_bars(self) -> PositiveInt:
+        return len(self.bars.keys())
 
     def clear(self):
+        meter = self.meter()
         for bar_num in self.bars.keys():
-            self.bars[bar_num] = Bar(
-                numerator=self.numerator, denominator=self.denominator, bar_num=bar_num
-            )
+            self.bars[bar_num] = Bar(meter=meter, bar_num=bar_num)
 
     def clear_bar(self, bar_num: NonNegativeInt):
-        self.bars[bar_num] = Bar(
-            numerator=self.numerator, denominator=self.denominator, bar_num=bar_num
-        )
+        self.bars[bar_num] = Bar(meter=self.meter(), bar_num=bar_num)
 
     def set_num_of_bars(self, value):
         if value <= 0:
             raise ValueError(f"Number of bars {value} cannot be negative or zero")
-        if value < self.num_of_bars:
+        if value < self.num_of_bars():
             self.bars = {k: v for k, v in self.bars.items() if k < value}
         else:
-            for bar_num in range(self.num_of_bars, value):
-                self.bars[bar_num] = Bar(
-                    numerator=self.numerator,
-                    denominator=self.denominator,
-                    bar_num=bar_num,
-                )
-        self.num_of_bars = value
+            for bar_num in range(self.num_of_bars(), value):
+                self.bars[bar_num] = Bar(meter=self.meter(), bar_num=bar_num)
 
     def __getitem__(self, index):
         """Enable the  '[]' notation on Bars to get the item at the index."""
@@ -62,14 +50,14 @@ class Sequence(BaseModel):
 
     def __len__(self):
         """Enable the len() method for Bars."""
-        return self.num_of_bars
+        return self.num_of_bars()
 
     def event_index(self, bar_num: NonNegativeInt, event: Event) -> int:
         if bar_num in self.bars.keys():
             return self.bars[bar_num].event_index(event=event)
         else:
             raise ValueError(
-                f"Bar number outside of range {bar_num} -> {self.num_of_bars}"
+                f"Bar number outside of range {bar_num} -> {self.num_of_bars()}"
             )
 
     def add_event(self, bar_num: NonNegativeInt, event: Event) -> None:
@@ -77,7 +65,7 @@ class Sequence(BaseModel):
             self.bars[bar_num] += event
         else:
             raise ValueError(
-                f"Bar number outside of range {bar_num} -> {self.num_of_bars}"
+                f"Bar number outside of range {bar_num} -> {self.num_of_bars()}"
             )
 
     def add_events(self, bar_num: NonNegativeInt, events: List[Event]):
@@ -87,7 +75,7 @@ class Sequence(BaseModel):
     def remove_event(self, bar_num: NonNegativeInt, event: Event) -> None:
         if bar_num not in self.bars.keys():
             raise ValueError(
-                f"Bar number outside of range {bar_num} -> {self.num_of_bars}"
+                f"Bar number outside of range {bar_num} -> {self.num_of_bars()}"
             )
         self.bars[bar_num].remove_event(event=event)
 
@@ -104,9 +92,10 @@ class Sequence(BaseModel):
 
     def add(self, this, other):
         if isinstance(other, Sequence):
-            if other.num_of_bars != this.num_of_bars:
+            if other.num_of_bars() != this.num_of_bars():
                 raise ValueError(
-                    f"Sequence has different number of bars {this.num_of_bars} -> {other.num_of_bars}"
+                    f"Sequence has different number of bars {this.num_of_bars()} -> "
+                    f"{other.num_of_bars()}"
                 )
             else:
                 for bar_num in this.bars.keys():
@@ -118,13 +107,13 @@ class Sequence(BaseModel):
                 if other.bar_num in this.bars.keys():
                     this.bars[other.bar_num] += other
                 else:
-                    raise ValueError(f"Incorrect bar number {other.bar_num}")
+                    this.bars[other.bar_num] = other
         else:
             raise ValueError(f"Unsupported type {type(other)}")
         return this
 
     def __add__(self, other):
-        sequence = copy.deepcopy(self)
+        sequence = self.copy(deep=True)
         return self.add(this=sequence, other=other)
 
     def __iadd__(self, other):
@@ -142,7 +131,14 @@ class Sequence(BaseModel):
 
     @classmethod
     def from_bars(cls, bars: List[Bar]) -> Sequence:
-        sequence = Sequence(num_of_bars=len(bars))
+        sequence = cls(bars={})
         for bar in bars:
             sequence += bar
         return sequence
+
+    @classmethod
+    def from_num_of_bars(cls, num_of_bars: PositiveInt, meter: Meter = None):
+        if meter is None:
+            meter = Meter()
+        return cls.from_bars([Bar(meter=meter, bar_num=bar_num)
+                              for bar_num in range(num_of_bars)])

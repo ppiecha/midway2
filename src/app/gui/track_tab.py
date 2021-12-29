@@ -96,7 +96,7 @@ class MelodyTrackVersion(QWidget):
         self.setMinimumWidth(500)
         self.setLayout(self.main_box)
 
-        self.num_of_bars = self.track_version.num_of_bars
+        self.num_of_bars = self.track_version.num_of_bars()
 
     def set_keyboard_position(self):
         self.piano_roll.keyboard.verticalScrollBar().setValue(

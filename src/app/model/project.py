@@ -12,8 +12,13 @@ from src.app.utils.properties import MidiAttr
 class Project(BaseModel):
     name: str
     bpm: Bpm
-    num_of_bars: PositiveInt
     compositions: List[Composition]
+
+    def num_of_bars(self) -> PositiveInt:
+        if self.compositions:
+            return self.compositions[0].num_of_bars()
+        else:
+            raise ValueError(f"List of compositions is empty {self.compositions}")
 
     def composition_by_name(
         self, composition_name: str, raise_not_found: bool = True
@@ -32,32 +37,28 @@ class Project(BaseModel):
         self.compositions.remove(composition)
 
 
-def sample_project() -> Project:
+def empty_project() -> Project:
     track_version = TrackVersion(
         channel=100,
         version_name="Bass 0",
-        num_of_bars=4,
         sf_name=MidiAttr.DEFAULT_SF2,
-        sequence=Sequence(num_of_bars=4),
+        sequence=Sequence.from_num_of_bars(num_of_bars=4),
     )
     track_version1 = TrackVersion(
         channel=2,
         version_name="Version 1",
-        num_of_bars=4,
         sf_name=MidiAttr.DEFAULT_SF2,
-        sequence=Sequence(num_of_bars=4),
+        sequence=Sequence.from_num_of_bars(num_of_bars=4),
     )
     track_version2 = TrackVersion(
         channel=2,
         version_name="Version 2",
-        num_of_bars=4,
         sf_name=MidiAttr.DEFAULT_SF2,
-        sequence=Sequence(num_of_bars=4),
+        sequence=Sequence.from_num_of_bars(num_of_bars=4),
     )
     return Project(
         name="Sample project",
         bpm=90,
-        num_of_bars=4,
         compositions=[
             Composition(
                 name="Default",

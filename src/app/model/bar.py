@@ -14,18 +14,27 @@ logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 _notes = List[Union[Event, type(None)]]
 
 
-class Bar(BaseModel):
+class Meter(BaseModel):
     numerator: PositiveInt = 4
     denominator: PositiveInt = 4
-    bar_num: NonNegativeInt
-    length: NonNegativeFloat = float(numerator) * (1.0 / float(denominator))
+
+    def length(self) -> NonNegativeFloat:
+        return float(self.numerator) * (1.0 / float(self.denominator))
+
+
+class Bar(BaseModel):
+    meter: Meter = Meter()
+    bar_num: Optional[NonNegativeInt]
     bar: List[Event] = []
+
+    def length(self) -> NonNegativeFloat:
+        return self.meter.length()
 
     def clear(self):
         self.bar.clear()
 
     def add_event(self, event: Event) -> None:
-        if event.beat >= self.length:
+        if event.beat >= self.length():
             raise BeatOutsideOfBar(f"Item outside of bar range {event.beat}")
         self.bar.append(event)
         self.bar.sort(key=lambda e: (e.beat, e.type))

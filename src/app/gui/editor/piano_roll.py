@@ -164,11 +164,10 @@ class PianoRoll(QWidget):
 
     @property
     def num_of_bars(self) -> int:
-        return self.track_version.num_of_bars
+        return self.track_version.num_of_bars()
 
     @num_of_bars.setter
     def num_of_bars(self, value) -> None:
-        self.track_version.num_of_bars = value
         self.ruler_view.num_of_bars = value
         self.grid_view.num_of_bars = value
         self.sequence.set_num_of_bars(value=value - 1)

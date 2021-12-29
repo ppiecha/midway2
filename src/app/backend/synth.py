@@ -1677,10 +1677,11 @@ class Sequencer:
     def note(
         self, time, channel, key, unit, bpm, velocity, source=-1, dest=-1, absolute=True
     ):
+        if any(map(lambda x: x is None, [time, channel, key, unit, bpm, velocity])):
+            raise ValueError(f"Not all parameters defined "
+                             f"{[time, channel, key, unit, bpm, velocity]}")
         evt = self._create_event(source, dest)
         duration = unit2tick(unit=unit, bpm=bpm) - 1
-        # logger.debug(f'sequencer note {evt} {channel} {key} {velocity} '
-        #              f'{duration} {time}')
         fluid_event_note(evt, channel, key, velocity, duration)
         self._schedule_event(evt, time, absolute)
         delete_fluid_event(evt)
