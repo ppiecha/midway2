@@ -33,6 +33,7 @@ class Event(BaseModel):
     preset: Optional[Preset]
     controls: Optional[List[Control]]
     pitch_bend_chain: Optional[PitchBendChain]
+    active: Optional[bool] = True
 
     def __int__(self) -> int:
         if not hasattr(self, "pitch"):

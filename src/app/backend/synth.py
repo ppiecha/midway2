@@ -1764,43 +1764,44 @@ class Sequencer:
     """
 
     def send_event(self, time: int, event: Event, bpm: float, synth_seq_id):
-        match event.type:
-            case EventType.note:
-                self.note(
-                    time=time,
-                    channel=event.channel,
-                    key=int(event.pitch),
-                    unit=event.unit,
-                    bpm=bpm,  # unit2tick(unit=note.unit, bpm=bpm),
-                    velocity=event.velocity,
-                    dest=synth_seq_id,
-                )
-            case EventType.program:
-                self.program_change(
-                    time=time,
-                    channel=event.channel,
-                    preset=event.preset,
-                    dest=synth_seq_id,
-                )
-            case EventType.controls:
-                for control in event.controls:
-                    self.control_change(
+        if event.active:
+            match event.type:
+                case EventType.note:
+                    self.note(
                         time=time,
                         channel=event.channel,
-                        control=control.class_.code,
-                        value=control.value,
+                        key=int(event.pitch),
+                        unit=event.unit,
+                        bpm=bpm,  # unit2tick(unit=note.unit, bpm=bpm),
+                        velocity=event.velocity,
                         dest=synth_seq_id,
                     )
-            case EventType.pitch_bend:
-                for bend in event.pitch_bend_chain.__root__:
-                    self.pitch_bend(
-                        time=time + bend.time,
+                case EventType.program:
+                    self.program_change(
+                        time=time,
                         channel=event.channel,
-                        value=bend.value,
-                        dest=synth_seq_id
+                        preset=event.preset,
+                        dest=synth_seq_id,
                     )
-            case _:
-                raise ValueError(f"Event type {event.type} not supported")
+                case EventType.controls:
+                    for control in event.controls:
+                        self.control_change(
+                            time=time,
+                            channel=event.channel,
+                            control=control.class_.code,
+                            value=control.value,
+                            dest=synth_seq_id,
+                        )
+                case EventType.pitch_bend:
+                    for bend in event.pitch_bend_chain.__root__:
+                        self.pitch_bend(
+                            time=time + bend.time,
+                            channel=event.channel,
+                            value=bend.value,
+                            dest=synth_seq_id
+                        )
+                case _:
+                    raise ValueError(f"Event type {event.type} not supported")
 
     def play_bar(self, synth: Synth, bar: Bar, bpm: float, start_tick: int = 0):
         synth_seq_id = self.register_fluidsynth(synth)

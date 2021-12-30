@@ -23,6 +23,7 @@ def two_notes() -> List:
             "preset": None,
             "controls": None,
             "pitch_bend_chain": None,
+            "active": True,
         },
         {
             "type": "3-note",
@@ -34,6 +35,7 @@ def two_notes() -> List:
             "preset": None,
             "controls": None,
             "pitch_bend_chain": None,
+            "active": True,
         },
     ]
 
@@ -59,6 +61,7 @@ def test_note(note0, capsys):
         "preset": None,
         "controls": None,
         "pitch_bend_chain": None,
+        "active": True,
     }
 
 
@@ -137,7 +140,8 @@ def test_program(program0):
         "velocity": None,
         "preset": {"sf_name": "test", "bank": 0, "patch": 0},
         "controls": None,
-        "pitch_bend_chain": None
+        "pitch_bend_chain": None,
+        "active": True,
     }
 
 
@@ -153,6 +157,7 @@ def test_controls(control0, capsys):
         "preset": None,
         "controls": [{"class_": {"name": "Volume", "code": 7}, "value": 100}],
         "pitch_bend_chain": None,
+        "active": True,
     }
 
 

@@ -44,7 +44,8 @@ def note0() -> Event:
 
 @pytest.fixture
 def note1() -> Event:
-    return Event(type=EventType.note, channel=0, beat=0.125, pitch=80, unit=NoteUnit.EIGHTH)
+    return Event(type=EventType.note, channel=0, beat=0.125, pitch=80,
+                 unit=NoteUnit.EIGHTH)
 
 
 @pytest.fixture
