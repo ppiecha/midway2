@@ -7,17 +7,16 @@ from src.app.model.bar import Bar
 
 from src.app.model.event import Event, EventType, Preset
 from src.app.model.types import Channel
-from src.app.model.control import MidiValue
+from src.app.model.control import MidiValue, MidiBankValue
 from src.app.model.sequence import Sequence
 from src.app.utils.properties import Color, MidiAttr
 
 
 class TrackVersion(BaseModel):
     channel: Channel
-    version_name: str
-    # num_of_bars: PositiveInt
+    version_name: str = ""
     sf_name: str
-    bank: MidiValue = MidiAttr.DEFAULT_BANK
+    bank: MidiBankValue = MidiAttr.DEFAULT_BANK
     patch: MidiValue = MidiAttr.DEFAULT_PATCH
     sequence: Sequence
 
@@ -63,6 +62,7 @@ class TrackVersion(BaseModel):
 
 class DrumTrackVersion(TrackVersion):
     channel: Channel = MidiAttr.DRUM_CHANNEL
+    bank: MidiValue = MidiAttr.MAX_MIDI
 
 
 class Track(BaseModel):

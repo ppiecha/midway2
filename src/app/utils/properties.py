@@ -4,7 +4,6 @@ from pathlib import Path
 
 from PySide6.QtGui import QColor, QPalette, Qt
 
-from src.app.mingus.core import value
 from src.app.model.types import NoteUnit
 
 
@@ -132,3 +131,117 @@ class IniAttr(str, Enum):
     MAIN_WIN_POS = "main_win_pos"
     EVENT_WIN_SIZE = "event_win_size"
     EVENT_WIN_POS = "event_win_pos"
+
+
+class DrumPatch(int, Enum):
+    NONE = 0
+    ACOUSTIC_BASS_DRUM = 35
+    BASS_DRUM_1 = 36
+    RIM_SHOT_SIDE_STICK = 37
+    ACOUSTIC_SNARE = 38
+    HAND_CLAP = 39
+    ELECTRIC_SNARE = 40
+    LOW_TOM_A = 41
+    CLOSED_HI_HAT = 42
+    LOW_TOM_B = 43
+    PEDAL_HI_HAT = 44
+    MID_TOM_A = 45
+    OPEN_HI_HAT = 46
+    MID_TOM_B = 47
+    HIGH_TOM_A = 48
+    CRASH_CYMBAL_1 = 49
+    HIGH_TOM_B = 50
+    RIDE_CYMBAL_1 = 51
+    CHINESE_CYMBAL = 52
+    RIDE_BELL = 53
+    TAMBOURINE = 54
+    SPLASH_CYMBAL = 55
+    COWBELL = 56
+    CRASH_CYMBAL_2 = 57
+    VIBRASLAP = 58
+    RIDE_CYMBAL_2 = 59
+    HI_BONGO = 60
+    LOW_BONGO = 61
+    MUTE_HI_CONGA = 62
+    OPEN_HI_CONGA = 63
+    LOW_CONGA = 64
+    HIGH_TIMBALE = 65
+    LOW_TIMBALE = 66
+    HIGH_AGOGO = 67
+    LOW_AGOGO = 68
+    CABASA = 69
+    MARACAS = 70
+    SHORT_WHISTLE = 71
+    LONG_WHISTLE = 72
+    SHORT_GUIRO = 73
+    LONG_GUIRO = 74
+    CLAVES = 75
+    HI_WOOD_BLOCK = 76
+    LOW_WOOD_BLOCK = 77
+    MUTE_CUICA = 78
+    OPEN_CUICA = 79
+    MUTE_TRIANGLE = 80
+    OPEN_TRIANGLE = 81
+
+
+DRUM_KIT = [
+    "None",
+    "Acoustic Bass Drum",
+    "Bass Drum 1",
+    "Rim Shot (Side Stick)",
+    "Acoustic Snare",
+    "Hand Clap",
+    "Electric Snare",
+    "Low Tom A",
+    "Closed Hi-Hat",
+    "Low Tom B",
+    "Pedal Hi-Hat",
+    "Mid Tom A",
+    "Open Hi-Hat",
+    "Mid Tom B",
+    "High Tom A",
+    "Crash Cymbal 1",
+    "High Tom B",
+    "Ride Cymbal 1",
+    "Chinese Cymbal",
+    "Ride Bell",
+    "Tambourine",
+    "Splash Cymbal",
+    "Cowbell",
+    "Crash Cymbal 2",
+    "Vibraslap",
+    "Ride Cymbal 2",
+    "Hi Bongo",
+    "Low Bongo",
+    "Mute Hi Conga",
+    "Open Hi Conga",
+    "Low Conga",
+    "High Timbale",
+    "Low Timbale",
+    "High Agogo",
+    "Low Agogo",
+    "Cabasa",
+    "Maracas",
+    "Short Whistle",
+    "Long Whistle",
+    "Short Guiro",
+    "Long Guiro",
+    "Claves",
+    "Hi Wood Block",
+    "Low Wood Block",
+    "Mute Cuica",
+    "Open Cuica",
+    "Mute Triangle",
+    "Open Triangle"
+]
+
+DRUM_NAME_TO_PATCH = {name: patch for name, patch in zip(DRUM_KIT,
+                                                         [0] + list(range(35, 82)))}
+
+DRUM_PATCH_TO_NAME = {patch: name for name, patch in DRUM_NAME_TO_PATCH.items()}
+
+# print(f"class DrumPatch(int, Enum):")
+# for name, patch in DRUM_NAME_TO_PATCH.items():
+#     print(name.translate({32: "_", 45: "_"}).upper(), "=", patch)
+
+

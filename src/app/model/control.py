@@ -11,6 +11,7 @@ from src.app.utils.logger import get_console_logger
 from src.app.utils.units import unit2tick, nvn
 
 MidiValue = NewType("MidiValue", conint(ge=0, le=127))
+MidiBankValue = NewType("MidiValue", conint(ge=0, le=128))
 Bend = conint(ge=0, lt=16384)
 BendNormalized = confloat(ge=-1, le=1)
 BendDurationNormalized = confloat(ge=0, le=1)

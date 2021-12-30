@@ -1,6 +1,6 @@
 from __future__ import annotations
 import copy
-from typing import Dict, Union, Optional, List
+from typing import Dict, Union, Optional, List, Any
 
 from pydantic import PositiveInt, BaseModel, NonNegativeInt, validator
 
@@ -142,3 +142,10 @@ class Sequence(BaseModel):
             meter = Meter()
         return cls.from_bars([Bar(meter=meter, bar_num=bar_num)
                               for bar_num in range(num_of_bars)])
+
+    @staticmethod
+    def set_events_attr(events: List[Event], attr_val_map: Dict[str, Any]):
+        for event in events:
+            for attr, value in attr_val_map.items():
+                if hasattr(event, attr):
+                    setattr(event, attr, value)

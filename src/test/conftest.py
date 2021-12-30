@@ -1,15 +1,18 @@
 import pytest
+from pydantic import PositiveInt
 
 from src.app.backend.composer import Composer
 from src.app.mingus.containers.note import Note
 from src.app.mingus.core.scales import Major
 from src.app.model.bar import Bar
+from src.app.model.composition import Composition
 from src.app.model.event import Event, EventType, Preset
 from src.app.model.control import Volume, Control, Expression
+from src.app.model.rhythm import Rhythm
 from src.app.model.sequence import Sequence
-from src.app.model.track import Track, TrackVersion
+from src.app.model.track import Track, TrackVersion, DrumTrackVersion
 from src.app.model.types import Bpm, NoteUnit
-from src.app.utils.properties import MidiAttr, GuiAttr
+from src.app.utils.properties import MidiAttr, DrumPatch
 
 
 @pytest.fixture
@@ -157,11 +160,47 @@ def track_c_major(bar0, bar1) -> Track:
 
 
 @pytest.fixture()
-def track_bass(bar0, bar1, bar2, bar3) -> Track:
-    sequence = Sequence.from_bars([bar0, bar1, bar2, bar3])
+def num_of_bars() -> PositiveInt:
+    return 4
 
-    return Track(
-        name="Bass",
-        versions=[TrackVersion.from_sequence(sequence=sequence,
-                                             version_name=GuiAttr.DEFAULT_VERSION_NAME)],
-    )
+
+@pytest.fixture()
+def rhythm() -> Rhythm:
+    return Rhythm()
+
+
+@pytest.fixture()
+def drums_sequence(rhythm, num_of_bars) -> Sequence:
+    bars = [rhythm.bar_of_notes(note_unit=NoteUnit.QUARTER, bar_num=bar_num)
+            for bar_num in range(num_of_bars)]
+    sequence = Sequence.from_bars(bars=bars)
+    down = [event for index, event in enumerate(sequence.events()) if index % 2 == 0]
+    up = [event for index, event in enumerate(sequence.events()) if index % 2 == 1]
+    Sequence.set_events_attr(events=down,
+                             attr_val_map={
+                                 "pitch": DrumPatch.ACOUSTIC_BASS_DRUM,
+                                 "velocity": 100,
+                                 "channel": MidiAttr.DRUM_CHANNEL
+                             })
+    Sequence.set_events_attr(events=up,
+                             attr_val_map={
+                                 "pitch": DrumPatch.ACOUSTIC_SNARE,
+                                 "velocity": 127,
+                                 "channel": MidiAttr.DRUM_CHANNEL
+                             })
+    return sequence
+
+
+@pytest.fixture()
+def bass_sequence(rhythm, num_of_bars) -> Sequence:
+    bars = [rhythm.bar_of_notes(note_unit=NoteUnit.EIGHTH, bar_num=bar_num)
+            for bar_num in range(num_of_bars)]
+    return Sequence.from_bars(bars=bars)
+
+
+@pytest.fixture()
+def drums_composition(drums_sequence, bass_sequence, capsys) -> Composition:
+    track_version = DrumTrackVersion(sf_name=MidiAttr.DEFAULT_SF2,
+                                     sequence=drums_sequence)
+    track = Track(name="Drums", versions=[track_version])
+    return Composition.from_tracks(tracks=[track], name='drums_composition')

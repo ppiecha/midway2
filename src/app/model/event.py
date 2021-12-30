@@ -5,14 +5,14 @@ from typing import Optional, List
 from pydantic import BaseModel
 
 from src.app.mingus.containers.note import Note
-from src.app.model.control import MidiValue, Control, PitchBendChain
+from src.app.model.control import MidiValue, Control, PitchBendChain, MidiBankValue
 from src.app.model.types import Unit, Channel, Beat, NoteUnit
 from src.app.utils.properties import KeyAttr, GuiAttr
 
 
 class Preset(BaseModel):
     sf_name: str
-    bank: MidiValue
+    bank: MidiBankValue
     patch: MidiValue
 
 
@@ -25,7 +25,7 @@ class EventType(str, Enum):
 
 class Event(BaseModel):
     type: EventType
-    channel: Channel
+    channel: Optional[Channel]
     beat: Beat
     pitch: Optional[MidiValue]
     unit: Optional[NoteUnit]
