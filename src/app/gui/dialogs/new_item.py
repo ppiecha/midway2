@@ -255,7 +255,9 @@ class NewTrackDlg(NewItemDlg):
             channel=ml.version_channel.get_channel(),
             version_name=ml.get_version_name(),
             sf_name=DEFAULT_SF2,
-            sequence=Sequence.from_num_of_bars(num_of_bars=ml.get_default_num_of_bars()),
+            sequence=Sequence.from_num_of_bars(
+                num_of_bars=ml.get_default_num_of_bars()
+            ),
         )
         return Track(
             name=ml.get_name(),

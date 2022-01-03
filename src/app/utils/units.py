@@ -3,6 +3,7 @@ from typing import NamedTuple, Any
 
 from pydantic import NonNegativeInt
 
+from src.app.mingus.containers import Bar
 from src.app.model.types import Bpm, Unit, Beat
 from src.app.utils.properties import MidiAttr
 
@@ -82,6 +83,19 @@ def unit2tick(unit: Unit, bpm: Bpm) -> int:
         )
     )
     return tick
+
+
+def bar_length2tick(bar: Bar, bpm: Bpm) -> int:
+    return unit2tick(unit=bar.length(), bpm=bpm)
+
+
+def bar_length2sec(bar: Bar, bpm: Bpm) -> float:
+    end_tick = bar_length2tick(bar=bar, bpm=bpm)
+    return tick2second(
+        tick=end_tick,
+        ticks_per_beat=MidiAttr.TICKS_PER_BEAT,
+        tempo=bpm2tempo(bpm=bpm),
+    )
 
 
 def beat2tick(beat: Beat, bpm: Bpm) -> int:

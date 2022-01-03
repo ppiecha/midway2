@@ -24,6 +24,7 @@ class AppAttr:
 
 class MidiAttr:
     DRUM_CHANNEL = 9
+    DRUM_BANK = 128
     TICKS_PER_BEAT = 96
     MAX_MIDI = 128
     MAX_CHANNEL = 256
@@ -31,6 +32,7 @@ class MidiAttr:
     DEFAULT_BANK = 0
     DEFAULT_PATCH = 0
     DEFAULT_VELOCITY = 100
+    DEFAULT_ACCENT_VELOCITY = 127
     CHANNELS = [channel for channel in range(MAX_CHANNEL)]
     DRIVER = "dsound"
 
@@ -126,7 +128,7 @@ class IniAttr(str, Enum):
     MAIN_WINDOW = "MAIN_WINDOW"
     EVENT_WINDOW = "EVENT_WINDOW"
     PROJECT_FILE = "project_file"
-    PROJECT_TEMPLATE = "project_template"
+    PROJECT_TEMPLATE = "project_template.json"
     MAIN_WIN_SIZE = "main_win_size"
     MAIN_WIN_POS = "main_win_pos"
     EVENT_WIN_SIZE = "event_win_size"
@@ -232,16 +234,15 @@ DRUM_KIT = [
     "Mute Cuica",
     "Open Cuica",
     "Mute Triangle",
-    "Open Triangle"
+    "Open Triangle",
 ]
 
-DRUM_NAME_TO_PATCH = {name: patch for name, patch in zip(DRUM_KIT,
-                                                         [0] + list(range(35, 82)))}
+DRUM_NAME_TO_PATCH = {
+    name: patch for name, patch in zip(DRUM_KIT, [0] + list(range(35, 82)))
+}
 
 DRUM_PATCH_TO_NAME = {patch: name for name, patch in DRUM_NAME_TO_PATCH.items()}
 
 # print(f"class DrumPatch(int, Enum):")
 # for name, patch in DRUM_NAME_TO_PATCH.items():
 #     print(name.translate({32: "_", 45: "_"}).upper(), "=", patch)
-
-

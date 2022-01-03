@@ -52,13 +52,14 @@ from typing import List, Optional, Dict, Any
 
 from six import binary_type, iteritems, text_type
 
+from src.app.model.types import Channel
 from src.app.utils.logger import get_console_logger
 from src.app.model.bar import Bar
 from src.app.model.event import Event, Preset, EventType
 
 # Constants
 from src.app.utils.properties import MidiAttr
-from src.app.utils.units import unit2tick, beat2tick
+from src.app.utils.units import unit2tick, beat2tick, bar_length2tick
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
@@ -1678,8 +1679,10 @@ class Sequencer:
         self, time, channel, key, unit, bpm, velocity, source=-1, dest=-1, absolute=True
     ):
         if any(map(lambda x: x is None, [time, channel, key, unit, bpm, velocity])):
-            raise ValueError(f"Not all parameters defined "
-                             f"{[time, channel, key, unit, bpm, velocity]}")
+            raise ValueError(
+                f"Not all parameters defined "
+                f"{[time, channel, key, unit, bpm, velocity]}"
+            )
         evt = self._create_event(source, dest)
         duration = unit2tick(unit=unit, bpm=bpm) - 1
         fluid_event_note(evt, channel, key, velocity, duration)
@@ -1798,14 +1801,20 @@ class Sequencer:
                             time=time + bend.time,
                             channel=event.channel,
                             value=bend.value,
-                            dest=synth_seq_id
+                            dest=synth_seq_id,
                         )
                 case _:
                     raise ValueError(f"Event type {event.type} not supported")
 
-    def play_bar(self, synth: Synth, bar: Bar, bpm: float, start_tick: int = 0):
+    def play_bar(
+        self, synth: Synth, bar: Bar, bpm: int, start_tick: int = 0, repeat: int = 1
+    ):
         synth_seq_id = self.register_fluidsynth(synth)
-        current_tick: int = self.get_tick() + start_tick
-        for event in bar.events():
-            time = current_tick + beat2tick(beat=event.beat, bpm=bpm)
-            self.send_event(time=time, event=event, bpm=bpm, synth_seq_id=synth_seq_id)
+        offset = self.get_tick() + start_tick
+        for counter in range(repeat):
+            offset += counter * bar_length2tick(bar=bar, bpm=bpm)
+            for event in bar.events():
+                last_time = offset + beat2tick(beat=event.beat, bpm=bpm)
+                self.send_event(
+                    time=last_time, event=event, bpm=bpm, synth_seq_id=synth_seq_id
+                )

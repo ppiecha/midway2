@@ -15,6 +15,7 @@ from src.app.model.bar import Bar
 from src.app.model.composition import Composition
 from src.app.model.event import Event, Preset
 from src.app.model.loop import Loops, LoopType
+from src.app.model.types import Channel
 from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import MidiAttr, GuiAttr
 from src.app.utils.units import (
@@ -22,7 +23,7 @@ from src.app.utils.units import (
     bpm2time_scale,
     beat2tick,
     tick2second,
-    bpm2tempo,
+    bpm2tempo, bar_length2sec,
 )
 
 logger = get_console_logger(name=__name__, log_level=DEBUG)
@@ -117,22 +118,23 @@ class MidwaySynth(Synth):
             self.loop_player.stop()
 
     @staticmethod
-    def play_bar(bar: Bar, bpm: float):
+    def play_bar(
+        bar: Bar,
+        bpm: int,
+        channel: Channel = 0,
+        bank=MidiAttr.DEFAULT_BANK,
+        patch=MidiAttr.DEFAULT_PATCH,
+        repeat: int = 1
+    ):
         fs = Synth()
         sfid = fs.sfload(MidiAttr.DEFAULT_SF2)
-        fs.program_select(0, sfid, 0, 0)
+        fs.program_select(chan=channel, sfid=sfid, bank=bank, preset=patch)
         fs.start(driver=MidiAttr.DRIVER)
         sequencer = Sequencer(
             synth=fs, time_scale=bpm2time_scale(bpm=bpm), use_system_timer=False
         )
-        sequencer.play_bar(synth=fs, bar=bar, bpm=bpm)
-        end_tick = unit2tick(unit=bar.length(), bpm=bpm)
-        sec = tick2second(
-            tick=end_tick,
-            ticks_per_beat=MidiAttr.TICKS_PER_BEAT,
-            tempo=bpm2tempo(bpm=bpm),
-        )
-        sleep(sec)
+        sequencer.play_bar(synth=fs, bar=bar, bpm=bpm, repeat=repeat)
+        sleep(bar_length2sec(bar=bar, bpm=bpm) * repeat)
 
     def play_loop(
         self,

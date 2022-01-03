@@ -140,8 +140,9 @@ class Sequence(BaseModel):
     def from_num_of_bars(cls, num_of_bars: PositiveInt, meter: Meter = None):
         if meter is None:
             meter = Meter()
-        return cls.from_bars([Bar(meter=meter, bar_num=bar_num)
-                              for bar_num in range(num_of_bars)])
+        return cls.from_bars(
+            [Bar(meter=meter, bar_num=bar_num) for bar_num in range(num_of_bars)]
+        )
 
     @staticmethod
     def set_events_attr(events: List[Event], attr_val_map: Dict[str, Any]):

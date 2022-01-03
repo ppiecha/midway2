@@ -178,8 +178,13 @@ class RulerScene(GenericGridScene):
         self.setSceneRect(self.ruler.rect)
         self.addItem(self.ruler)
 
-    def add_note(self, bar: NonNegativeInt, beat: Beat, key: int,
-                 unit: NoteUnit = NoteUnit.EIGHTH) -> None:
+    def add_note(
+        self,
+        bar: NonNegativeInt,
+        beat: Beat,
+        key: int,
+        unit: NoteUnit = NoteUnit.EIGHTH,
+    ) -> None:
         meta_node = None
         if KEY_MAPPING[EventType.program] <= key <= KEY_MAPPING[EventType.controls]:
             meta_node = MetaNode(
@@ -217,7 +222,7 @@ class RulerScene(GenericGridScene):
                             pos=e.scenePos().x(), cell_width=KeyAttr.W_HEIGHT
                         ),
                         cell_unit=GuiAttr.GRID_DIV_UNIT,
-                        cell_width=KeyAttr.W_HEIGHT
+                        cell_width=KeyAttr.W_HEIGHT,
                     )
                     self.add_note(
                         bar=bar, beat=beat, key=e.scenePos().y(), unit=NoteUnit.EIGHTH
@@ -247,8 +252,8 @@ class Ruler(QGraphicsItem):
     def get_rect(self):
         meta_notes_height = 3 * KeyAttr.W_HEIGHT
         width = (
-                self.num_of_bars * GuiAttr.GRID_DIV_UNIT * KeyAttr.W_HEIGHT
-                + self.scroll_diff
+            self.num_of_bars * GuiAttr.GRID_DIV_UNIT * KeyAttr.W_HEIGHT
+            + self.scroll_diff
         )
         height = (
             (GuiAttr.RULER_HEIGHT + meta_notes_height)

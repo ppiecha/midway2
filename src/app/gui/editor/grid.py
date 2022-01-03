@@ -147,8 +147,13 @@ class GridScene(GenericGridScene):
             QBrush(self.mark_col),
         )
 
-    def add_note(self, bar_num: NonNegativeInt, beat: Beat, key: Key,
-                 unit: float = NoteUnit.EIGHTH) -> None:
+    def add_note(
+        self,
+        bar_num: NonNegativeInt,
+        beat: Beat,
+        key: Key,
+        unit: float = NoteUnit.EIGHTH,
+    ) -> None:
         note_node = NoteNode(
             channel=self.channel,
             grid_scene=self,
@@ -215,7 +220,7 @@ class GridScene(GenericGridScene):
                             pos=e.scenePos().x(), cell_width=KeyAttr.W_HEIGHT
                         ),
                         cell_unit=GuiAttr.GRID_DIV_UNIT,
-                        cell_width=KeyAttr.W_HEIGHT
+                        cell_width=KeyAttr.W_HEIGHT,
                     )
                     self.add_note(bar_num=bar, beat=beat, key=key, unit=8)
                     key.play_note_in_thread(secs=0.3)

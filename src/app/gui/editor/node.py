@@ -400,10 +400,13 @@ class NoteNode(Node):
 
     def set_pos(self):
         self.setPos(
-            bar_beat2pos(bar_beat=BarBeat(bar=self.bar_num, beat=self.event.beat),
-                         cell_unit=GuiAttr.GRID_DIV_UNIT,
-                         cell_width=KeyAttr.W_HEIGHT),
-            self.key.y_pos_black_key if isinstance(self.key, BlackKey)
+            bar_beat2pos(
+                bar_beat=BarBeat(bar=self.bar_num, beat=self.event.beat),
+                cell_unit=GuiAttr.GRID_DIV_UNIT,
+                cell_width=KeyAttr.W_HEIGHT,
+            ),
+            self.key.y_pos_black_key
+            if isinstance(self.key, BlackKey)
             else self.key.y_pos,
         )
 
@@ -479,9 +482,11 @@ class MetaNode(Node):
 
     def set_pos(self):
         self.setPos(
-            bar_beat2pos(bar_beat=BarBeat(bar=self.bar_num, beat=self.event.beat),
-                         cell_unit=GuiAttr.GRID_DIV_UNIT,
-                         cell_width=KeyAttr.W_HEIGHT),
+            bar_beat2pos(
+                bar_beat=BarBeat(bar=self.bar_num, beat=self.event.beat),
+                cell_unit=GuiAttr.GRID_DIV_UNIT,
+                cell_width=KeyAttr.W_HEIGHT,
+            ),
             self._key,
         )
 

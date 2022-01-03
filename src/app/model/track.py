@@ -60,9 +60,9 @@ class TrackVersion(BaseModel):
             return self.sequence
 
 
-class DrumTrackVersion(TrackVersion):
+class RhythmTrackVersion(TrackVersion):
     channel: Channel = MidiAttr.DRUM_CHANNEL
-    bank: MidiValue = MidiAttr.MAX_MIDI
+    bank: MidiValue = MidiAttr.DRUM_BANK
 
 
 class Track(BaseModel):
@@ -142,5 +142,5 @@ class Track(BaseModel):
                 return None
 
 
-class DrumTrack(Track):
-    versions: List[DrumTrackVersion]
+class RhythmDrumTrack(Track):
+    versions: List[RhythmTrackVersion]

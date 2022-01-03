@@ -170,7 +170,7 @@ class PianoRoll(QWidget):
     def num_of_bars(self, value) -> None:
         self.ruler_view.num_of_bars = value
         self.grid_view.num_of_bars = value
-        self.sequence.set_num_of_bars(value=value - 1)
+        self.sequence.set_num_of_bars(value=value)
         self.grid_view.horizontalScrollBar().setValue(1)
         self.grid_view.horizontalScrollBar().setValue(0)
 

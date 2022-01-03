@@ -2,7 +2,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Optional, List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, NonNegativeFloat
 
 from src.app.mingus.containers.note import Note
 from src.app.model.control import MidiValue, Control, PitchBendChain, MidiBankValue
@@ -28,7 +28,7 @@ class Event(BaseModel):
     channel: Optional[Channel]
     beat: Beat
     pitch: Optional[MidiValue]
-    unit: Optional[NoteUnit]
+    unit: Optional[NonNegativeFloat]
     velocity: Optional[MidiValue]
     preset: Optional[Preset]
     controls: Optional[List[Control]]

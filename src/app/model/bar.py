@@ -27,6 +27,9 @@ class Bar(BaseModel):
     bar_num: Optional[NonNegativeInt]
     bar: List[Event] = []
 
+    def set_pitch(self):
+        pass
+
     def length(self) -> NonNegativeFloat:
         return self.meter.length()
 
@@ -35,7 +38,9 @@ class Bar(BaseModel):
 
     def add_event(self, event: Event) -> None:
         if event.beat >= self.length():
-            raise BeatOutsideOfBar(f"Item outside of bar range {event.beat}")
+            raise BeatOutsideOfBar(
+                f"Item outside of bar range {event.beat}/{self.length()}"
+            )
         self.bar.append(event)
         self.bar.sort(key=lambda e: (e.beat, e.type))
 

@@ -34,13 +34,14 @@ class PitchBendChain(BaseModel):
     __root__: List[PitchBend]
 
     @classmethod
-    def gen_chain(cls,
-                  bend_fun: Callable,
-                  bpm: Bpm,
-                  duration: NoteUnit = NoteUnit.EIGHTH,
-                  start_time: NoteUnit = None,
-                  stop_time: NoteUnit = None,
-                  ) -> PitchBendChain:
+    def gen_chain(
+        cls,
+        bend_fun: Callable,
+        bpm: Bpm,
+        duration: NoteUnit = NoteUnit.EIGHTH,
+        start_time: NoteUnit = None,
+        stop_time: NoteUnit = None,
+    ) -> PitchBendChain:
         max_tick = unit2tick(unit=duration, bpm=bpm) + 1
         start_tick = unit2tick(unit=nvn(start_time, 0), bpm=bpm)
         stop_tick = unit2tick(unit=duration - nvn(stop_time, 0), bpm=bpm)
@@ -53,17 +54,23 @@ class PitchBendChain(BaseModel):
         bend_value_max = max([abs(value) for value in bend_values_norm])
         logger.debug(f"bend_value_max {bend_value_max}")
         if bend_value_max > 0:
-            bend_values_norm = [val/bend_value_max for val in bend_values_norm]
+            bend_values_norm = [val / bend_value_max for val in bend_values_norm]
         logger.debug(f"bend_values_norm {bend_values_norm}")
-        bend_values = [(((val_norm + 1) * PitchBendValues.NORM) -
-                        1 if val_norm == 1 else 0)
-                       for val_norm in bend_values_norm]
+        bend_values = [
+            (((val_norm + 1) * PitchBendValues.NORM) - 1 if val_norm == 1 else 0)
+            for val_norm in bend_values_norm
+        ]
         logger.debug(f"bend_values {bend_values}")
-        chain = [PitchBend(time=time, value=bend)
-                 for time, bend in zip(timeline, bend_values)]
-        chain = [pitch_bend if start_tick < pitch_bend.time < stop_tick
-                 else PitchBend(time=pitch_bend.time, value=PitchBendValues.NORM)
-                 for pitch_bend in chain]
+        chain = [
+            PitchBend(time=time, value=bend)
+            for time, bend in zip(timeline, bend_values)
+        ]
+        chain = [
+            pitch_bend
+            if start_tick < pitch_bend.time < stop_tick
+            else PitchBend(time=pitch_bend.time, value=PitchBendValues.NORM)
+            for pitch_bend in chain
+        ]
         logger.debug(f"chain {chain}")
         return cls(__root__=chain)
 
@@ -72,11 +79,11 @@ class PitchBendChain(BaseModel):
         if x == 0:
             return 0
         else:
-            return -(1/x)
+            return -(1 / x)
 
     @staticmethod
     def fun_parabola_neq(x: float) -> float:
-        return -4*x*(x-1)
+        return -4 * x * (x - 1)
 
 
 class ControlClass(BaseModel):

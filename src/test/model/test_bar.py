@@ -172,8 +172,8 @@ def test_play_pitch_bend_parabola(bar0, note4, capsys, program_guitar, bpm):
         bend_fun=PitchBendChain.fun_parabola_neq,
         bpm=bpm,
         duration=NoteUnit.WHOLE,
-        stop_time=None
-        )
+        stop_time=None,
+    )
     event0 = Event(
         type=EventType.pitch_bend,
         channel=0,
@@ -186,13 +186,15 @@ def test_play_pitch_bend_parabola(bar0, note4, capsys, program_guitar, bpm):
 
 def test_play_pitch_bend(bar_c_major, capsys, program_guitar):
     bpm = 30
-    pitch_bend_chain1 = PitchBendChain.gen_chain(bend_fun=PitchBendChain.fun_slide_up,
-                                                 bpm=bpm)
-    pitch_bend_chain2 = PitchBendChain.gen_chain(bend_fun=PitchBendChain.fun_parabola_neq,
-                                                 bpm=bpm,
-                                                 duration=NoteUnit.EIGHTH,
-                                                 stop_time=NoteUnit.THIRTY_SECOND
-                                                 )
+    pitch_bend_chain1 = PitchBendChain.gen_chain(
+        bend_fun=PitchBendChain.fun_slide_up, bpm=bpm
+    )
+    pitch_bend_chain2 = PitchBendChain.gen_chain(
+        bend_fun=PitchBendChain.fun_parabola_neq,
+        bpm=bpm,
+        duration=NoteUnit.EIGHTH,
+        stop_time=NoteUnit.THIRTY_SECOND,
+    )
     event0 = Event(
         type=EventType.pitch_bend,
         channel=0,
@@ -211,7 +213,7 @@ def test_play_pitch_bend(bar_c_major, capsys, program_guitar):
         beat=0.5,
         pitch_bend_chain=pitch_bend_chain2,
     )
-    print('pitch bend event', event1)
+    print("pitch bend event", event1)
     bar_c_major.add_events(events=[event0, event1, event2, program_guitar])
     MidwaySynth.play_bar(bar=bar_c_major, bpm=bpm)
 
