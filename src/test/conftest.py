@@ -42,32 +42,32 @@ def bar3() -> Bar:
 
 @pytest.fixture
 def note0() -> Event:
-    return Event(type=EventType.note, channel=0, beat=0, pitch=79, unit=8)
+    return Event(type=EventType.NOTE, channel=0, beat=0, pitch=79, unit=8)
 
 
 @pytest.fixture
 def note1() -> Event:
     return Event(
-        type=EventType.note, channel=0, beat=0.125, pitch=80, unit=NoteUnit.EIGHTH
+        type=EventType.NOTE, channel=0, beat=0.125, pitch=80, unit=NoteUnit.EIGHTH
     )
 
 
 @pytest.fixture
 def note2() -> Event:
     return Event(
-        type=EventType.note, channel=0, beat=0.250, pitch=81, unit=NoteUnit.QUARTER
+        type=EventType.NOTE, channel=0, beat=0.250, pitch=81, unit=NoteUnit.QUARTER
     )
 
 
 @pytest.fixture
 def note3() -> Event:
-    return Event(type=EventType.note, channel=0, beat=0.5, pitch=81, unit=NoteUnit.HALF)
+    return Event(type=EventType.NOTE, channel=0, beat=0.5, pitch=81, unit=NoteUnit.HALF)
 
 
 @pytest.fixture
 def note4() -> Event:
     return Event(
-        type=EventType.note,
+        type=EventType.NOTE,
         channel=0,
         beat=0,
         pitch=50,
@@ -79,7 +79,7 @@ def note4() -> Event:
 @pytest.fixture
 def program0() -> Event:
     return Event(
-        type=EventType.program,
+        type=EventType.PROGRAM,
         channel=0,
         beat=0,
         # preset=Preset(sf_name='test', bank=0, patch=0),
@@ -90,7 +90,7 @@ def program0() -> Event:
 @pytest.fixture
 def program_guitar() -> Event:
     return Event(
-        type=EventType.program,
+        type=EventType.PROGRAM,
         channel=0,
         beat=0,
         preset=Preset(sf_name=MidiAttr.DEFAULT_SF2, bank=0, patch=26),
@@ -100,7 +100,7 @@ def program_guitar() -> Event:
 @pytest.fixture
 def program_bass() -> Event:
     return Event(
-        type=EventType.program,
+        type=EventType.PROGRAM,
         channel=0,
         beat=0,
         preset=Preset(sf_name=MidiAttr.DEFAULT_SF2, bank=0, patch=33),
@@ -110,7 +110,7 @@ def program_bass() -> Event:
 @pytest.fixture
 def program_organ() -> Event:
     return Event(
-        type=EventType.program,
+        type=EventType.PROGRAM,
         channel=0,
         beat=0,
         preset=Preset(sf_name=MidiAttr.DEFAULT_SF2, bank=0, patch=5),
@@ -120,7 +120,7 @@ def program_organ() -> Event:
 @pytest.fixture
 def control0() -> Event:
     return Event(
-        type=EventType.controls,
+        type=EventType.CONTROLS,
         channel=0,
         beat=0,
         controls=[Control(class_=Volume(), value=100)],
@@ -130,7 +130,7 @@ def control0() -> Event:
 @pytest.fixture
 def control1() -> Event:
     return Event(
-        type=EventType.controls,
+        type=EventType.CONTROLS,
         channel=0,
         beat=0.25,
         controls=[Control(class_=Expression(), value=100)],

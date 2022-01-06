@@ -1769,7 +1769,7 @@ class Sequencer:
     def send_event(self, time: int, event: Event, bpm: float, synth_seq_id):
         if event.active:
             match event.type:
-                case EventType.note:
+                case EventType.NOTE:
                     self.note(
                         time=time,
                         channel=event.channel,
@@ -1779,14 +1779,14 @@ class Sequencer:
                         velocity=event.velocity,
                         dest=synth_seq_id,
                     )
-                case EventType.program:
+                case EventType.PROGRAM:
                     self.program_change(
                         time=time,
                         channel=event.channel,
                         preset=event.preset,
                         dest=synth_seq_id,
                     )
-                case EventType.controls:
+                case EventType.CONTROLS:
                     for control in event.controls:
                         self.control_change(
                             time=time,
@@ -1795,7 +1795,7 @@ class Sequencer:
                             value=control.value,
                             dest=synth_seq_id,
                         )
-                case EventType.pitch_bend:
+                case EventType.PITCH_BEND:
                     for bend in event.pitch_bend_chain.__root__:
                         self.pitch_bend(
                             time=time + bend.time,

@@ -121,6 +121,10 @@ def bpm2time_scale(bpm: float):
 
 
 def bar_beat2pos(bar_beat: BarBeat, cell_unit: Unit, cell_width: int) -> float:
+    if bar_beat.bar is None or bar_beat.beat is None:
+        raise ValueError(
+            f"Incomplete bar/beat definition " f"{bar_beat.bar}/{bar_beat.beat}"
+        )
     return (bar_beat.bar + bar_beat.beat) * cell_unit * cell_width
 
 

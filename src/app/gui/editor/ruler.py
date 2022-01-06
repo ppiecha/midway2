@@ -12,12 +12,13 @@ from pydantic import NonNegativeInt
 
 from src.app.gui.editor.grid import GridView
 from src.app.gui.editor.generic_grid import GenericGridScene
+from src.app.gui.editor.keyboard import Keyboard
 from src.app.gui.editor.node import MetaNode
 from src.app.gui.widgets import GraphicsView
 from src.app.utils.properties import KeyAttr, Color, GuiAttr
 from src.app.utils.logger import get_console_logger
 from src.app.mingus.core import value
-from src.app.model.event import EventType, KEY_MAPPING
+from src.app.model.event import EventType, MetaKeyPos
 from src.app.model.types import Unit, Channel, Beat, NoteUnit
 from src.app.model.sequence import Sequence
 from src.app.utils.units import pos2bar_beat, round2cell
@@ -99,32 +100,30 @@ class Header(QGraphicsItem):
             pen.setWidth(1)
             painter.setBrush(meta_notes_brush)
             painter.drawRect(
-                0, KEY_MAPPING[EventType.program], KeyAttr.W_WIDTH, 3 * KeyAttr.W_HEIGHT
+                0, MetaKeyPos.PROGRAM, KeyAttr.W_WIDTH, 3 * KeyAttr.W_HEIGHT
             )
             painter.drawLine(
                 0,
-                KEY_MAPPING[EventType.controls],
+                MetaKeyPos.CONTROLS,
                 self.rect.width(),
-                KEY_MAPPING[EventType.controls],
+                MetaKeyPos.CONTROLS,
             )
             painter.drawLine(
                 0,
-                KEY_MAPPING[EventType.pitch_bend],
+                MetaKeyPos.PITCH_BEND,
                 self.rect.width(),
-                KEY_MAPPING[EventType.pitch_bend],
+                MetaKeyPos.PITCH_BEND,
             )
             painter.setPen(Color.RULER_TEXT)
             painter.drawText(
-                QRect(
-                    0, KEY_MAPPING[EventType.program], KeyAttr.W_WIDTH, KeyAttr.W_HEIGHT
-                ),
+                QRect(0, MetaKeyPos.PROGRAM, KeyAttr.W_WIDTH, KeyAttr.W_HEIGHT),
                 Qt.AlignHCenter | Qt.AlignVCenter | Qt.TextSingleLine,
                 "Program",
             )
             painter.drawText(
                 QRect(
                     0,
-                    KEY_MAPPING[EventType.controls],
+                    MetaKeyPos.CONTROLS,
                     KeyAttr.W_WIDTH,
                     KeyAttr.W_HEIGHT,
                 ),
@@ -134,7 +133,7 @@ class Header(QGraphicsItem):
             painter.drawText(
                 QRect(
                     0,
-                    KEY_MAPPING[EventType.pitch_bend],
+                    MetaKeyPos.PITCH_BEND,
                     KeyAttr.W_WIDTH,
                     KeyAttr.W_HEIGHT,
                 ),
@@ -177,46 +176,28 @@ class RulerScene(GenericGridScene):
         self.ruler = Ruler(channel=channel, num_of_bars=num_of_bars, parent=self)
         self.setSceneRect(self.ruler.rect)
         self.addItem(self.ruler)
+        self._keyboard = Keyboard(channel=channel)
+
+    @property
+    def keyboard(self):
+        return self._keyboard
 
     def add_note(
         self,
         bar: NonNegativeInt,
         beat: Beat,
-        key: int,
-        unit: NoteUnit = NoteUnit.EIGHTH,
+        key_pos: int,
     ) -> None:
-        meta_node = None
-        if KEY_MAPPING[EventType.program] <= key <= KEY_MAPPING[EventType.controls]:
-            meta_node = MetaNode(
-                event_type=EventType.program,
-                channel=self.channel,
-                grid_scene=self,
-                bar_num=bar,
-                beat=beat,
-            )
-        elif (
-            KEY_MAPPING[EventType.controls] <= key <= KEY_MAPPING[EventType.pitch_bend]
-        ):
-            meta_node = MetaNode(
-                event_type=EventType.controls,
-                channel=self.channel,
-                grid_scene=self,
-                bar_num=bar,
-                beat=beat,
-            )
-        if meta_node:
-            self._add_note(meta_node=meta_node, including_sequence=True)
+        key = self.keyboard.get_key_by_pos(position=key_pos)
+        meta_node = MetaNode(
+            channel=self.channel, grid_scene=self, bar_num=bar, beat=beat, key=key
+        )
+        self._add_note(meta_node=meta_node, including_sequence=True)
 
     def mousePressEvent(self, e: QGraphicsSceneMouseEvent):
-        # super().mousePressEvent(e)
-        # logger.debug(f"ruler {e.pos()}")
         if not e.isAccepted():
-            # logger.debug("meta scene not acceted")
             if e.button() == Qt.LeftButton:
                 if e.modifiers() == Qt.NoModifier:
-                    # bar, beat = self.x2bar_beat(
-                    #     x=floor(e.scenePos().x() / KeyAttr.W_HEIGHT) * KeyAttr._W_HEIGHT
-                    # )
                     bar, beat = pos2bar_beat(
                         pos=round2cell(
                             pos=e.scenePos().x(), cell_width=KeyAttr.W_HEIGHT
@@ -225,9 +206,10 @@ class RulerScene(GenericGridScene):
                         cell_width=KeyAttr.W_HEIGHT,
                     )
                     self.add_note(
-                        bar=bar, beat=beat, key=e.scenePos().y(), unit=NoteUnit.EIGHTH
+                        bar=bar,
+                        beat=beat,
+                        key_pos=e.scenePos().y(),
                     )
-                    # key.play_note_in_thread(secs=0.3)
             elif e.button() == Qt.RightButton:
                 for meta_node in self.notes(e.scenePos()):
                     self.delete_node(meta_node=meta_node, hard_delete=True)
@@ -313,9 +295,9 @@ class Ruler(QGraphicsItem):
         painter.setPen(pen)
         painter.drawLine(
             0,
-            KEY_MAPPING[EventType.program],
+            MetaKeyPos.PROGRAM,
             self.rect.width() - self.scroll_diff,
-            KEY_MAPPING[EventType.program],
+            MetaKeyPos.PROGRAM,
         )
         if self.show_meta_notes:
             pen.setWidth(1)
@@ -328,15 +310,15 @@ class Ruler(QGraphicsItem):
             )
             painter.drawLine(
                 0,
-                KEY_MAPPING[EventType.controls],
+                MetaKeyPos.CONTROLS,
                 self.rect.width() - self.scroll_diff,
-                KEY_MAPPING[EventType.controls],
+                MetaKeyPos.CONTROLS,
             )
             painter.drawLine(
                 0,
-                KEY_MAPPING[EventType.pitch_bend],
+                MetaKeyPos.PITCH_BEND,
                 self.rect.width() - self.scroll_diff,
-                KEY_MAPPING[EventType.pitch_bend],
+                MetaKeyPos.PITCH_BEND,
             )
         for tick in range(self.num_of_bars * int(GuiAttr.GRID_DIV_UNIT)):
             x = (tick + 1) * KeyAttr.W_HEIGHT

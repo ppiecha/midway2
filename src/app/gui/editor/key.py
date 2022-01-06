@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 from math import floor
 from typing import Union, Optional
@@ -10,6 +11,9 @@ from PySide6.QtWidgets import (
     QGraphicsSceneMouseEvent,
 )
 
+from src.app.model.event import Event, EventType
+from src.app.model.sequence import Sequence
+from src.app.model.types import Channel
 from src.app.utils.properties import KeyAttr, Color, MidiAttr
 from src.app.utils.logger import get_console_logger
 from src.app.mingus.containers.note import Note
@@ -19,13 +23,20 @@ logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 GraphicsItem = Union[QGraphicsItem, type(None)]
 
 
-class Key(QGraphicsItem):
-    def __init__(self, parent, note: int, callback: callable):
-        super().__init__(parent=parent)
+class Key:
+    def __init__(self, event_type: EventType, channel: Channel = None):
+        self.event = Event(type=event_type, channel=channel)
+
+
+class PianoKey(QGraphicsItem, Key):
+    def __init__(self, parent, note_pitch: int, callback: callable):
+        QGraphicsItem.__init__(self, parent=parent)
         self.keyboard = parent
-        self.note: Note = Note().from_int(integer=note)
-        self.note.channel = self.keyboard.channel
-        self.note.velocity = MidiAttr.DEFAULT_VELOCITY
+        Key.__init__(self, event_type=EventType.NOTE, channel=self.keyboard.channel)
+        Sequence.set_events_attr(
+            events=[self.event],
+            attr_val_map={"pitch": note_pitch, "velocity": MidiAttr.DEFAULT_VELOCITY},
+        )
         self.color_on: Optional[QColor] = None
         self.color_off: Optional[QColor] = None
         self.color_pressed: Optional[QColor] = None
@@ -33,6 +44,10 @@ class Key(QGraphicsItem):
         self.callback = callback
         self.setAcceptHoverEvents(True)
         # self.setAcceptTouchEvents(True)
+
+    @property
+    def note(self) -> Note:
+        return self.event.note()
 
     def __str__(self):
         return str(self.note)
@@ -96,12 +111,9 @@ class Key(QGraphicsItem):
         self.keyboard.synth.noteoff(chan=self.note.channel, key=int(self.note))
 
 
-class EmptyKey(Key):
-    def __init__(
-        self, parent, note: int, y_pos: int, callback: callable, keyboard_num: int
-    ):
-        super().__init__(note=note, parent=parent, callback=callback)
-        self.keyboard_num = keyboard_num
+class EmptyPianoKey(PianoKey):
+    def __init__(self, parent, note_pitch: int, y_pos: int, callback: callable):
+        super().__init__(note_pitch=note_pitch, parent=parent, callback=callback)
         self.rect = QRect(QPoint(0, 0), QSize(KeyAttr.W_WIDTH, KeyAttr.W_HEIGHT))
         self.color = Color.WK_OFF
         self.color_on = Color.WK_OFF
@@ -124,19 +136,19 @@ class EmptyKey(Key):
         painter.fillRect(self.rect, self.color)
 
 
-class WhiteKey(Key):
-    def __init__(
-        self, parent, note: int, y_pos: int, callback: callable, keyboard_num: int
-    ):
-        super().__init__(note=note, parent=parent, callback=callback)
-        self.keyboard_num = keyboard_num
+class WhitePianoKey(PianoKey):
+    def __init__(self, parent, note_pitch: int, callback: callable):
+        super().__init__(note_pitch=note_pitch, parent=parent, callback=callback)
         self.rect = QRect(QPoint(0, 0), QSize(KeyAttr.W_WIDTH, KeyAttr.W_HEIGHT))
         self.color = Color.WK_OFF
         self.color_on = Color.WK_ON
         self.color_off = Color.WK_OFF
         self.color_pressed = Color.WK_PRESSED
-        self.setPos(QPoint(0, y_pos))
-        self.y_pos = y_pos
+        self.setPos(QPoint(0, self.position))
+
+    @property
+    def position(self) -> int:
+        return self.keyboard.white_key_position(pitch=self.event.pitch)
 
     def boundingRect(self):
         return self.rect
@@ -152,18 +164,25 @@ class WhiteKey(Key):
         )
 
 
-class BlackKey(Key):
-    def __init__(self, parent, note: int, y_pos: int, callback: callable):
-        super().__init__(note=note, parent=parent, callback=callback)
+class BlackPianoKey(PianoKey):
+    def __init__(self, parent, note_pitch: int, callback: callable):
+        super().__init__(note_pitch=note_pitch, parent=parent, callback=callback)
         self.rect = QRect(QPoint(0, 0), QSize(KeyAttr.B_WIDTH, KeyAttr.B_HEIGHT))
         self.color = Color.BK_OFF
         self.color_on = Color.BK_ON
         self.color_off = Color.BK_OFF
         self.color_pressed = Color.BK_PRESSED
-        self.setPos(QPoint(0, y_pos))
-        self.y_pos = y_pos
-        self.y_pos_black_key = floor(y_pos / KeyAttr.W_HEIGHT) * KeyAttr.W_HEIGHT + (
-            KeyAttr.W_HEIGHT / 2
+        self.setPos(QPoint(0, self.position))
+
+    @property
+    def position(self) -> int:
+        return self.keyboard.black_key_position(pitch=self.event.pitch)
+
+    @property
+    def black_key_position(self) -> int:
+        return int(
+            floor(self.position / KeyAttr.W_HEIGHT) * KeyAttr.W_HEIGHT
+            + (KeyAttr.W_HEIGHT / 2)
         )
 
     def boundingRect(self):

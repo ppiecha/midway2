@@ -57,5 +57,5 @@ def test_play_rhythm_pattern(capsys):
         bpm=120,
         channel=MidiAttr.DRUM_CHANNEL,
         bank=MidiAttr.DRUM_BANK,
-        repeat=4
+        repeat=4,
     )

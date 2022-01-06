@@ -78,7 +78,6 @@ class KeyAttr(int, Enum):
     W_HEIGHT = 14
     B_WIDTH = 24
     B_HEIGHT = 8
-    WHITE_KEY_COUNT = int((MAX - MIN + 1) / 12 * 7)
 
 
 class Color:

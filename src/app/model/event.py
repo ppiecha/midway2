@@ -17,16 +17,23 @@ class Preset(BaseModel):
 
 
 class EventType(str, Enum):
-    note = "3-note"
-    program = "0-program"
-    controls = "1-controls"
-    pitch_bend = "2-pitch_end"
+    NOTE = "3-note"
+    PROGRAM = "0-program"
+    CONTROLS = "1-controls"
+    PITCH_BEND = "2-pitch_end"
+
+
+class MetaKeyPos(int, Enum):
+    PROGRAM = GuiAttr.RULER_HEIGHT
+    CONTROLS = GuiAttr.RULER_HEIGHT + KeyAttr.W_HEIGHT
+    PITCH_BEND = GuiAttr.RULER_HEIGHT + 2 * KeyAttr.W_HEIGHT
+    MAX = GuiAttr.RULER_HEIGHT + 3 * KeyAttr.W_HEIGHT
 
 
 class Event(BaseModel):
     type: EventType
     channel: Optional[Channel]
-    beat: Beat
+    beat: Optional[Beat]
     pitch: Optional[MidiValue]
     unit: Optional[NonNegativeFloat]
     velocity: Optional[MidiValue]
@@ -42,26 +49,22 @@ class Event(BaseModel):
             return self.pitch
 
     def note(self) -> Note:
-        if self.type != EventType.note:
+        if self.type != EventType.NOTE:
             raise ValueError(f"Wrong event type {self.type}. It must be a note")
-        return Note().from_int(int(self))
+        note = Note().from_int(int(self))
+        note.channel = self.channel
+        note.velocity = self.velocity
+        return note
 
     @classmethod
     def from_note(
         cls, note: Note, channel: Channel, beat: Beat, unit: Unit, velocity: MidiValue
     ) -> Event:
         return Event(
-            type=EventType.note,
+            type=EventType.NOTE,
             channel=channel,
             beat=beat,
             unit=unit,
             pitch=int(note),
             velocity=velocity,
         )
-
-
-KEY_MAPPING = {
-    EventType.program: GuiAttr.RULER_HEIGHT,
-    EventType.controls: GuiAttr.RULER_HEIGHT + KeyAttr.W_HEIGHT,
-    EventType.pitch_bend: GuiAttr.RULER_HEIGHT + 2 * KeyAttr.W_HEIGHT,
-}

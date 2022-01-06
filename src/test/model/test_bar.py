@@ -77,7 +77,7 @@ def test_add_note(bar0, note0, capsys):
     for note in b0:
         print(note)
         assert isinstance(note, Event)
-        assert note.type == EventType.note
+        assert note.type == EventType.NOTE
 
 
 def test_add_two_notes(bar0, note0, note1, bar_result):
@@ -175,7 +175,7 @@ def test_play_pitch_bend_parabola(bar0, note4, capsys, program_guitar, bpm):
         stop_time=None,
     )
     event0 = Event(
-        type=EventType.pitch_bend,
+        type=EventType.PITCH_BEND,
         channel=0,
         beat=0,
         pitch_bend_chain=pbc,
@@ -196,19 +196,19 @@ def test_play_pitch_bend(bar_c_major, capsys, program_guitar):
         stop_time=NoteUnit.THIRTY_SECOND,
     )
     event0 = Event(
-        type=EventType.pitch_bend,
+        type=EventType.PITCH_BEND,
         channel=0,
         beat=0.125,
         pitch_bend_chain=pitch_bend_chain2,
     )
     event1 = Event(
-        type=EventType.pitch_bend,
+        type=EventType.PITCH_BEND,
         channel=0,
         beat=0.25,
         pitch_bend_chain=pitch_bend_chain1,
     )
     event2 = Event(
-        type=EventType.pitch_bend,
+        type=EventType.PITCH_BEND,
         channel=0,
         beat=0.5,
         pitch_bend_chain=pitch_bend_chain2,
@@ -225,11 +225,11 @@ def test_remove_events_by_type_notes(
     assert len(b0) == 6
     b0.remove_events([note2, note3])
     assert len(b0) == 4
-    b0.remove_events_by_type(EventType.controls)
+    b0.remove_events_by_type(EventType.CONTROLS)
     assert len(b0) == 3
-    b0.remove_events_by_type(EventType.program)
+    b0.remove_events_by_type(EventType.PROGRAM)
     assert list(b0.events()) == two_notes
-    b0.remove_events_by_type(EventType.note)
+    b0.remove_events_by_type(EventType.NOTE)
     assert len(b0) == 0
 
 
@@ -237,7 +237,7 @@ def test_play_bar_changing_programs(bar_c_major, capsys):
     bar = Bar(bar_num=0)
     for index, event in enumerate(bar_c_major):
         prog_event = Event(
-            type=EventType.program,
+            type=EventType.PROGRAM,
             channel=0,
             beat=event.beat,
             preset=Preset(sf_name=MidiAttr.DEFAULT_SF2, bank=0, patch=index),
@@ -247,7 +247,7 @@ def test_play_bar_changing_programs(bar_c_major, capsys):
     bar = Bar(bar_num=0)
     for index, event in enumerate(bar_c_major):
         prog_event = Event(
-            type=EventType.program,
+            type=EventType.PROGRAM,
             channel=0,
             beat=event.beat,
             preset=Preset(sf_name=MidiAttr.DEFAULT_SF2, bank=0, patch=index + 64),

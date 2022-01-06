@@ -100,12 +100,12 @@ class Pattern(BaseModel):
                 if element.type != PatternElementType.pause:
                     if not element.chord:
                         events = [
-                            Event(type=EventType.note, beat=last_beat, unit=duration)
+                            Event(type=EventType.NOTE, beat=last_beat, unit=duration)
                         ]
                     else:
                         events = [
                             Event(
-                                type=EventType.note,
+                                type=EventType.NOTE,
                                 beat=last_beat,
                                 unit=duration,
                                 pitch=chord_item.pitch,
@@ -138,7 +138,7 @@ class Rhythm:
         logger.debug(f"timeline {timeline}")
         note_duration = note_duration or note_unit
         notes = [
-            Event(type=EventType.note, beat=beat, unit=note_duration)
+            Event(type=EventType.NOTE, beat=beat, unit=note_duration)
             for beat in timeline
         ]
         logger.debug(f"notes {notes}")

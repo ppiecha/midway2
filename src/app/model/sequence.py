@@ -1,13 +1,19 @@
 from __future__ import annotations
 import copy
-from typing import Dict, Union, Optional, List, Any
+from typing import Dict, Union, Optional, List, Any, NamedTuple
 
 from pydantic import PositiveInt, BaseModel, NonNegativeInt, validator
 
 from src.app.model.bar import Bar, Meter
 from src.app.model.event import Event, EventType
+from src.app.utils.units import BarBeat
 
 _bars = Dict[int, Union[Bar, type(None)]]
+
+
+class BarNumEvent(NamedTuple):
+    bar_num: NonNegativeInt
+    event: Event
 
 
 class Sequence(BaseModel):
@@ -150,3 +156,32 @@ class Sequence(BaseModel):
             for attr, value in attr_val_map.items():
                 if hasattr(event, attr):
                     setattr(event, attr, value)
+
+    def get_moved_event(
+        self, bar_event: BarNumEvent, beat_diff: float, pitch_diff: int
+    ) -> BarNumEvent:
+        event = bar_event.event.copy(deep=True)
+        event.pitch += pitch_diff
+        bar_num = bar_event.bar_num
+        moved_beat = event.beat + beat_diff
+        if moved_beat >= self.bars[bar_event.bar_num].length():
+            if bar_num + 1 < self.num_of_bars():
+                bar_num += 1
+                event.beat = moved_beat - self.bars[bar_event.bar_num].length()
+        elif moved_beat < 0:
+            if bar_num - 1 >= 0:
+                bar_num -= 1
+                event.beat = self.bars[bar_event.bar_num].length() + beat_diff
+        else:
+            event.beat = moved_beat
+        return BarNumEvent(bar_num=bar_num, event=event)
+
+    def move_event(
+        self, bar_event: BarNumEvent, beat_diff: float = 0.0, pitch_diff: int = 0
+    ) -> BarNumEvent:
+        moved_event = self.get_moved_event(
+            bar_event=bar_event, beat_diff=beat_diff, pitch_diff=pitch_diff
+        )
+        self.remove_event(bar_num=bar_event.bar_num, event=bar_event.event)
+        self.add_event(bar_num=moved_event.bar_num, event=moved_event.event)
+        return moved_event

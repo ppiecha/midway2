@@ -9,7 +9,7 @@ from PySide6.QtWidgets import QWidget, QBoxLayout
 
 from src.app.gui.menu import Action
 from src.app.gui.editor.grid import GridView
-from src.app.gui.editor.keyboard import KeyboardView
+from src.app.gui.editor.piano_keyboard import PianoKeyboardView
 from src.app.gui.editor.ruler import RulerView, HeaderView
 from src.app.gui.widgets import Box
 from src.app.utils.logger import get_console_logger
@@ -52,7 +52,7 @@ class PianoRoll(QWidget):
         )
         self.grid_view.verticalScrollBar().valueChanged.connect(self.on_change_ver)
         self.grid_view.horizontalScrollBar().valueChanged.connect(self.on_change_hor)
-        self.keyboard = KeyboardView(
+        self.keyboard = PianoKeyboardView(
             channel=self.channel, callback=self.grid_view.mark, synth=synth
         )
         self.keyboard.verticalScrollBar().valueChanged.connect(self.on_change_ver)

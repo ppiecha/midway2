@@ -45,7 +45,7 @@ class TrackVersion(BaseModel):
             if bars:
                 first_bar, *rest = bars
                 event = Event(
-                    type=EventType.program,
+                    type=EventType.PROGRAM,
                     channel=self.channel,
                     beat=0,
                     preset=Preset(

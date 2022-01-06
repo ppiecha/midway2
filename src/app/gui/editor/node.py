@@ -11,17 +11,18 @@ from PySide6.QtWidgets import (
     QGraphicsSceneHoverEvent,
     QGraphicsItemGroup,
 )
-from pydantic import NonNegativeInt
+from pydantic import NonNegativeInt, NonNegativeFloat
 
+from src.app.gui.editor.keyboard import Keyboard
+from src.app.model.sequence import Sequence, BarNumEvent
 from src.app.utils.properties import Color, KeyAttr, GuiAttr
 from src.app.utils.units import bar_beat2pos, BarBeat
 
 if TYPE_CHECKING:
     from src.app.gui.editor.generic_grid import GenericGridScene
-from src.app.gui.editor.key import Key, BlackKey
+from src.app.gui.editor.key import PianoKey, BlackPianoKey, Key
 from src.app.utils.logger import get_console_logger
-from src.app.mingus.core import value
-from src.app.model.event import Event, EventType, KEY_MAPPING
+from src.app.model.event import Event, EventType, MetaKeyPos
 from src.app.model.types import Channel, Beat, NoteUnit
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
@@ -36,6 +37,8 @@ class Node(QGraphicsItem):
         grid_scene: GenericGridScene,
         bar_num: NonNegativeInt,
         beat: Beat,
+        key: Key,
+        unit: NoteUnit,
         color: QColor = Color.NODE_START,
         parent=None,
         is_temporary: bool = False,
@@ -53,7 +56,9 @@ class Node(QGraphicsItem):
         self._channel = channel
         self._bar_num: NonNegativeInt = bar_num
         self._beat = beat
-        self._event: Optional[Event] = None
+        key.event.beat = beat
+        self._key = key
+        self._unit = unit
         self.is_moving: bool = is_temporary
         self.is_resizing: bool = False
         self.is_temporary: bool = is_temporary
@@ -111,18 +116,33 @@ class Node(QGraphicsItem):
         self._is_copying = value
 
     @property
-    def event(self):
-        return self._event
+    def key(self) -> Key:
+        return self._key
+
+    @key.setter
+    def key(self, key_: Key):
+        Sequence.set_events_attr(
+            events=[self.event],
+            attr_val_map={"beat": self.beat,
+                          "unit": self.unit,
+                          "pitch": self.event.pitch},
+        )
+        self._key = key_
+        # self.event = Event(
+        #     pitch=int(key_.note),
+        #     channel=key_.note.channel,
+        #     beat=self.beat,
+        #     unit=self.unit,
+        # )
+        self.set_pos()
+
+    @property
+    def event(self) -> Event:
+        return self.key.event
 
     @event.setter
     def event(self, new_event: Event):
-        del self.event
-        self.grid_scene.sequence.add_event(bar_num=self.bar_num, event=new_event)
-        self._event = new_event
-
-    @event.deleter
-    def event(self):
-        del self._event
+        self.key.event = new_event
 
     @property
     def channel(self) -> Channel:
@@ -144,45 +164,30 @@ class Node(QGraphicsItem):
     @beat.setter
     def beat(self, beat: Beat) -> None:
         if beat != self.beat:
-            logger.debug(f"MOVING {self}")
-            if self.bar_num in self.grid_scene.sequence.bars.keys():
-                if beat > 0:
-                    if beat >= self.grid_scene.sequence[self.bar_num].length():
-                        if self.bar_num < self.grid_scene.num_of_bars - 1:
-                            self.grid_scene.sequence.remove_event(
-                                bar_num=self.bar_num, event=self.event
-                            )
-                            self.event.beat = (
-                                beat - self.grid_scene.sequence[self.bar_num].length()
-                            )
-                            self.bar_num += 1
-                            self.grid_scene.sequence.add_event(
-                                bar_num=self.bar_num, event=self.event
-                            )
-                    else:
-                        self.event.beat = beat
-                elif beat == 0:
-                    self.event.beat = beat
-                elif beat < 0:
-                    if self.bar_num > 0:
-                        self.grid_scene.sequence.remove_event(
-                            bar_num=self.bar_num, event=self.event
-                        )
-                        self.event.beat = (
-                            self.grid_scene.sequence[self.bar_num].length() + beat
-                        )
-                        self.bar_num -= 1
-                        self.grid_scene.sequence.add_event(
-                            bar_num=self.bar_num, event=self.event
-                        )
-            else:
-                raise ValueError(
-                    f"Bar not in sequence. Sequence {self.grid_scene.sequence}"
-                )
+            moved_event = self.grid_scene.sequence.move_event(
+                BarNumEvent(bar_num=self.bar_num,
+                            event=self.event),
+                beat_diff=beat - self.beat,
+            )
+            self.event = moved_event.event
             self.set_pos()
 
     def set_pos(self):
-        raise NotImplementedError
+        x = bar_beat2pos(
+            bar_beat=BarBeat(bar=self.bar_num, beat=self.event.beat),
+            cell_unit=GuiAttr.GRID_DIV_UNIT,
+            cell_width=KeyAttr.W_HEIGHT,
+        )
+        if isinstance(self.key, PianoKey):
+            if isinstance(self.key, BlackPianoKey):
+                y = self.key.black_key_position
+            else:
+                y = self.key.position
+        elif type(self.key) is Key:
+            y = Keyboard.event_type_to_pos(event_type=self.event.type)
+        else:
+            raise ValueError(f"Unknown key type {type(self.key)}")
+        self.setPos(x, y)
 
     def __del__(self):
         if not self.is_temporary:
@@ -253,8 +258,8 @@ class NoteNode(Node):
         grid_scene: GenericGridScene,
         bar_num: NonNegativeInt,
         beat: Beat,
-        key: Key,
-        unit: float = NoteUnit.EIGHTH,
+        key: PianoKey,
+        unit: NoteUnit = NoteUnit.EIGHTH,
         color: QColor = Color.NODE_START,
         parent=None,
         is_temporary: bool = False,
@@ -264,18 +269,11 @@ class NoteNode(Node):
             grid_scene=grid_scene,
             bar_num=bar_num,
             beat=beat,
+            key=key,
+            unit=unit,
             color=color,
             parent=parent,
             is_temporary=is_temporary,
-        )
-        self._key: Key = key
-        # logger.debug(f'NoteNode key {self._key}')
-        self._event = Event(
-            type=EventType.note,
-            pitch=int(key.note),
-            channel=key.note.channel,
-            beat=beat,
-            unit=unit,
         )
         self.set_pos()
 
@@ -360,14 +358,14 @@ class NoteNode(Node):
             return unit_
 
         if self.is_moving or self.is_copying:
-            key_: Key = self.grid_scene.keyboard.get_key_by_pos(e.scenePos().y())
+            key_: PianoKey = self.grid_scene.keyboard.get_key_by_pos(e.scenePos().y())
             nodes = (
                 self.grid_scene.selected_notes
                 if self.is_moving
                 else self.copied_grp.childItems()
             )
             logger.debug(f"notes to move {nodes}")
-            self_key = int(self.key.note)
+            self_key = int(self.key.event.note())
             moving_diff = calc_unit(node=self)
             for node in nodes:
                 if node.is_temporary:
@@ -398,18 +396,6 @@ class NoteNode(Node):
                 self.rect.setRight(self.rect.right() + diff)
                 self.unit = self.grid_scene.width_beat / self.rect.width()
 
-    def set_pos(self):
-        self.setPos(
-            bar_beat2pos(
-                bar_beat=BarBeat(bar=self.bar_num, beat=self.event.beat),
-                cell_unit=GuiAttr.GRID_DIV_UNIT,
-                cell_width=KeyAttr.W_HEIGHT,
-            ),
-            self.key.y_pos_black_key
-            if isinstance(self.key, BlackKey)
-            else self.key.y_pos,
-        )
-
     def move(self, unit_diff: float, key_diff: int):
         # notes = []
         # logger.debug(f"moving note {self}, unit_diff {unit_diff}, key_diff {key_diff}")
@@ -419,9 +405,11 @@ class NoteNode(Node):
                 if unit_diff != 0:
                     self.beat = self.beat + unit_diff
                 if key_diff != 0:
-                    self.key = self.grid_scene.keyboard.get_key_by_pitch(
+                    key = self.grid_scene.keyboard.get_key_by_pitch(
                         int(self.key.note) + key_diff
                     )
+                    key.event.beat = self.beat
+                    self.key = key
             else:
                 logger.debug(f"not moved")
             # if self.is_moving:
@@ -433,26 +421,11 @@ class NoteNode(Node):
             #     self.grid_scene.move_notes(notes=notes, unit_diff=unit_diff, key_diff=key_diff)
 
     @property
-    def key(self) -> Key:
-        return self._key
-
-    @key.setter
-    def key(self, key_: Key):
-        self._key = key_
-        self.event = Event(
-            pitch=int(key_.note),
-            channel=key_.note.channel,
-            beat=self.beat,
-            unit=self.unit,
-        )
-        self.set_pos()
-
-    @property
-    def unit(self) -> float:
+    def unit(self) -> NonNegativeFloat:
         return self.event.unit
 
     @unit.setter
-    def unit(self, unit_: float) -> None:
+    def unit(self, unit_: NonNegativeFloat) -> None:
         self.event.unit = unit_
         self.update(self.rect)
 
@@ -460,11 +433,11 @@ class NoteNode(Node):
 class MetaNode(Node):
     def __init__(
         self,
-        event_type: EventType,
         channel: Channel,
         grid_scene,
         bar_num: NonNegativeInt,
         beat: Beat,
+        key: Key,
         color: QColor = Color.NODE_START,
         parent=None,
     ):
@@ -473,22 +446,12 @@ class MetaNode(Node):
             grid_scene=grid_scene,
             bar_num=bar_num,
             beat=beat,
+            key=key,
+            unit=NoteUnit.EIGHTH,
             color=color,
             parent=parent,
         )
-        self._event = Event(type=event_type, channel=channel, beat=beat)
-        self._key: int = KEY_MAPPING[event_type]
         self.set_pos()
-
-    def set_pos(self):
-        self.setPos(
-            bar_beat2pos(
-                bar_beat=BarBeat(bar=self.bar_num, beat=self.event.beat),
-                cell_unit=GuiAttr.GRID_DIV_UNIT,
-                cell_width=KeyAttr.W_HEIGHT,
-            ),
-            self._key,
-        )
 
     def move(self, unit: float):
         if unit != 0:

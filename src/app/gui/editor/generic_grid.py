@@ -5,7 +5,8 @@ from PySide6.QtCore import QRectF, QPointF
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsItemGroup
 from pydantic import NonNegativeInt
 
-from src.app.gui.editor.keyboard import KeyboardView
+from src.app.gui.editor.keyboard import Keyboard
+from src.app.gui.editor.piano_keyboard import PianoKeyboardView
 from src.app.gui.editor.node import NoteNode, MetaNode, Node
 from src.app.mingus.core import value
 from src.app.model.bar import Meter
@@ -36,7 +37,7 @@ class GenericGridScene(QGraphicsScene):
         self._width_beat = self._denominator / self._numerator * self._width_bar
         self.min_unit = value.thirty_second
         self.min_unit_width = self.get_unit_width(self.min_unit)
-        self._keyboard_view: Optional[KeyboardView] = None
+        self._keyboard: Optional[Keyboard] = None
         self._sequence: Optional[Sequence] = None
         self.num_of_bars = num_of_bars
         self.sequence = Sequence(
@@ -51,7 +52,7 @@ class GenericGridScene(QGraphicsScene):
     def node_from_event(
         self, event: Event, bar_num: NonNegativeInt, is_temporary: bool = True
     ):
-        if event.type == EventType.note:
+        if event.type == EventType.NOTE:
             return NoteNode(
                 channel=self.channel,
                 grid_scene=self,
@@ -61,7 +62,7 @@ class GenericGridScene(QGraphicsScene):
                 unit=event.unit,
                 is_temporary=is_temporary,
             )
-        elif event.type in (EventType.program, EventType.controls):
+        elif event.type in (EventType.PROGRAM, EventType.CONTROLS):
             return MetaNode(
                 event_type=event.type,
                 channel=self.channel,
@@ -185,18 +186,6 @@ class GenericGridScene(QGraphicsScene):
     @sequence.setter
     def sequence(self, value: Sequence) -> None:
         self._sequence = value
-
-    @property
-    def keyboard_view(self) -> KeyboardView:
-        return self._keyboard_view
-
-    @keyboard_view.setter
-    def keyboard_view(self, value: KeyboardView) -> None:
-        self._keyboard_view = value
-
-    @property
-    def keyboard(self):
-        return self._keyboard_view.keyboard_scene.keyboard_widget
 
     @property
     def channel(self) -> Channel:

@@ -26,7 +26,7 @@ if __name__ == "__main__":
         time=3000, channel=0, sfid=sfid, bank=0, preset=15, dest=synthSeqID
     )
     for i in range(100):
-        sequencer.note(
+        sequencer.NOTE(
             time=int(now + 500 * i),
             channel=0,
             key=60 + i,

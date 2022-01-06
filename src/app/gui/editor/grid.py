@@ -1,5 +1,5 @@
 import logging
-from typing import List, Iterable
+from typing import List, Iterable, Optional
 
 from PySide6.QtCore import QRect, Qt, QLineF, QPointF, QRectF
 from PySide6.QtGui import QPen, QColor, QBrush
@@ -10,8 +10,9 @@ from PySide6.QtWidgets import (
 from pydantic import NonNegativeInt
 
 from src.app.gui.editor.generic_grid import GenericGridScene
-from src.app.gui.editor.key import Key, WhiteKey
+from src.app.gui.editor.key import PianoKey, WhitePianoKey
 from src.app.gui.editor.node import Node, NoteNode
+from src.app.gui.editor.piano_keyboard import PianoKeyboardView, PianoKeyboardWidget
 from src.app.gui.widgets import GraphicsView
 from src.app.utils.properties import KeyAttr, Color, GuiAttr
 from src.app.utils.logger import get_console_logger
@@ -63,19 +64,24 @@ class GridScene(GenericGridScene):
             grid_divider=grid_divider,
             num_of_bars=num_of_bars,
         )
+        self._piano_keyboard_view: Optional[PianoKeyboardView] = None
         self.show_mark: bool = True
-        self.mark_rect: QRect = None
+        self.mark_rect: Optional[QRect] = None
         self.mark_col = QColor(48, 48, 48, 32)
         self.draw_grid_lines()
-        self._selection_start_pos: QPointF = None
+        self._selection_start_pos: Optional[QPointF] = None
         self._selection_rect: QGraphicsRectItem() = None
 
         self.setSceneRect(
             0,
             0,
             num_of_bars * self._width_bar,
-            KeyAttr.WHITE_KEY_COUNT * KeyAttr.W_HEIGHT,
+            self.white_key_count * KeyAttr.W_HEIGHT,
         )
+
+    @property
+    def white_key_count(self) -> int:
+        return len(PianoKeyboardWidget.white_keys())
 
     @property
     def is_selecting(self):
@@ -102,7 +108,7 @@ class GridScene(GenericGridScene):
             0,
             0,
             value * self.width_bar,
-            float(KeyAttr.WHITE_KEY_COUNT * KeyAttr.W_HEIGHT),
+            float(self.white_key_count * KeyAttr.W_HEIGHT),
         )
         self.clear()
         self.draw_grid_lines()
@@ -132,11 +138,11 @@ class GridScene(GenericGridScene):
     def show_mark_at_pos(self, y: int):
         y_start = 0
         y_height = 0
-        key: Key = self.keyboard.get_key_by_pos(y)
+        key: PianoKey = self.keyboard.get_key_by_pos(y)
         self.remove_mark()
         key.set_active()
-        if isinstance(key, WhiteKey):
-            y_start = key.keyboard_num * KeyAttr.W_HEIGHT
+        if isinstance(key, WhitePianoKey):
+            y_start = key.position
             y_height = KeyAttr.W_HEIGHT
         else:
             y_start = key.pos().y()
@@ -151,8 +157,8 @@ class GridScene(GenericGridScene):
         self,
         bar_num: NonNegativeInt,
         beat: Beat,
-        key: Key,
-        unit: float = NoteUnit.EIGHTH,
+        key: PianoKey,
+        unit: NoteUnit = NoteUnit.EIGHTH,
     ) -> None:
         note_node = NoteNode(
             channel=self.channel,
@@ -211,10 +217,7 @@ class GridScene(GenericGridScene):
                     logger.debug("not implemented")
                 elif e.modifiers() == Qt.NoModifier:
                     self.is_selecting = False
-                    key: Key = self.keyboard.get_key_by_pos(e.scenePos().y())
-                    # bar, beat = self.x2bar_beat(
-                    #     x=floor(e.scenePos().x() / KeyAttr.W_HEIGHT) * KeyAttr.W_HEIGHT
-                    # )
+                    key: PianoKey = self.keyboard.get_key_by_pos(e.scenePos().y())
                     bar, beat = pos2bar_beat(
                         pos=round2cell(
                             pos=e.scenePos().x(), cell_width=KeyAttr.W_HEIGHT
@@ -222,7 +225,7 @@ class GridScene(GenericGridScene):
                         cell_unit=GuiAttr.GRID_DIV_UNIT,
                         cell_width=KeyAttr.W_HEIGHT,
                     )
-                    self.add_note(bar_num=bar, beat=beat, key=key, unit=8)
+                    self.add_note(bar_num=bar, beat=beat, key=key, unit=NoteUnit.EIGHTH)
                     key.play_note_in_thread(secs=0.3)
             elif e.button() == Qt.RightButton:
                 for meta_node in self.notes(e.scenePos()):
@@ -272,7 +275,7 @@ class GridScene(GenericGridScene):
         pen_oct.setStyle(Qt.SolidLine)
         pen_oct.setColor(Color.GRID_OCT)
         pen_oct.setWidth(0)
-        for vl in range(KeyAttr.WHITE_KEY_COUNT):
+        for vl in range(self.white_key_count):
             y = vl * KeyAttr.W_HEIGHT
             self.addLine(
                 QLineF(QPointF(0, y), QPointF(self.width(), y)),
@@ -286,3 +289,15 @@ class GridScene(GenericGridScene):
                 if hl % self.grid_divider == self.grid_divider - 1
                 else pen_grid,
             )
+
+    @property
+    def keyboard_view(self) -> PianoKeyboardView:
+        return self._piano_keyboard_view
+
+    @keyboard_view.setter
+    def keyboard_view(self, value: PianoKeyboardView) -> None:
+        self._piano_keyboard_view = value
+
+    @property
+    def keyboard(self):
+        return self._piano_keyboard_view.keyboard_scene.keyboard_widget

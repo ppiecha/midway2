@@ -23,7 +23,8 @@ from src.app.utils.units import (
     bpm2time_scale,
     beat2tick,
     tick2second,
-    bpm2tempo, bar_length2sec,
+    bpm2tempo,
+    bar_length2sec,
 )
 
 logger = get_console_logger(name=__name__, log_level=DEBUG)
@@ -124,7 +125,7 @@ class MidwaySynth(Synth):
         channel: Channel = 0,
         bank=MidiAttr.DEFAULT_BANK,
         patch=MidiAttr.DEFAULT_PATCH,
-        repeat: int = 1
+        repeat: int = 1,
     ):
         fs = Synth()
         sfid = fs.sfload(MidiAttr.DEFAULT_SF2)

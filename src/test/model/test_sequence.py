@@ -1,7 +1,7 @@
 import pytest
 
-from src.app.model.event import EventType
-from src.app.model.sequence import Sequence
+from src.app.model.event import EventType, Event
+from src.app.model.sequence import Sequence, BarNumEvent
 
 
 @pytest.fixture()
@@ -124,9 +124,27 @@ def test_remove_events_by_type(
     sequence = Sequence.from_bars([bar0, bar1])
     sequence.add_events(bar_num=0, events=[note0, program0])
     sequence.add_events(bar_num=1, events=[note1, control0])
-    sequence.remove_events_by_type(event_type=EventType.controls)
+    sequence.remove_events_by_type(event_type=EventType.CONTROLS)
     assert list(sequence.events()) == [program0, note0, note1]
-    sequence.remove_events_by_type(event_type=EventType.program)
+    sequence.remove_events_by_type(event_type=EventType.PROGRAM)
     assert list(sequence.events()) == [note0, note1]
-    sequence.remove_events_by_type(event_type=EventType.note)
+    sequence.remove_events_by_type(event_type=EventType.NOTE)
     assert list(sequence.events()) == []
+
+
+def test_move_event(bar0, bar1, capsys):
+    sequence = Sequence.from_bars([bar0, bar1])
+    event = Event(type=EventType.NOTE, pitch=50, beat=0.5)
+    sequence.add_event(bar_num=0, event=event)
+    moved_event = sequence.move_event(
+        BarNumEvent(bar_num=0, event=event), beat_diff=0.25, pitch_diff=1
+    )
+    assert moved_event.bar_num == 0
+    assert moved_event.event.pitch == 51
+    assert moved_event.event.beat == 0.75
+    moved_event = sequence.move_event(
+        BarNumEvent(bar_num=0, event=moved_event.event), beat_diff=0.25, pitch_diff=1
+    )
+    assert moved_event.bar_num == 1
+    assert moved_event.event.pitch == 52
+    assert moved_event.event.beat == 0.0
