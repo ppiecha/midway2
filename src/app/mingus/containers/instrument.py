@@ -85,7 +85,7 @@ class Instrument(object):
         Return True if so, False otherwise.
         """
         if hasattr(notes, "notes"):
-            notes = notes.notes
+            notes = notes.nodes
         if not isinstance(notes, list):
             notes = [notes]
         for n in notes:

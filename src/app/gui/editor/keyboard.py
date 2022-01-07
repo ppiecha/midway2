@@ -1,5 +1,5 @@
 from src.app.gui.editor.key import Key
-from src.app.model.event import Event, EventType, MetaKeyPos
+from src.app.model.event import EventType, MetaKeyPos
 from src.app.model.types import Channel
 
 

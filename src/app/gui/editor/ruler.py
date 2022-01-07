@@ -20,7 +20,7 @@ from src.app.utils.logger import get_console_logger
 from src.app.mingus.core import value
 from src.app.model.event import EventType, MetaKeyPos
 from src.app.model.types import Unit, Channel, Beat, NoteUnit
-from src.app.model.sequence import Sequence
+from src.app.model.sequence import Sequence, BarNumEvent
 from src.app.utils.units import pos2bar_beat, round2cell
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
@@ -172,6 +172,11 @@ class RulerView(GraphicsView):
 class RulerScene(GenericGridScene):
     def __init__(self, channel: Channel, num_of_bars: int, parent):
         super().__init__(channel=channel, num_of_bars=num_of_bars)
+        self.supported_event_types = [
+            EventType.PROGRAM,
+            EventType.CONTROLS,
+            EventType.PITCH_BEND,
+        ]
         self.parent = parent
         self.ruler = Ruler(channel=channel, num_of_bars=num_of_bars, parent=self)
         self.setSceneRect(self.ruler.rect)
@@ -182,37 +187,18 @@ class RulerScene(GenericGridScene):
     def keyboard(self):
         return self._keyboard
 
-    def add_note(
-        self,
-        bar: NonNegativeInt,
-        beat: Beat,
-        key_pos: int,
-    ) -> None:
-        key = self.keyboard.get_key_by_pos(position=key_pos)
-        meta_node = MetaNode(
-            channel=self.channel, grid_scene=self, bar_num=bar, beat=beat, key=key
-        )
-        self._add_note(meta_node=meta_node, including_sequence=True)
-
     def mousePressEvent(self, e: QGraphicsSceneMouseEvent):
         if not e.isAccepted():
             if e.button() == Qt.LeftButton:
                 if e.modifiers() == Qt.NoModifier:
-                    bar, beat = pos2bar_beat(
-                        pos=round2cell(
-                            pos=e.scenePos().x(), cell_width=KeyAttr.W_HEIGHT
-                        ),
-                        cell_unit=GuiAttr.GRID_DIV_UNIT,
-                        cell_width=KeyAttr.W_HEIGHT,
-                    )
-                    self.add_note(
-                        bar=bar,
-                        beat=beat,
-                        key_pos=e.scenePos().y(),
-                    )
+                    x, y = e.scenePos().x(), e.scenePos().y()
+                    self.add_event(self.point_to_bar_event(x=x, y=y))
             elif e.button() == Qt.RightButton:
-                for meta_node in self.notes(e.scenePos()):
-                    self.delete_node(meta_node=meta_node, hard_delete=True)
+                for meta_node in self.nodes(e.scenePos()):
+                    self.remove_event(
+                        BarNumEvent(bar_num=meta_node.bar_num, event=meta_node.event)
+                    )
+                    # self.delete_node(meta_node=meta_node, hard_delete=True)
 
 
 class Ruler(QGraphicsItem):

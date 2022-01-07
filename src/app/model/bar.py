@@ -27,6 +27,25 @@ class Bar(BaseModel):
     bar_num: Optional[NonNegativeInt]
     bar: List[Event] = []
 
+    def __eq__(self, other):
+        params = list(filter(lambda x: x is None, [self, other]))
+        match len(params):
+            case 1:
+                return False
+            case 2:
+                return True
+        if not isinstance(other, self.__class__):
+            raise NotImplementedError
+        return (
+            self.meter.numerator == other.meter.numerator
+            and self.meter.denominator == other.meter.denominator
+            and self.bar_num == other.bar_num
+            and list(self.events()) == list(other.events())
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
     def set_pitch(self):
         pass
 
@@ -53,7 +72,10 @@ class Bar(BaseModel):
         return self.bar.index(event)
 
     def remove_event(self, event: Event) -> None:
-        self.bar.remove(event)
+        try:
+            self.bar.remove(event)
+        except ValueError as e:
+            raise ValueError(f"Event {event} not found")
 
     def remove_events(self, events: Optional[List[Event]]) -> None:
         for event in events:

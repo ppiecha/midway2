@@ -123,9 +123,11 @@ class Node(QGraphicsItem):
     def key(self, key_: Key):
         Sequence.set_events_attr(
             events=[self.event],
-            attr_val_map={"beat": self.beat,
-                          "unit": self.unit,
-                          "pitch": self.event.pitch},
+            attr_val_map={
+                "beat": self.beat,
+                "unit": self.unit,
+                "pitch": self.event.pitch,
+            },
         )
         self._key = key_
         # self.event = Event(
@@ -165,8 +167,7 @@ class Node(QGraphicsItem):
     def beat(self, beat: Beat) -> None:
         if beat != self.beat:
             moved_event = self.grid_scene.sequence.move_event(
-                BarNumEvent(bar_num=self.bar_num,
-                            event=self.event),
+                BarNumEvent(bar_num=self.bar_num, event=self.event),
                 beat_diff=beat - self.beat,
             )
             self.event = moved_event.event
@@ -189,18 +190,18 @@ class Node(QGraphicsItem):
             raise ValueError(f"Unknown key type {type(self.key)}")
         self.setPos(x, y)
 
-    def __del__(self):
-        if not self.is_temporary:
-            self.grid_scene.sequence.remove_event(
-                bar_num=self.bar_num, event=self.event
-            )
-            logger.debug(
-                f"__DEL__ instance of {type(self)} {self} {type(self.event)} {self.event.__repr__()}"
-            )
-        else:
-            logger.debug(
-                f"temporary (not deleting) instance of {type(self)} {self} {type(self.event)} {self.event.__repr__()}"
-            )
+    # def __del__(self):
+    #     if not self.is_temporary:
+    #         self.grid_scene.sequence.remove_event(
+    #             bar_num=self.bar_num, event=self.event
+    #         )
+    #         logger.debug(
+    #             f"__DEL__ instance of {type(self)} {self} {type(self.event)} {self.event.__repr__()}"
+    #         )
+    #     else:
+    #         logger.debug(
+    #             f"temporary (not deleting) instance of {type(self)} {self} {type(self.event)} {self.event.__repr__()}"
+    #         )
 
     def paint(self, painter: QPainter, option, widget=None):
         painter.setPen(QColor(32, 32, 32))
@@ -259,7 +260,7 @@ class NoteNode(Node):
         bar_num: NonNegativeInt,
         beat: Beat,
         key: PianoKey,
-        unit: NoteUnit = NoteUnit.EIGHTH,
+        unit: NonNegativeFloat = NoteUnit.EIGHTH,
         color: QColor = Color.NODE_START,
         parent=None,
         is_temporary: bool = False,

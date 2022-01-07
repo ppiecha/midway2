@@ -13,40 +13,44 @@ from src.app.utils.properties import MidiAttr
 @pytest.fixture
 def two_notes() -> List:
     return [
-        {
-            "type": "3-note",
-            "channel": 0,
-            "beat": 0.0,
-            "pitch": 79,
-            "unit": 8.0,
-            "velocity": None,
-            "preset": None,
-            "controls": None,
-            "pitch_bend_chain": None,
-            "active": True,
-        },
-        {
-            "type": "3-note",
-            "channel": 0,
-            "beat": 0.125,
-            "pitch": 80,
-            "unit": 8.0,
-            "velocity": None,
-            "preset": None,
-            "controls": None,
-            "pitch_bend_chain": None,
-            "active": True,
-        },
+        Event(
+            **{
+                "type": "3-note",
+                "channel": 0,
+                "beat": 0.0,
+                "pitch": 79,
+                "unit": 8.0,
+                "velocity": None,
+                "preset": None,
+                "controls": None,
+                "pitch_bend_chain": None,
+                "active": True,
+            }
+        ),
+        Event(
+            **{
+                "type": "3-note",
+                "channel": 0,
+                "beat": 0.125,
+                "pitch": 80,
+                "unit": 8.0,
+                "velocity": None,
+                "preset": None,
+                "controls": None,
+                "pitch_bend_chain": None,
+                "active": True,
+            }
+        ),
     ]
 
 
 @pytest.fixture
-def bar_result(two_notes) -> Dict:
-    return {
+def bar_result(two_notes) -> Bar:
+    return Bar(**{
         "meter": {"denominator": 4, "numerator": 4},
         "bar_num": 0,
         "bar": two_notes,
-    }
+    })
 
 
 def test_note(note0, capsys):
@@ -82,14 +86,14 @@ def test_add_note(bar0, note0, capsys):
 
 def test_add_two_notes(bar0, note0, note1, bar_result):
     b0 = bar0 + note0 + note1
-    assert b0.dict() == bar_result
+    assert b0 == bar_result
 
 
 def test_add_bars(bar0, bar1, note0, note1, bar_result):
     b0 = bar0 + note0
     b1 = bar1 + note1
     b0 += b1
-    assert b0.dict() == bar_result
+    assert b0 == bar_result
 
 
 def test_bar_notes(bar0, note0, note1, two_notes):

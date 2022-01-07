@@ -86,7 +86,7 @@ class NoteContainer(object):
         >>> notes = [['C', 5, {'velocity': 20}], ['E', 6, {'velocity': 20}]]
         """
         if hasattr(notes, "notes"):
-            for x in notes.notes:
+            for x in notes.nodes:
                 self.add_note(x)
             return self.notes
         elif hasattr(notes, "name"):

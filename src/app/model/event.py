@@ -42,6 +42,21 @@ class Event(BaseModel):
     pitch_bend_chain: Optional[PitchBendChain]
     active: Optional[bool] = True
 
+    def __eq__(self, other):
+        params = list(filter(lambda x: x is None, [self, other]))
+        match len(params):
+            case 1:
+                return False
+            case 2:
+                return True
+        if not isinstance(other, self.__class__):
+            raise NotImplementedError
+        return (
+            self.type == other.type
+            and self.channel == other.channel
+            and self.beat == other.beat
+        )
+
     def __int__(self) -> int:
         if not hasattr(self, "pitch"):
             raise AttributeError(f"Pitch attribute is not defined {str(self)}")

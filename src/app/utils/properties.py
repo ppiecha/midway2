@@ -7,6 +7,11 @@ from PySide6.QtGui import QColor, QPalette, Qt
 from src.app.model.types import NoteUnit
 
 
+class Notification(Enum):
+    EVENT_ADDED = "EVENT_ADDED"
+    EVENT_REMOVED = "EVENT_REMOVED"
+
+
 class AppAttr:
     APP_NAME = "Midway"
     CONFIG_FILE = "config.ini"

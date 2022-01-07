@@ -7,16 +7,17 @@ from PySide6.QtWidgets import (
     QGraphicsSceneMouseEvent,
     QGraphicsRectItem,
 )
-from pydantic import NonNegativeInt
 
 from src.app.gui.editor.generic_grid import GenericGridScene
 from src.app.gui.editor.key import PianoKey, WhitePianoKey
 from src.app.gui.editor.node import Node, NoteNode
 from src.app.gui.editor.piano_keyboard import PianoKeyboardView, PianoKeyboardWidget
 from src.app.gui.widgets import GraphicsView
+from src.app.model.event import EventType
+from src.app.model.sequence import Sequence, BarNumEvent
 from src.app.utils.properties import KeyAttr, Color, GuiAttr
 from src.app.utils.logger import get_console_logger
-from src.app.model.types import Int, Channel, Beat, NoteUnit
+from src.app.model.types import Int, Channel, NoteUnit
 from src.app.utils.units import pos2bar_beat, round2cell
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
@@ -64,6 +65,7 @@ class GridScene(GenericGridScene):
             grid_divider=grid_divider,
             num_of_bars=num_of_bars,
         )
+        self.supported_event_types = [EventType.NOTE]
         self._piano_keyboard_view: Optional[PianoKeyboardView] = None
         self.show_mark: bool = True
         self.mark_rect: Optional[QRect] = None
@@ -121,11 +123,11 @@ class GridScene(GenericGridScene):
     def selected_notes(self, rect: QRectF = None, pos: QPointF = None) -> List[Node]:
         lst = []
         if rect:
-            lst = list(filter(lambda note: note.isSelected(), self.notes(rect)))
+            lst = list(filter(lambda note: note.isSelected(), self.nodes(rect)))
         elif pos:
-            lst = list(filter(lambda note: note.isSelected(), self.notes(pos)))
+            lst = list(filter(lambda note: note.isSelected(), self.nodes(pos)))
         else:
-            lst = list(filter(lambda note: note.isSelected(), self.notes()))
+            lst = list(filter(lambda note: note.isSelected(), self.nodes()))
         return lst
 
     def set_selected_moving(self):
@@ -153,23 +155,6 @@ class GridScene(GenericGridScene):
             QBrush(self.mark_col),
         )
 
-    def add_note(
-        self,
-        bar_num: NonNegativeInt,
-        beat: Beat,
-        key: PianoKey,
-        unit: NoteUnit = NoteUnit.EIGHTH,
-    ) -> None:
-        note_node = NoteNode(
-            channel=self.channel,
-            grid_scene=self,
-            bar_num=bar_num,
-            beat=beat,
-            key=key,
-            unit=unit,
-        )
-        self._add_note(meta_node=note_node, including_sequence=True)
-
     def move_notes(self, notes: Iterable[NoteNode], unit_diff: float, key_diff: int):
         for note in notes:
             note.move(unit_diff=unit_diff, key_diff=key_diff)
@@ -179,10 +164,10 @@ class GridScene(GenericGridScene):
             note.resize(diff=diff)
 
     def select_all(self):
-        list(map(lambda note: note.setSelected(True), self.notes()))
+        list(map(lambda note: note.setSelected(True), self.nodes()))
 
     def invert_selection(self):
-        list(map(lambda note: note.setSelected(not note.isSelected()), self.notes()))
+        list(map(lambda note: note.setSelected(not note.isSelected()), self.nodes()))
 
     def copy_selection(self):
         if not self._is_copying:
@@ -217,23 +202,13 @@ class GridScene(GenericGridScene):
                     logger.debug("not implemented")
                 elif e.modifiers() == Qt.NoModifier:
                     self.is_selecting = False
-                    key: PianoKey = self.keyboard.get_key_by_pos(e.scenePos().y())
-                    bar, beat = pos2bar_beat(
-                        pos=round2cell(
-                            pos=e.scenePos().x(), cell_width=KeyAttr.W_HEIGHT
-                        ),
-                        cell_unit=GuiAttr.GRID_DIV_UNIT,
-                        cell_width=KeyAttr.W_HEIGHT,
-                    )
-                    self.add_note(bar_num=bar, beat=beat, key=key, unit=NoteUnit.EIGHTH)
+                    x, y = e.scenePos().x(), e.scenePos().y()
+                    key: PianoKey = self.keyboard.get_key_by_pos(position=y)
+                    self.add_event(self.point_to_bar_event(x=x, y=y))
                     key.play_note_in_thread(secs=0.3)
             elif e.button() == Qt.RightButton:
-                for meta_node in self.notes(e.scenePos()):
-                    # logger.debug(f"removing note {note} from grid and sequence {self.sequence}")
+                for meta_node in self.nodes(e.scenePos()):
                     self.delete_node(meta_node=meta_node, hard_delete=True)
-                logger.info(f"current sequence {self.sequence}")
-                logger.info(f"sequence iterator {list(self.sequence.events())}")
-                logger.info(f"grid items {list(self.notes())}")
 
     def mouseMoveEvent(self, e: QGraphicsSceneMouseEvent):
         super().mouseMoveEvent(e)
@@ -254,7 +229,7 @@ class GridScene(GenericGridScene):
             list(
                 map(
                     lambda note: note.setSelected(True),
-                    self.notes(self._selection_rect.rect()),
+                    self.nodes(self._selection_rect.rect()),
                 )
             )
         self.remove_mark()
@@ -300,4 +275,4 @@ class GridScene(GenericGridScene):
 
     @property
     def keyboard(self):
-        return self._piano_keyboard_view.keyboard_scene.keyboard_widget
+        return self.keyboard_view.keyboard_scene.keyboard_widget

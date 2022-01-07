@@ -2,11 +2,12 @@ from __future__ import annotations
 import copy
 from typing import Dict, Union, Optional, List, Any, NamedTuple
 
-from pydantic import PositiveInt, BaseModel, NonNegativeInt, validator
+from pubsub import pub
+from pydantic import PositiveInt, BaseModel, NonNegativeInt
 
 from src.app.model.bar import Bar, Meter
 from src.app.model.event import Event, EventType
-from src.app.utils.units import BarBeat
+from src.app.utils.properties import Notification
 
 _bars = Dict[int, Union[Bar, type(None)]]
 
@@ -18,6 +19,25 @@ class BarNumEvent(NamedTuple):
 
 class Sequence(BaseModel):
     bars: Dict[NonNegativeInt, Bar] = {}
+
+    def __eq__(self, other):
+        params = list(filter(lambda x: x is None, [self, other]))
+        match len(params):
+            case 1:
+                return False
+            case 2:
+                return True
+        if not isinstance(other, self.__class__):
+            raise NotImplementedError
+        if self.num_of_bars() != other.num_of_bars():
+            return False
+        for bar_num in self.bars.keys():
+            if self.bars[bar_num] != other.bars[bar_num]:
+                return False
+        return True
+
+    def __ne__(self, other):
+        return not self == other
 
     def meter(self) -> Meter:
         if self.num_of_bars():
@@ -69,6 +89,11 @@ class Sequence(BaseModel):
     def add_event(self, bar_num: NonNegativeInt, event: Event) -> None:
         if bar_num in self.bars.keys():
             self.bars[bar_num] += event
+            pub.sendMessage(
+                topicName=Notification.EVENT_ADDED.value,
+                sequence_id=id(self),
+                bar_event=BarNumEvent(bar_num=bar_num, event=event),
+            )
         else:
             raise ValueError(
                 f"Bar number outside of range {bar_num} -> {self.num_of_bars()}"
@@ -84,6 +109,11 @@ class Sequence(BaseModel):
                 f"Bar number outside of range {bar_num} -> {self.num_of_bars()}"
             )
         self.bars[bar_num].remove_event(event=event)
+        pub.sendMessage(
+            topicName=Notification.EVENT_REMOVED.value,
+            sequence_id=id(self),
+            bar_event=BarNumEvent(bar_num=bar_num, event=event),
+        )
 
     def remove_events(
         self, bar_num: NonNegativeInt, events: Optional[List[Event]]
