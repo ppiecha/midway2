@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QGraphicsSceneMouseEvent,
 )
 
-from src.app.model.event import Event, EventType
+from src.app.model.event import Event, EventType, MetaKeyPos
 from src.app.model.sequence import Sequence
 from src.app.model.types import Channel
 from src.app.utils.properties import KeyAttr, Color, MidiAttr
@@ -26,6 +26,46 @@ GraphicsItem = Union[QGraphicsItem, type(None)]
 class Key:
     def __init__(self, event_type: EventType, channel: Channel = None):
         self.event = Event(type=event_type, channel=channel)
+
+    @staticmethod
+    def get_event_type(position: int) -> Optional[EventType]:
+        match position:
+            case pos if MetaKeyPos.PROGRAM <= pos <= MetaKeyPos.CONTROLS:
+                return EventType.PROGRAM
+            case pos if MetaKeyPos.CONTROLS <= pos <= MetaKeyPos.PITCH_BEND:
+                return EventType.CONTROLS
+            case pos if MetaKeyPos.PITCH_BEND <= pos <= MetaKeyPos.MAX:
+                return EventType.PITCH_BEND
+            case _:
+                return None
+
+    @staticmethod
+    def event_type_to_pos(event_type: EventType) -> int:
+        match event_type:
+            case EventType.PROGRAM:
+                return MetaKeyPos.PROGRAM
+            case EventType.PITCH_BEND:
+                return MetaKeyPos.PITCH_BEND
+            case EventType.CONTROLS:
+                return MetaKeyPos.CONTROLS
+            case _:
+                raise ValueError(f"Wrong event type {event_type}")
+
+    @property
+    def position(self) -> int:
+        return Key.event_type_to_pos(event_type=self.event.type)
+
+    def set_active(self):
+        pass
+
+    def set_inactive(self):
+        pass
+
+    def play_note_in_thread(self, secs):
+        pass
+
+    def stop_note(self):
+        pass
 
 
 class PianoKey(QGraphicsItem, Key):

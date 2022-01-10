@@ -58,9 +58,7 @@ class PianoRoll(QWidget):
         self.keyboard.verticalScrollBar().valueChanged.connect(self.on_change_ver)
         self.keyboard.horizontalScrollBar().valueChanged.connect(self.on_change_hor)
         self.grid_view.grid_scene.keyboard_view = self.keyboard
-        self.ruler_view = RulerView(
-            channel=self.channel, num_of_bars=self.num_of_bars, grid_view=self.grid_view
-        )
+        self.ruler_view = RulerView(channel=self.channel, grid_view=self.grid_view)
         self.header_view = HeaderView()
         self.box_piano = Box(direction=QBoxLayout.LeftToRight)
         self.box_piano.addWidget(self.keyboard)
@@ -125,7 +123,7 @@ class PianoRoll(QWidget):
 
     def delete_selected(self, mf: MainFrame):
         self.grid_view.grid_scene.delete_nodes(
-            meta_notes=self.grid_view.grid_scene.selected_notes, hard_delete=True
+            meta_notes=self.grid_view.grid_scene.selected_nodes, hard_delete=True
         )
 
     def invert_selection(self, mf: MainFrame):
@@ -159,7 +157,7 @@ class PianoRoll(QWidget):
     @sequence.setter
     def sequence(self, value: Sequence) -> None:
         self.track_version.sequence = value
-        self.ruler_view.ruler_scene.sequence = value
+        self.ruler_view.grid_scene.sequence = value
         self.grid_view.grid_scene.sequence = value
 
     @property

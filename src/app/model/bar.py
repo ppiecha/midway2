@@ -4,7 +4,7 @@ from typing import List, Union, Optional, Iterator, Any
 
 from pydantic import BaseModel, PositiveInt, NonNegativeInt, NonNegativeFloat
 
-from src.app.utils.exceptions import BeatOutsideOfBar
+from src.app.utils.exceptions import BeatOutsideOfBar, EventAlreadyExists
 from src.app.utils.logger import get_console_logger
 from src.app.model.event import Event, EventType
 import logging
@@ -26,6 +26,37 @@ class Bar(BaseModel):
     meter: Meter = Meter()
     bar_num: Optional[NonNegativeInt]
     bar: List[Event] = []
+
+    def is_empty(self) -> bool:
+        return len(list(self.events())) == 0
+
+    def have_same_beat(self, e1: Event, e2: Event) -> bool:
+        if e1.type != e2.type:
+            return False
+        params = list(filter(lambda x: x.unit is None, [e1, e2]))
+        if len(params) == 1:
+            raise ValueError(f"Cannot compare units {e1.unit} {e2.unit}")
+        if e1.unit:
+            # print(self.length())
+            # print(e1.beat, e2.beat, e1.beat + (self.length() / e1.unit))
+            # print(e2.beat, e1.beat, e2.beat + (self.length() / e2.unit))
+            # print(e1.beat <= e2.beat < e1.beat + (self.length() / e1.unit)
+            #         or e2.beat <= e1.beat < e2.beat + (self.length() / e2.unit))
+            return (
+                    e1.beat <= e2.beat < e1.beat + (self.length() / e1.unit)
+                    or e2.beat <= e1.beat < e2.beat + (self.length() / e2.unit)
+            )
+        else:
+            return e1.beat == e2.beat
+
+    def has_event(self, event: Event) -> bool:
+        expr_beat = lambda e: self.have_same_beat(e, event)
+        expr_pitch = lambda e: self.have_same_beat(e, event) and e.pitch == event.pitch
+        match event.type:
+            case EventType.NOTE:
+                return len(list(filter(expr_pitch, self.bar))) > 0
+            case _:
+                return len(list(filter(expr_beat, self.bar))) > 0
 
     def __eq__(self, other):
         params = list(filter(lambda x: x is None, [self, other]))
@@ -60,6 +91,8 @@ class Bar(BaseModel):
             raise BeatOutsideOfBar(
                 f"Item outside of bar range {event.beat}/{self.length()}"
             )
+        if self.has_event(event=event):
+            raise EventAlreadyExists(f"Event {event} exists in bar {self.bar}")
         self.bar.append(event)
         self.bar.sort(key=lambda e: (e.beat, e.type))
 
@@ -82,7 +115,7 @@ class Bar(BaseModel):
             self.remove_event(event=event)
 
     def remove_events_by_type(self, event_type: EventType) -> None:
-        self.remove_events([event for event in self.bar if event.type == event_type])
+        self.remove_events(list(filter(lambda e: e.type == event_type, self.bar)))
 
     def add(self, this, other):
         if isinstance(other, Event):

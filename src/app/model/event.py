@@ -6,7 +6,7 @@ from pydantic import BaseModel, NonNegativeFloat
 
 from src.app.mingus.containers.note import Note
 from src.app.model.control import MidiValue, Control, PitchBendChain, MidiBankValue
-from src.app.model.types import Unit, Channel, Beat, NoteUnit
+from src.app.model.types import Unit, Channel, Beat
 from src.app.utils.properties import KeyAttr, GuiAttr
 
 
@@ -55,6 +55,10 @@ class Event(BaseModel):
             self.type == other.type
             and self.channel == other.channel
             and self.beat == other.beat
+            and (
+                self.type != EventType.NOTE
+                or (self.type == EventType.NOTE and self.pitch == other.pitch)
+            )
         )
 
     def __int__(self) -> int:
@@ -83,3 +87,4 @@ class Event(BaseModel):
             pitch=int(note),
             velocity=velocity,
         )
+

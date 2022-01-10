@@ -1,10 +1,20 @@
 import os
-from enum import Enum
+from enum import Enum, Flag, auto
 from pathlib import Path
 
 from PySide6.QtGui import QColor, QPalette, Qt
 
 from src.app.model.types import NoteUnit
+
+
+class GridAttr(Flag):
+    selection_direct = auto()
+    selection_background = auto()
+    move_horizontal = auto()
+    move_vertical = auto()
+    show_marker = auto()
+    copy = auto()
+    resize = auto()
 
 
 class Notification(Enum):
@@ -40,6 +50,7 @@ class MidiAttr:
     DEFAULT_ACCENT_VELOCITY = 127
     CHANNELS = [channel for channel in range(MAX_CHANNEL)]
     DRIVER = "dsound"
+    KEY_PLAY_TIME = 0.3
 
 
 class GuiAttr:
@@ -105,6 +116,7 @@ class Color:
     NODE_END = WK_ON
     NODE_SELECTED = QColor(96, 96, 96)
     NODE_TEMPORARY = QColor(96, 96, 96, 128)
+    GRID_MARKER = QColor(48, 48, 48, 32)
 
 
 def get_app_palette(dark: bool = True) -> QPalette:

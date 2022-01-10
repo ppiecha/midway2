@@ -1,27 +1,21 @@
 import logging
-from math import floor
 
 from PySide6.QtCore import Qt, QRect
 from PySide6.QtGui import QPainter, QPen, QBrush
 from PySide6.QtWidgets import (
     QGraphicsItem,
     QGraphicsScene,
-    QGraphicsSceneMouseEvent,
 )
-from pydantic import NonNegativeInt
 
 from src.app.gui.editor.grid import GridView
-from src.app.gui.editor.generic_grid import GenericGridScene
+from src.app.gui.editor.generic_grid import GenericGridScene, GenericGridView
 from src.app.gui.editor.keyboard import Keyboard
-from src.app.gui.editor.node import MetaNode
 from src.app.gui.widgets import GraphicsView
 from src.app.utils.properties import KeyAttr, Color, GuiAttr
 from src.app.utils.logger import get_console_logger
-from src.app.mingus.core import value
 from src.app.model.event import EventType, MetaKeyPos
-from src.app.model.types import Unit, Channel, Beat, NoteUnit
-from src.app.model.sequence import Sequence, BarNumEvent
-from src.app.utils.units import pos2bar_beat, round2cell
+from src.app.model.types import Channel
+from src.app.model.sequence import Sequence
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
@@ -146,59 +140,37 @@ class Header(QGraphicsItem):
         return self.get_rect()
 
 
-class RulerView(GraphicsView):
-    def __init__(self, channel: Channel, num_of_bars: int, grid_view: GridView):
+class RulerView(GraphicsView, GenericGridView):
+    def __init__(self, channel: Channel, grid_view: GridView):
         super().__init__()
         self.grid_view = grid_view
-        self._num_of_bars = num_of_bars
-        self.ruler_scene = RulerScene(
-            channel=channel, num_of_bars=num_of_bars, parent=self
+        self.grid_scene = RulerScene(
+            channel=channel, num_of_bars=self.grid_view.num_of_bars, parent=self
         )
-        self.setScene(self.ruler_scene)
-        self.setFixedHeight(self.sceneRect().height())
-
-    @property
-    def num_of_bars(self) -> int:
-        return self._num_of_bars
-
-    @num_of_bars.setter
-    def num_of_bars(self, value) -> None:
-        self._num_of_bars = value
-        self.ruler_scene.ruler.num_of_bars = value
-        self.ruler_scene.setSceneRect(self.ruler_scene.ruler.rect)
-        self.setFixedHeight(self.sceneRect().height())
 
 
 class RulerScene(GenericGridScene):
     def __init__(self, channel: Channel, num_of_bars: int, parent):
+        self.parent = parent
+        self.ruler = Ruler(channel=channel, num_of_bars=num_of_bars, parent=self)
         super().__init__(channel=channel, num_of_bars=num_of_bars)
         self.supported_event_types = [
             EventType.PROGRAM,
             EventType.CONTROLS,
             EventType.PITCH_BEND,
         ]
-        self.parent = parent
-        self.ruler = Ruler(channel=channel, num_of_bars=num_of_bars, parent=self)
         self.setSceneRect(self.ruler.rect)
         self.addItem(self.ruler)
         self._keyboard = Keyboard(channel=channel)
 
+    def redraw(self):
+        self.ruler.num_of_bars = self.num_of_bars
+        self.setSceneRect(self.ruler.rect)
+        super().redraw()
+
     @property
     def keyboard(self):
         return self._keyboard
-
-    def mousePressEvent(self, e: QGraphicsSceneMouseEvent):
-        if not e.isAccepted():
-            if e.button() == Qt.LeftButton:
-                if e.modifiers() == Qt.NoModifier:
-                    x, y = e.scenePos().x(), e.scenePos().y()
-                    self.add_event(self.point_to_bar_event(x=x, y=y))
-            elif e.button() == Qt.RightButton:
-                for meta_node in self.nodes(e.scenePos()):
-                    self.remove_event(
-                        BarNumEvent(bar_num=meta_node.bar_num, event=meta_node.event)
-                    )
-                    # self.delete_node(meta_node=meta_node, hard_delete=True)
 
 
 class Ruler(QGraphicsItem):

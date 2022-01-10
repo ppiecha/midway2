@@ -20,6 +20,15 @@ class BarNumEvent(NamedTuple):
 class Sequence(BaseModel):
     bars: Dict[NonNegativeInt, Bar] = {}
 
+    def is_empty(self) -> bool:
+        for bar in self.bars.values():
+            if not bar.is_empty():
+                return False
+        return True
+
+    def has_event(self, bar_event: BarNumEvent) -> bool:
+        return self.bars[bar_event.bar_num].has_event(event=bar_event.event)
+
     def __eq__(self, other):
         params = list(filter(lambda x: x is None, [self, other]))
         match len(params):

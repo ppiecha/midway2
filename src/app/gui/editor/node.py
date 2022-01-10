@@ -13,16 +13,16 @@ from PySide6.QtWidgets import (
 )
 from pydantic import NonNegativeInt, NonNegativeFloat
 
-from src.app.gui.editor.keyboard import Keyboard
+from src.app.gui.editor.selection import NodeSelection
 from src.app.model.sequence import Sequence, BarNumEvent
-from src.app.utils.properties import Color, KeyAttr, GuiAttr
+from src.app.utils.properties import Color, KeyAttr, GuiAttr, GridAttr
 from src.app.utils.units import bar_beat2pos, BarBeat
 
 if TYPE_CHECKING:
     from src.app.gui.editor.generic_grid import GenericGridScene
 from src.app.gui.editor.key import PianoKey, BlackPianoKey, Key
 from src.app.utils.logger import get_console_logger
-from src.app.model.event import Event, EventType, MetaKeyPos
+from src.app.model.event import Event
 from src.app.model.types import Channel, Beat, NoteUnit
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
@@ -38,13 +38,15 @@ class Node(QGraphicsItem):
         bar_num: NonNegativeInt,
         beat: Beat,
         key: Key,
-        unit: NoteUnit,
+        unit: NonNegativeFloat,
         color: QColor = Color.NODE_START,
         parent=None,
         is_temporary: bool = False,
     ):
         super().__init__(parent=parent)
         self.sibling: Optional[Node] = None
+        self.selection = NodeSelection(node=self)
+        self.grid_attr = grid_scene.grid_attr
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.setFlag(QGraphicsItem.ItemIsMovable, True)
         self.setFlag(QGraphicsItem.ItemIsFocusable, True)
@@ -59,10 +61,7 @@ class Node(QGraphicsItem):
         key.event.beat = beat
         self._key = key
         self._unit = unit
-        self.is_moving: bool = is_temporary
-        self.is_resizing: bool = False
         self.is_temporary: bool = is_temporary
-        self.is_copying: bool = False
         self.rect = QRectF(0, 0, KeyAttr.W_HEIGHT, KeyAttr.W_HEIGHT)
 
     def copy_node(self):
@@ -70,50 +69,6 @@ class Node(QGraphicsItem):
             event=self.event, bar_num=self.bar_num
         )
         return self.sibling
-
-    def set_moving(self, moving: bool = True) -> None:
-        self.is_moving = moving
-
-    @property
-    def is_moving(self) -> bool:
-        return self._is_moving
-
-    @is_moving.setter
-    def is_moving(self, value: bool) -> None:
-        if value:
-            self.is_resizing = False
-            self.is_copying = False
-        self._is_moving = value
-
-    @property
-    def is_resizing(self) -> bool:
-        return self._is_resizing
-
-    @is_resizing.setter
-    def is_resizing(self, value: bool) -> None:
-        if value:
-            self.is_moving = False
-            self.is_copying = False
-        self._is_resizing = value
-
-    @property
-    def is_copying(self) -> bool:
-        return self._is_copying
-
-    @is_copying.setter
-    def is_copying(self, value: bool) -> None:
-        if value:
-            self.is_moving = False
-            self.is_resizing = False
-            self.copied_grp = self.grid_scene.createItemGroup(
-                [node.copy_node() for node in self.grid_scene.selected_notes]
-            )
-            for copied in self.copied_grp.childItems():
-                self.grid_scene._add_note(
-                    meta_node=copied, including_sequence=not copied.is_temporary
-                )
-                logger.debug(f"copied notes {self.copied_grp.childItems()}")
-        self._is_copying = value
 
     @property
     def key(self) -> Key:
@@ -185,23 +140,10 @@ class Node(QGraphicsItem):
             else:
                 y = self.key.position
         elif type(self.key) is Key:
-            y = Keyboard.event_type_to_pos(event_type=self.event.type)
+            y = Key.event_type_to_pos(event_type=self.event.type)
         else:
             raise ValueError(f"Unknown key type {type(self.key)}")
         self.setPos(x, y)
-
-    # def __del__(self):
-    #     if not self.is_temporary:
-    #         self.grid_scene.sequence.remove_event(
-    #             bar_num=self.bar_num, event=self.event
-    #         )
-    #         logger.debug(
-    #             f"__DEL__ instance of {type(self)} {self} {type(self.event)} {self.event.__repr__()}"
-    #         )
-    #     else:
-    #         logger.debug(
-    #             f"temporary (not deleting) instance of {type(self)} {self} {type(self.event)} {self.event.__repr__()}"
-    #         )
 
     def paint(self, painter: QPainter, option, widget=None):
         painter.setPen(QColor(32, 32, 32))
@@ -251,6 +193,47 @@ class Node(QGraphicsItem):
         temp = "T " if self.is_temporary else ""
         return f"({temp}bar: {str(self.bar_num)}, {repr(self.event)})"
 
+    def mouseMoveEvent(self, e: QGraphicsSceneMouseEvent):
+        self.adjust_size(cur_pos=e.pos())
+        self.adjust_pos(e=e)
+
+    def mouseReleaseEvent(self, e: QGraphicsSceneMouseEvent):
+        self.selection.resizing = False
+        self.selection.moving = False
+        if self.selection.copying:
+            self.selection.copying = False
+
+    def mousePressEvent(self, e: QGraphicsSceneMouseEvent):
+        if e.button() == Qt.LeftButton:
+            match e.modifiers():
+                case Qt.ControlModifier if GridAttr.selection_direct in self.grid_attr:
+                    self.setSelected(not self.isSelected())
+                case Qt.ShiftModifier if GridAttr.copy in self.grid_attr:
+                    self.selection.copying = True
+                case Qt.NoModifier if self.isSelected():
+                    if self.corner_rect().contains(e.pos()):
+                        self.selection.resizing = True
+                    else:
+                        self.grid_scene.set_selected_moving()
+            e.accept()
+        elif e.button() == Qt.RightButton:
+            e.ignore()
+            logger.debug("ignored")
+
+    def corner_rect(self):
+        return QRectF(self.rect.right() - 3, 0, 3, self.rect.height())
+
+    def hoverMoveEvent(self, e: QGraphicsSceneHoverEvent):
+        if GridAttr.resize in self.grid_attr:
+            if self.corner_rect().contains(e.pos()) and self.isSelected():
+                self.setCursor(Qt.SizeHorCursor)
+            else:
+                self.unsetCursor()
+
+    def hoverLeaveEvent(self, e: QGraphicsSceneHoverEvent):
+        if GridAttr.resize in self.grid_attr:
+            self.unsetCursor()
+
 
 class NoteNode(Node):
     def __init__(
@@ -277,36 +260,6 @@ class NoteNode(Node):
             is_temporary=is_temporary,
         )
         self.set_pos()
-
-    def corner_rect(self):
-        return QRectF(self.rect.right() - 3, 0, 3, self.rect.height())
-
-    def mousePressEvent(self, e: QGraphicsSceneMouseEvent):
-        logger.debug(f"Node clicked {self}")
-        if e.button() == Qt.LeftButton:
-            if e.modifiers() == Qt.ControlModifier:
-                self.setSelected(not self.isSelected())
-            elif e.modifiers() == Qt.ShiftModifier:
-                self.is_copying = True
-            elif e.modifiers() == Qt.NoModifier:
-                if self.isSelected():
-                    if self.corner_rect().contains(e.pos()):
-                        self.is_resizing = True
-                    else:
-                        self.grid_scene.set_selected_moving()
-            e.accept()
-        elif e.button() == Qt.RightButton:
-            e.ignore()
-            logger.debug("ignored")
-
-    def hoverMoveEvent(self, e: QGraphicsSceneHoverEvent):
-        if self.corner_rect().contains(e.pos()) and self.isSelected():
-            self.setCursor(Qt.SizeHorCursor)
-        else:
-            self.unsetCursor()
-
-    def hoverLeaveEvent(self, e: QGraphicsSceneHoverEvent):
-        self.unsetCursor()
 
     def adjust_size(self, cur_pos: QPoint):
         if self.is_resizing:
@@ -361,7 +314,7 @@ class NoteNode(Node):
         if self.is_moving or self.is_copying:
             key_: PianoKey = self.grid_scene.keyboard.get_key_by_pos(e.scenePos().y())
             nodes = (
-                self.grid_scene.selected_notes
+                self.grid_scene.selected_nodes
                 if self.is_moving
                 else self.copied_grp.childItems()
             )
@@ -379,16 +332,6 @@ class NoteNode(Node):
                         unit_diff=moving_diff,
                         key_diff=int(key_.note) - self_key if key_ else 0,
                     )
-
-    def mouseMoveEvent(self, e: QGraphicsSceneMouseEvent):
-        self.adjust_size(cur_pos=e.pos())
-        self.adjust_pos(e=e)
-
-    def mouseReleaseEvent(self, e: QGraphicsSceneMouseEvent):
-        self.is_resizing = False
-        self.is_moving = False
-        if self.is_copying:
-            self.is_copying = False
 
     def resize(self, diff: float):
         if diff != 0:
@@ -458,12 +401,12 @@ class MetaNode(Node):
         if unit != 0:
             self.beat = self.beat + unit
 
-    def mousePressEvent(self, e: QGraphicsSceneMouseEvent):
-        if e.button() == Qt.LeftButton:
-            self.is_moving = True
-            e.accept()
-        elif e.button() == Qt.RightButton:
-            e.ignore()
+    # def mousePressEvent(self, e: QGraphicsSceneMouseEvent):
+    #     if e.button() == Qt.LeftButton:
+    #         self.is_moving = True
+    #         e.accept()
+    #     elif e.button() == Qt.RightButton:
+    #         e.ignore()
 
     def mouseMoveEvent(self, e: QGraphicsSceneMouseEvent):
         if self.is_moving:

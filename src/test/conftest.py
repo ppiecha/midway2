@@ -42,7 +42,7 @@ def bar3() -> Bar:
 
 @pytest.fixture
 def note0() -> Event:
-    return Event(type=EventType.NOTE, channel=0, beat=0, pitch=79, unit=8)
+    return Event(type=EventType.NOTE, channel=0, beat=0, pitch=79, unit=NoteUnit.EIGHTH)
 
 
 @pytest.fixture
@@ -77,12 +77,30 @@ def note4() -> Event:
 
 
 @pytest.fixture
+def note5() -> Event:
+    return Event(
+        type=EventType.NOTE, channel=0, beat=0.250, pitch=81, unit=NoteUnit.HALF
+    )
+
+
+@pytest.fixture
+def note6() -> Event:
+    return Event(
+        type=EventType.NOTE,
+        channel=0,
+        beat=0,
+        pitch=50,
+        unit=NoteUnit.WHOLE,
+        velocity=127,
+    )
+
+
+@pytest.fixture
 def program0() -> Event:
     return Event(
         type=EventType.PROGRAM,
         channel=0,
         beat=0,
-        # preset=Preset(sf_name='test', bank=0, patch=0),
         preset={"sf_name": "test", "bank": 0, "patch": 0},
     )
 

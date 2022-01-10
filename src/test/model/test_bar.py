@@ -7,6 +7,7 @@ from src.app.model.bar import Bar
 from src.app.model.control import PitchBendChain
 from src.app.model.event import Event, EventType, Preset
 from src.app.model.types import NoteUnit
+from src.app.utils.exceptions import EventAlreadyExists
 from src.app.utils.properties import MidiAttr
 
 
@@ -46,11 +47,13 @@ def two_notes() -> List:
 
 @pytest.fixture
 def bar_result(two_notes) -> Bar:
-    return Bar(**{
-        "meter": {"denominator": 4, "numerator": 4},
-        "bar_num": 0,
-        "bar": two_notes,
-    })
+    return Bar(
+        **{
+            "meter": {"denominator": 4, "numerator": 4},
+            "bar_num": 0,
+            "bar": two_notes,
+        }
+    )
 
 
 def test_note(note0, capsys):
@@ -258,3 +261,34 @@ def test_play_bar_changing_programs(bar_c_major, capsys):
         )
         bar.add_events([prog_event, event])
     MidwaySynth.play_bar(bar=bar, bpm=120)
+
+
+def test_has_event_meta(bar0, program0):
+    bar0.add_event(program0)
+    with pytest.raises(EventAlreadyExists):
+        bar0.add_event(program0)
+
+
+def test_has_event_note_negative(bar0, note3, note5):
+    bar0.add_event(note3)
+    with pytest.raises(EventAlreadyExists):
+        bar0.add_event(note5)
+
+
+def test_has_event_note_negative2(bar1, note4, note6):
+    bar1.add_event(note4)
+    with pytest.raises(EventAlreadyExists):
+        bar1.add_event(note6)
+
+
+def test_has_event_note_positive(bar0, bar1, note3, note0, note1, note2, capsys):
+    bar0.add_events([note2, note3])
+
+
+def test_have_same_beat(capsys, bar0, note2, note3, note4):
+    result = bar0.have_same_beat(e1=note2, e2=note3)
+    assert result is False
+    result = bar0.have_same_beat(e1=note4, e2=note2)
+    assert result is True
+
+

@@ -37,6 +37,29 @@ class Project(BaseModel):
         self.compositions.remove(composition)
 
 
+def simple_project() -> Project:
+    track_version = TrackVersion(
+        channel=100,
+        version_name="Bass 0",
+        sf_name=MidiAttr.DEFAULT_SF2,
+        sequence=Sequence.from_num_of_bars(num_of_bars=4),
+    )
+    return Project(
+        name="Simple project",
+        bpm=90,
+        compositions=[
+            Composition(
+                name="First composition",
+                tracks=[
+                    Track(
+                        name="Bass", current_version="Default", versions=[track_version]
+                    ),
+                ],
+            ),
+        ],
+    )
+
+
 def empty_project() -> Project:
     track_version = TrackVersion(
         channel=100,

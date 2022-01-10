@@ -1,62 +1,45 @@
 import logging
+import traceback
 from typing import List, Iterable, Optional
 
-from PySide6.QtCore import QRect, Qt, QLineF, QPointF, QRectF
-from PySide6.QtGui import QPen, QColor, QBrush
-from PySide6.QtWidgets import (
-    QGraphicsSceneMouseEvent,
-    QGraphicsRectItem,
-)
+from PySide6.QtCore import Qt, QLineF, QPointF, QRectF
+from PySide6.QtGui import QPen
 
-from src.app.gui.editor.generic_grid import GenericGridScene
-from src.app.gui.editor.key import PianoKey, WhitePianoKey
+from pydantic import NonNegativeInt
+
+from src.app.gui.editor.generic_grid import GenericGridScene, GenericGridView
 from src.app.gui.editor.node import Node, NoteNode
 from src.app.gui.editor.piano_keyboard import PianoKeyboardView, PianoKeyboardWidget
 from src.app.gui.widgets import GraphicsView
 from src.app.model.event import EventType
-from src.app.model.sequence import Sequence, BarNumEvent
 from src.app.utils.properties import KeyAttr, Color, GuiAttr
 from src.app.utils.logger import get_console_logger
-from src.app.model.types import Int, Channel, NoteUnit
-from src.app.utils.units import pos2bar_beat, round2cell
+from src.app.model.types import Int, Channel
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
 
-class GridView(GraphicsView):
+class GridView(GraphicsView, GenericGridView):
     def __init__(self, num_of_bars: int, channel: Channel):
         super().__init__(show_scrollbars=True)
         self._num_of_bars = num_of_bars
         self.grid_scene = GridScene(num_of_bars=num_of_bars, channel=channel)
-        self.setScene(self.grid_scene)
-        self.num_of_bars = num_of_bars
 
     def mark(self, show: bool, y: int):
         if show:
-            self.grid_scene.show_mark_at_pos(y=y)
+            self.grid_scene.selection.show_marker_at_pos(y=y)
         else:
-            self.grid_scene.remove_mark()
-
-    @property
-    def num_of_bars(self) -> int:
-        return self._num_of_bars
-
-    @num_of_bars.setter
-    def num_of_bars(self, value) -> None:
-        self._num_of_bars = value
-        self.grid_scene.num_of_bars = value
-        self.setScene(self.grid_scene)
-        # self.scroll2start()
+            self.grid_scene.selection.remove_marker()
 
 
 class GridScene(GenericGridScene):
     def __init__(
         self,
         channel: Channel,
+        num_of_bars: NonNegativeInt,
         numerator: int = 4,
         denominator: int = 4,
         grid_divider=GuiAttr.GRID_DIV_UNIT,
-        num_of_bars: Int = None,
     ):
         super().__init__(
             channel=channel,
@@ -67,93 +50,25 @@ class GridScene(GenericGridScene):
         )
         self.supported_event_types = [EventType.NOTE]
         self._piano_keyboard_view: Optional[PianoKeyboardView] = None
-        self.show_mark: bool = True
-        self.mark_rect: Optional[QRect] = None
-        self.mark_col = QColor(48, 48, 48, 32)
-        self.draw_grid_lines()
-        self._selection_start_pos: Optional[QPointF] = None
-        self._selection_rect: QGraphicsRectItem() = None
-
-        self.setSceneRect(
-            0,
-            0,
-            num_of_bars * self._width_bar,
-            self.white_key_count * KeyAttr.W_HEIGHT,
-        )
 
     @property
     def white_key_count(self) -> int:
         return len(PianoKeyboardWidget.white_keys())
 
-    @property
-    def is_selecting(self):
-        return self._is_selecting
-
-    @is_selecting.setter
-    def is_selecting(self, value):
-        if value:
-            # self.is_copying = False
-            logger.debug("copying turned off")
-        self._is_selecting = value
-        if not value and self._selection_rect:
-            self.removeItem(self._selection_rect)
-            self._selection_rect = None
-
-    @property
-    def num_of_bars(self) -> int:
-        return self._num_of_bars
-
-    @num_of_bars.setter
-    def num_of_bars(self, value: int) -> None:
-        self._num_of_bars = value
+    def redraw(self):
         self.setSceneRect(
             0,
             0,
-            value * self.width_bar,
-            float(self.white_key_count * KeyAttr.W_HEIGHT),
+            self.num_of_bars * self._width_bar,
+            self.white_key_count * KeyAttr.W_HEIGHT,
         )
         self.clear()
         self.draw_grid_lines()
+        super().redraw()
 
     # def copied_notes(self) -> QGraphicsItemGroup:
     #     logger.debug(f"copied notes {self.copied_grp.childItems()}")
     #     return self.copied_grp
-
-    @property
-    def selected_notes(self, rect: QRectF = None, pos: QPointF = None) -> List[Node]:
-        lst = []
-        if rect:
-            lst = list(filter(lambda note: note.isSelected(), self.nodes(rect)))
-        elif pos:
-            lst = list(filter(lambda note: note.isSelected(), self.nodes(pos)))
-        else:
-            lst = list(filter(lambda note: note.isSelected(), self.nodes()))
-        return lst
-
-    def set_selected_moving(self):
-        list(map(lambda node: node.set_moving(), self.selected_notes))
-
-    def remove_mark(self):
-        if self.mark_rect:
-            self.removeItem(self.mark_rect)
-
-    def show_mark_at_pos(self, y: int):
-        y_start = 0
-        y_height = 0
-        key: PianoKey = self.keyboard.get_key_by_pos(y)
-        self.remove_mark()
-        key.set_active()
-        if isinstance(key, WhitePianoKey):
-            y_start = key.position
-            y_height = KeyAttr.W_HEIGHT
-        else:
-            y_start = key.pos().y()
-            y_height = key.boundingRect().height()
-        self.mark_rect = self.addRect(
-            QRect(0, y_start, self.width_bar * self.num_of_bars, y_height),
-            QPen(self.mark_col),
-            QBrush(self.mark_col),
-        )
 
     def move_notes(self, notes: Iterable[NoteNode], unit_diff: float, key_diff: int):
         for note in notes:
@@ -178,66 +93,7 @@ class GridScene(GenericGridScene):
         if self.is_copying:
             self.is_copying = False
 
-    def mouseReleaseEvent(self, e: QGraphicsSceneMouseEvent):
-        super().mouseReleaseEvent(e)
-        if self.is_selecting:
-            self.is_selecting = False
-
-    def mouseDoubleClickEvent(self, event: QGraphicsSceneMouseEvent):
-        pass
-
-    def mousePressEvent(self, e: QGraphicsSceneMouseEvent):
-        super().mousePressEvent(e)
-        if not e.isAccepted():
-            if e.button() == Qt.LeftButton:
-                if e.modifiers() == Qt.ControlModifier:
-                    if self._is_selecting:
-                        self.is_selecting = False
-                    self.is_selecting = True
-                    self._selection_start_pos = QPointF(e.scenePos())
-                elif e.modifiers() == Qt.ShiftModifier:
-                    logger.debug("Play key using new sequencer")
-                    self.keyboard.get_key_by_pos(e.scenePos().y()).play_note()
-                elif e.modifiers() == Qt.ShiftModifier | Qt.ControlModifier:
-                    logger.debug("not implemented")
-                elif e.modifiers() == Qt.NoModifier:
-                    self.is_selecting = False
-                    x, y = e.scenePos().x(), e.scenePos().y()
-                    key: PianoKey = self.keyboard.get_key_by_pos(position=y)
-                    self.add_event(self.point_to_bar_event(x=x, y=y))
-                    key.play_note_in_thread(secs=0.3)
-            elif e.button() == Qt.RightButton:
-                for meta_node in self.nodes(e.scenePos()):
-                    self.delete_node(meta_node=meta_node, hard_delete=True)
-
-    def mouseMoveEvent(self, e: QGraphicsSceneMouseEvent):
-        super().mouseMoveEvent(e)
-        # print("scene mouse move")
-        if self._is_selecting:
-            if self._selection_rect:
-                self.removeItem(self._selection_rect)
-            self._selection_rect = self.addRect(
-                QRect(
-                    min(self._selection_start_pos.x(), e.scenePos().x()),
-                    min(self._selection_start_pos.y(), e.scenePos().y()),
-                    abs(self._selection_start_pos.x() - e.scenePos().x()),
-                    abs(self._selection_start_pos.y() - e.scenePos().y()),
-                ),
-                QPen(Color.GRID_SELECTION),
-                QBrush(Color.GRID_SELECTION),
-            )
-            list(
-                map(
-                    lambda note: note.setSelected(True),
-                    self.nodes(self._selection_rect.rect()),
-                )
-            )
-        self.remove_mark()
-        if 0 < e.scenePos().x() < self.width() and 0 < e.scenePos().y() < self.height():
-            self.show_mark_at_pos(y=e.scenePos().y())
-
     def draw_grid_lines(self):
-        # logger.debug(f"draw_grid_lines bars {self.num_of_bars} rect {str(self.sceneRect())}")
         pen_grid = QPen()
         pen_grid.setStyle(Qt.DotLine)
         pen_grid.setColor(Color.GRID_DEFAULT)

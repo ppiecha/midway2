@@ -96,6 +96,7 @@ class Pattern(BaseModel):
         last_beat = 0
         for element in pattern.elements:
             duration = float(self.meter.length() / element.value)
+            raise ValueError(f"should be calculated later")
             for counter in range(element.repeat):
                 if element.type != PatternElementType.pause:
                     if not element.chord:
