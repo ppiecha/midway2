@@ -88,8 +88,6 @@ class GuiAttr:
 
 
 class KeyAttr(int, Enum):
-    MIN = 12
-    MAX = 119
     W_WIDTH = 60
     W_HEIGHT = 14
     B_WIDTH = 24

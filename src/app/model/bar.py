@@ -42,10 +42,9 @@ class Bar(BaseModel):
             # print(e2.beat, e1.beat, e2.beat + (self.length() / e2.unit))
             # print(e1.beat <= e2.beat < e1.beat + (self.length() / e1.unit)
             #         or e2.beat <= e1.beat < e2.beat + (self.length() / e2.unit))
-            return (
-                    e1.beat <= e2.beat < e1.beat + (self.length() / e1.unit)
-                    or e2.beat <= e1.beat < e2.beat + (self.length() / e2.unit)
-            )
+            return e1.beat <= e2.beat < e1.beat + (
+                self.length() / e1.unit
+            ) or e2.beat <= e1.beat < e2.beat + (self.length() / e2.unit)
         else:
             return e1.beat == e2.beat
 

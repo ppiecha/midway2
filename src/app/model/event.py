@@ -1,13 +1,13 @@
 from __future__ import annotations
 from enum import Enum
+from math import ceil
 from typing import Optional, List
 
-from pydantic import BaseModel, NonNegativeFloat
+from pydantic import BaseModel, NonNegativeFloat, NonNegativeInt
 
 from src.app.mingus.containers.note import Note
-from src.app.model.control import MidiValue, Control, PitchBendChain, MidiBankValue
-from src.app.model.types import Unit, Channel, Beat
-from src.app.utils.properties import KeyAttr, GuiAttr
+from src.app.model.control import Control, PitchBendChain
+from src.app.model.types import Unit, Channel, Beat, Pitch, MidiValue, MidiBankValue
 
 
 class Preset(BaseModel):
@@ -23,24 +23,18 @@ class EventType(str, Enum):
     PITCH_BEND = "2-pitch_end"
 
 
-class MetaKeyPos(int, Enum):
-    PROGRAM = GuiAttr.RULER_HEIGHT
-    CONTROLS = GuiAttr.RULER_HEIGHT + KeyAttr.W_HEIGHT
-    PITCH_BEND = GuiAttr.RULER_HEIGHT + 2 * KeyAttr.W_HEIGHT
-    MAX = GuiAttr.RULER_HEIGHT + 3 * KeyAttr.W_HEIGHT
-
-
 class Event(BaseModel):
     type: EventType
     channel: Optional[Channel]
     beat: Optional[Beat]
-    pitch: Optional[MidiValue]
+    pitch: Optional[Pitch]
     unit: Optional[NonNegativeFloat]
     velocity: Optional[MidiValue]
     preset: Optional[Preset]
     controls: Optional[List[Control]]
     pitch_bend_chain: Optional[PitchBendChain]
     active: Optional[bool] = True
+    bar_num: Optional[NonNegativeInt]
 
     def __eq__(self, other):
         params = list(filter(lambda x: x is None, [self, other]))
@@ -88,3 +82,26 @@ class Event(BaseModel):
             velocity=velocity,
         )
 
+    @staticmethod
+    def unit_diff(x: int, min_unit_width: int) -> int:
+        if x > 0 and abs(x - ceil(node.rect().right())) >= min_unit_width:
+            return min_unit_width if x - node.rect().right() > 0 else -min_unit_width
+        else:
+            return 0
+
+    def pitch_diff(self, y: int, keyboard) -> int:
+        if self.event.pitch is None:
+            return 0
+        if key := keyboard.get_key_by_pos(position=y) is None:
+            return 0
+        else:
+            return self.event.pitch - int(key.note)
+
+    @staticmethod
+    def beat_diff(x: int, node) -> int:
+        center = node.scenePos().x() + node.rect.width() / 2
+        dist = x - center
+        if abs(dist) >= node.grid_scene.min_unit_width:
+            return int(copysign(1 / node.grid_scene.min_unit, dist))
+        else:
+            return 0

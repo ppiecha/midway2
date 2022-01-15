@@ -2,8 +2,7 @@ from typing import List, Callable
 
 from src.app.mingus.containers.note import Note
 from src.app.model.event import Event
-from src.app.model.types import Unit, Beat, NoteUnit
-from src.app.model.control import MidiValue
+from src.app.model.types import Unit, Beat, NoteUnit, MidiValue
 from src.app.utils.properties import MidiAttr
 
 STEP = 0.125

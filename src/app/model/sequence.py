@@ -1,13 +1,17 @@
 from __future__ import annotations
 import copy
+from functools import lru_cache
+from math import ceil, copysign
 from typing import Dict, Union, Optional, List, Any, NamedTuple
 
+from PySide6.QtCore import QRect, QPoint
 from pubsub import pub
 from pydantic import PositiveInt, BaseModel, NonNegativeInt
 
 from src.app.model.bar import Bar, Meter
 from src.app.model.event import Event, EventType
-from src.app.utils.properties import Notification
+from src.app.utils.properties import Notification, KeyAttr, GuiAttr
+from src.app.utils.units import pos2bar_beat, round2cell
 
 _bars = Dict[int, Union[Bar, type(None)]]
 
@@ -15,6 +19,57 @@ _bars = Dict[int, Union[Bar, type(None)]]
 class BarNumEvent(NamedTuple):
     bar_num: NonNegativeInt
     event: Event
+
+    @lru_cache()
+    def bar_num_diff(self, x: int) -> int:
+        bar, _ = pos2bar_beat(
+            pos=round2cell(pos=x, cell_width=KeyAttr.W_HEIGHT),
+            cell_unit=GuiAttr.GRID_DIV_UNIT,
+            cell_width=KeyAttr.W_HEIGHT,
+        )
+        return self.bar_num - bar
+
+    @staticmethod
+    def unit_diff(x: int, node) -> int:
+        min_unit_width = node.grid_scene.min_unit_width
+        if x > 0 and abs(x - ceil(node.rect().right())) >= min_unit_width:
+            return min_unit_width if x - node.rect().right() > 0 else -min_unit_width
+        else:
+            return 0
+
+    def pitch_diff(self, y: int, keyboard) -> int:
+        if self.event.pitch is None:
+            return 0
+        if key := keyboard.get_key_by_pos(position=y) is None:
+            return 0
+        else:
+            return self.event.pitch - int(key.note)
+
+    @staticmethod
+    def beat_diff(x: int, node) -> int:
+        center = node.scenePos().x() + node.rect.width() / 2
+        dist = x - center
+        if abs(dist) >= node.grid_scene.min_unit_width:
+            return int(copysign(1 / node.grid_scene.min_unit, dist))
+        else:
+            return 0
+
+    def change_valid(self, x: int, y: int, node, keyboard, resizing: bool) -> bool:
+        return (
+            (self.beat_diff(x, node) != 0 and not resizing)
+            or self.pitch_diff(y, keyboard) != 0
+            or (self.unit_diff(x, node) != 0 and resizing)
+            or self.bar_num_diff(x) != 0
+        )
+
+    def get_new_coordinates(
+        self, x: int, y: int, node, keyboard, resizing: bool
+    ) -> QPoint:
+        bar, beat = pos2bar_beat(
+            pos=round2cell(pos=x, cell_width=KeyAttr.W_HEIGHT),
+            cell_unit=GuiAttr.GRID_DIV_UNIT,
+            cell_width=KeyAttr.W_HEIGHT,
+        )
 
 
 class Sequence(BaseModel):
@@ -26,8 +81,8 @@ class Sequence(BaseModel):
                 return False
         return True
 
-    def has_event(self, bar_event: BarNumEvent) -> bool:
-        return self.bars[bar_event.bar_num].has_event(event=bar_event.event)
+    def has_event(self, event: Event) -> bool:
+        return self.bars[event.bar_num].has_event(event=event)
 
     def __eq__(self, other):
         params = list(filter(lambda x: x is None, [self, other]))
@@ -224,3 +279,7 @@ class Sequence(BaseModel):
         self.remove_event(bar_num=bar_event.bar_num, event=bar_event.event)
         self.add_event(bar_num=moved_event.bar_num, event=moved_event.event)
         return moved_event
+
+    def replace_event(self, old: BarNumEvent, new: BarNumEvent) -> None:
+        self.remove_event(bar_num=old.bar_num, event=old.event)
+        self.add_event(bar_num=new.bar_num, event=new.event)

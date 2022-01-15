@@ -6,9 +6,8 @@ from typing import Optional, List
 from pydantic import NonNegativeInt, BaseModel, PositiveInt, NonNegativeFloat
 
 from src.app.model.bar import Meter, Bar
-from src.app.model.control import MidiValue
 from src.app.model.event import Event, EventType
-from src.app.model.types import NoteUnit
+from src.app.model.types import NoteUnit, MidiValue
 from src.app.utils.logger import get_console_logger
 
 import numpy as np

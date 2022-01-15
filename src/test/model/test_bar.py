@@ -69,6 +69,7 @@ def test_note(note0, capsys):
         "controls": None,
         "pitch_bend_chain": None,
         "active": True,
+        "bar_num": None,
     }
 
 
@@ -149,6 +150,7 @@ def test_program(program0):
         "controls": None,
         "pitch_bend_chain": None,
         "active": True,
+        "bar_num": None,
     }
 
 
@@ -165,6 +167,7 @@ def test_controls(control0, capsys):
         "controls": [{"class_": {"name": "Volume", "code": 7}, "value": 100}],
         "pitch_bend_chain": None,
         "active": True,
+        "bar_num": None,
     }
 
 
@@ -290,5 +293,3 @@ def test_have_same_beat(capsys, bar0, note2, note3, note4):
     assert result is False
     result = bar0.have_same_beat(e1=note4, e2=note2)
     assert result is True
-
-

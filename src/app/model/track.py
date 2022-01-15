@@ -6,8 +6,7 @@ from pydantic import BaseModel, PositiveInt
 from src.app.model.bar import Bar
 
 from src.app.model.event import Event, EventType, Preset
-from src.app.model.types import Channel
-from src.app.model.control import MidiValue, MidiBankValue
+from src.app.model.types import Channel, MidiValue, MidiBankValue
 from src.app.model.sequence import Sequence
 from src.app.utils.properties import Color, MidiAttr
 

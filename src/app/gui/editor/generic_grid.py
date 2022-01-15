@@ -7,11 +7,10 @@ from PySide6.QtWidgets import QGraphicsScene, QGraphicsSceneMouseEvent
 from pubsub import pub
 from pydantic import NonNegativeInt
 
-from src.app.gui.editor.key import Key
 from src.app.gui.editor.node import NoteNode, MetaNode, Node
 from src.app.gui.editor.selection import GridSelection
 from src.app.mingus.core import value
-from src.app.model.bar import Meter, Bar
+from src.app.model.bar import Bar
 from src.app.model.event import Event, EventType
 from src.app.model.sequence import Sequence, BarNumEvent
 from src.app.model.types import Channel, Int, NoteUnit
@@ -76,7 +75,9 @@ class GenericGridScene(QGraphicsScene):
         if not pub.subscribe(self.remove_node, Notification.EVENT_REMOVED.value):
             raise Exception(f"Cannot register listener {Notification.EVENT_REMOVED}")
 
-    def point_to_bar_event(self, x: int, y: int) -> Optional[BarNumEvent]:
+    def point_to_bar_event(
+        self, x: int, y: int, unit=NoteUnit.EIGHTH
+    ) -> Optional[BarNumEvent]:
         key = self.keyboard.get_key_by_pos(position=y)
         if key:
             bar, beat = pos2bar_beat(
@@ -87,7 +88,7 @@ class GenericGridScene(QGraphicsScene):
             event = key.event.copy(deep=True)
             Sequence.set_events_attr(
                 events=[event],
-                attr_val_map={"beat": beat, "unit": NoteUnit.EIGHTH},
+                attr_val_map={"beat": beat, "unit": unit},
             )
             return BarNumEvent(bar_num=bar, event=event)
         else:
@@ -113,53 +114,26 @@ class GenericGridScene(QGraphicsScene):
         self.sequence.remove_event(bar_num=bar_event.bar_num, event=bar_event.event)
         logger.debug(self.sequence)
 
-    def _add_node(self, bar_event: BarNumEvent, is_temporary: bool = False):
-        node = self.node_from_event(
-            event=bar_event.event, bar_num=bar_event.bar_num, is_temporary=is_temporary
-        )
+    def _add_node(self, event: Event):
+        node = self.node_from_event(event=event)
         self.addItem(node)
 
     def _add_bar(self, bar: Bar):
         for event in bar:
-            self._add_node(bar_event=BarNumEvent(bar_num=bar.bar_num, event=event))
+            self._add_node(event=event)
 
-    def add_node(self, sequence_id, bar_event: BarNumEvent):
-        if self.is_matching(sequence_id=sequence_id, event_type=bar_event.event.type):
-            self._add_node(bar_event=bar_event, is_temporary=False)
+    def add_node(self, sequence_id, event: Event):
+        if self.is_matching(sequence_id=sequence_id, event_type=event.type):
+            self._add_node(event=event)
 
-    def add_event(self, bar_event: BarNumEvent):
-        if not self.sequence.has_event(bar_event=bar_event):
-            self.sequence.add_event(bar_num=bar_event.bar_num, event=bar_event.event)
+    def add_event(self, event: Event):
+        if not self.sequence.has_event(event=event):
+            self.sequence.add_event(event=event)
             logger.debug(self.sequence)
 
-    def node_from_event(
-        self, event: Event, bar_num: NonNegativeInt, is_temporary: bool
-    ):
-        match event.type:
-            case event_type if event_type == EventType.NOTE:
-                return NoteNode(
-                    channel=self.channel,
-                    grid_scene=self,
-                    bar_num=bar_num,
-                    beat=event.beat,
-                    key=self.keyboard.get_key_by_pitch(pitch=int(event)),
-                    unit=event.unit,
-                    is_temporary=is_temporary,
-                )
-            case event_type if event_type in (
-                EventType.PROGRAM,
-                EventType.CONTROLS,
-                EventType.PITCH_BEND,
-            ):
-                return MetaNode(
-                    channel=self.channel,
-                    grid_scene=self,
-                    bar_num=bar_num,
-                    beat=event.beat,
-                    key=Key(event_type=event.type, channel=self.channel),
-                )
-            case _:
-                raise ValueError(f"Unsupported event type {event.type}")
+    def node_from_event(self, event: Event):
+        cls = NoteNode if event.type == EventType.NOTE else MetaNode
+        return cls(grid_scene=self, event=event)
 
     def draw_sequence(self, sequence: Sequence):
         if not sequence:

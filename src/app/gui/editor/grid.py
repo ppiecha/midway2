@@ -9,9 +9,10 @@ from pydantic import NonNegativeInt
 
 from src.app.gui.editor.generic_grid import GenericGridScene, GenericGridView
 from src.app.gui.editor.node import Node, NoteNode
-from src.app.gui.editor.piano_keyboard import PianoKeyboardView, PianoKeyboardWidget
+from src.app.gui.editor.keyboard import PianoKeyboardView, PianoKeyboardWidget
 from src.app.gui.widgets import GraphicsView
 from src.app.model.event import EventType
+from src.app.model.midi_keyboard import MidiRange
 from src.app.utils.properties import KeyAttr, Color, GuiAttr
 from src.app.utils.logger import get_console_logger
 from src.app.model.types import Int, Channel
@@ -53,7 +54,7 @@ class GridScene(GenericGridScene):
 
     @property
     def white_key_count(self) -> int:
-        return len(PianoKeyboardWidget.white_keys())
+        return len(MidiRange.WHITE_KEYS)
 
     def redraw(self):
         self.setSceneRect(

@@ -134,13 +134,8 @@ class GridSelection:
         key = self.grid.keyboard.get_key_by_pos(y)
         if self.grid_options.show_marker and key:
             key.set_active()
-            if isinstance(key, BlackPianoKey):
-                y_start = key.pos().y()
-                y_height = key.boundingRect().height()
-            else:
-                y_start = key.position
-                y_height = KeyAttr.W_HEIGHT
-
+            y_start = key.key_top
+            y_height = key.boundingRect().height()
             self.marker_rect = self.grid.addRect(
                 QRect(
                     0, y_start, self.grid.width_bar * self.grid.num_of_bars, y_height

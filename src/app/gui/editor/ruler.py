@@ -9,11 +9,11 @@ from PySide6.QtWidgets import (
 
 from src.app.gui.editor.grid import GridView
 from src.app.gui.editor.generic_grid import GenericGridScene, GenericGridView
-from src.app.gui.editor.keyboard import Keyboard
 from src.app.gui.widgets import GraphicsView
+from src.app.model.midi_keyboard import MidiKeyboard, MetaKeyPos
 from src.app.utils.properties import KeyAttr, Color, GuiAttr
 from src.app.utils.logger import get_console_logger
-from src.app.model.event import EventType, MetaKeyPos
+from src.app.model.event import EventType
 from src.app.model.types import Channel
 from src.app.model.sequence import Sequence
 
@@ -161,7 +161,7 @@ class RulerScene(GenericGridScene):
         ]
         self.setSceneRect(self.ruler.rect)
         self.addItem(self.ruler)
-        self._keyboard = Keyboard(channel=channel)
+        self._keyboard = MidiKeyboard(channel=channel)
 
     def redraw(self):
         self.ruler.num_of_bars = self.num_of_bars
