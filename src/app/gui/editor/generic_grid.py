@@ -1,17 +1,22 @@
+from __future__ import annotations
 import logging
-from typing import Optional, List
+from typing import Optional, List, Callable, Type
 
 from PySide6.QtCore import QRectF, QPointF
 from PySide6.QtGui import Qt
-from PySide6.QtWidgets import QGraphicsScene, QGraphicsSceneMouseEvent
+from PySide6.QtWidgets import QGraphicsScene, QGraphicsSceneMouseEvent, QBoxLayout
 from pubsub import pub
 from pydantic import NonNegativeInt
 
+from src.app.backend.synth import Synth
+from src.app.gui.editor.keyboard import KeyboardView
 from src.app.gui.editor.node import NoteNode, MetaNode, Node
 from src.app.gui.editor.selection import GridSelection
+from src.app.gui.widgets import GraphicsView, Box
 from src.app.mingus.core import value
 from src.app.model.bar import Bar
 from src.app.model.event import Event, EventType
+from src.app.model.midi_keyboard import BaseKeyboard
 from src.app.model.sequence import Sequence, BarNumEvent
 from src.app.model.types import Channel, Int, NoteUnit
 from src.app.utils.logger import get_console_logger
@@ -21,38 +26,73 @@ from src.app.utils.units import pos2bar_beat, round2cell
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
 
-class GenericGridView:
+class KeyboardGridBox(Box):
+    def __init__(self, components: List):
+        super().__init__(direction=QBoxLayout.LeftToRight)
+        for component in components:
+            self.addWidget(component)
+
+
+
+class GenericGridView(GraphicsView):
+    def __init__(
+        self,
+        cls: Type[GenericGridScene],
+        num_of_bars: int,
+        channel: Channel,
+        synth: Synth,
+    ):
+        super().__init__(show_scrollbars=GridAttr.SHOW_SCROLLBARS in cls.GRID_ATTR)
+        self._num_of_bars = num_of_bars
+        self.grid_scene = cls(num_of_bars=num_of_bars, channel=channel, grid_view=self)
+        self.setScene(self.grid_scene)
+        if GridAttr.FIXED_HEIGHT in cls.GRID_ATTR:
+            self.setFixedHeight(self.sceneRect().height())
+        self.keyboard_view = KeyboardView(
+            cls=cls.KEYBOARD_CLS,
+            synth=synth,
+            channel=channel,
+            callback=self.mark,
+        )
+
     @property
     def num_of_bars(self) -> int:
-        attr_name = "grid_scene"
-        if not hasattr(self, attr_name):
-            raise ValueError(f"{type(self)} does not have {attr_name} attribute")
-        attr_name = "num_of_bars"
-        if not hasattr(self.grid_scene, attr_name):
-            raise ValueError(
-                f"{type(self.grid_scene)} does not have {attr_name} " f"attribute"
-            )
         return self.grid_scene.num_of_bars
 
     @num_of_bars.setter
     def num_of_bars(self, value) -> None:
         self.grid_scene.num_of_bars = value
         self.setScene(self.grid_scene)
-        if hasattr(self, "grid_view"):
+        if GridAttr.FIXED_HEIGHT in self.grid_scene.__class__.GRID_ATTR:
             self.setFixedHeight(self.sceneRect().height())
+
+    def mark(self, show: bool, y: int):
+        if show:
+            self.grid_scene.selection.show_marker_at_pos(y=y)
+        else:
+            self.grid_scene.selection.remove_marker()
+
+    def leaveEvent(self, event):
+        super().leaveEvent(event)
+        self.grid_scene.selection.remove_marker()
+        self.keyboard_view.keyboard.deactivate_all()
 
 
 class GenericGridScene(QGraphicsScene):
+    KEYBOARD_CLS = None
+    GRID_ATTR = GridAttr.SELECTION_DIRECT | GridAttr.MOVE_HORIZONTAL
+
     def __init__(
         self,
+        grid_view: GenericGridView,
         channel: Channel,
         num_of_bars: NonNegativeInt,
         numerator: int = 4,
         denominator: int = 4,
         grid_divider=GuiAttr.GRID_DIV_UNIT,
-        grid_attr: GridAttr = GridAttr.selection_direct | GridAttr.move_horizontal,
     ):
         super().__init__()
+        self.grid_view = grid_view
         self.supported_event_types = []
         self._channel = channel
         self._numerator = numerator
@@ -65,8 +105,7 @@ class GenericGridScene(QGraphicsScene):
         self._sequence: Optional[Sequence] = None
         self._num_of_bars = num_of_bars
         self.redraw()
-        self.grid_attr = grid_attr
-        self.selection = GridSelection(grid=self, grid_attr=grid_attr)
+        self.selection = GridSelection(grid=self, grid_attr=GenericGridScene.GRID_ATTR)
         self.register_listeners()
 
     def register_listeners(self):
@@ -263,6 +302,10 @@ class GenericGridScene(QGraphicsScene):
     @property
     def channel(self) -> Channel:
         return self._channel
+
+    @property
+    def keyboard(self) -> BaseKeyboard:
+        return self.grid_view.keyboard_view.keyboard
 
     def mousePressEvent(self, e: QGraphicsSceneMouseEvent):
         super().mousePressEvent(e)

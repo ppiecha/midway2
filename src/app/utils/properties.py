@@ -8,13 +8,15 @@ from src.app.model.types import NoteUnit
 
 
 class GridAttr(Flag):
-    selection_direct = auto()
-    selection_background = auto()
-    move_horizontal = auto()
-    move_vertical = auto()
-    show_marker = auto()
-    copy = auto()
-    resize = auto()
+    SELECTION_DIRECT = auto()
+    SELECTION_BACKGROUND = auto()
+    MOVE_HORIZONTAL = auto()
+    MOVE_VERTICAL = auto()
+    SHOW_MARKER = auto()
+    COPY = auto()
+    RESIZE = auto()
+    FIXED_HEIGHT = auto()
+    SHOW_SCROLLBARS = auto()
 
 
 class Notification(Enum):

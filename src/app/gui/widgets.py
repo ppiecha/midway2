@@ -2,7 +2,7 @@ from __future__ import annotations
 import logging
 import threading
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Callable
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPainter

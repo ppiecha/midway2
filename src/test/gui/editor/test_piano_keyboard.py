@@ -1,7 +1,7 @@
-from src.app.gui.editor.keyboard import PianoKeyboardWidget
+from src.app.gui.editor.keyboard import PianoKeyboard
 from src.app.model.types import MidiValue
 
 
 def test_piano_keyboard_class(capsys):
-    keyboard = PianoKeyboardWidget(synth=None, callback=None, channel=0)
+    keyboard = PianoKeyboard(synth=None, callback=None, channel=0)
     assert keyboard.white_key_position(MidiValue(117)) == 14

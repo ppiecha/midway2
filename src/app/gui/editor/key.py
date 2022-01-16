@@ -112,11 +112,11 @@ class MetaKey(Key):
     def __str__(self):
         match self.event_type:
             case EventType.PROGRAM:
-                return "Program"
+                return "Program "
             case EventType.CONTROLS:
-                return "Controls"
+                return "Controls "
             case EventType.PITCH_BEND:
-                return "Pitch Bend"
+                return "Pitch Bend "
 
 
 class PianoKey(Key):

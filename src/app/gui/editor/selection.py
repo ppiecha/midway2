@@ -125,14 +125,14 @@ class GridSelection:
         if 0 < x < self.grid.width() and 0 < y < self.grid.height():
             self.show_marker_at_pos(y=y)
 
-    def remove_marker(self):
-        if self.grid_options.show_marker and self.marker_rect:
+    def remove_marker(self, ):
+        if self.grid_options.SHOW_MARKER and self.marker_rect:
             self.grid.removeItem(self.marker_rect)
 
     def show_marker_at_pos(self, y: int):
         self.remove_marker()
         key = self.grid.keyboard.get_key_by_pos(y)
-        if self.grid_options.show_marker and key:
+        if self.grid_options.SHOW_MARKER and key:
             key.set_active()
             y_start = key.key_top
             y_height = key.boundingRect().height()

@@ -6,7 +6,7 @@ from typing import Any, NamedTuple
 
 from PySide6.QtCore import QSize
 
-from src.app.gui.editor.keyboard import PianoKeyboardView, PianoKeyboardWidget
+from src.app.gui.editor.keyboard import KeyboardView, PianoKeyboard
 from typing import TYPE_CHECKING
 
 from src.app.model.sequence import Sequence
@@ -150,8 +150,8 @@ class PresetTab(QWidget):
         self.bank_list = QListWidget()
         self.bank_list.resize(50, self.bank_list.height())
         self.prog_list = QListWidget()
-        self.keyboard = PianoKeyboardView(
-            cls=PianoKeyboardWidget, synth=None, channel=self.channel, callback=None
+        self.keyboard = KeyboardView(
+            cls=PianoKeyboard, synth=None, channel=self.channel, callback=None
         )
         self.splitter_right = QSplitter(Qt.Horizontal)
         self.splitter_right.addWidget(self.bank_list)

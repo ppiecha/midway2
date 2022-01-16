@@ -32,7 +32,7 @@ class Node(QGraphicsItem):
         super().__init__()
         self.sibling: Optional[Node] = None
         self.selection = NodeSelection(node=self)
-        self.grid_attr = grid_scene.grid_attr
+        self.grid_attr = grid_scene.GRID_ATTR
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.setFlag(QGraphicsItem.ItemIsMovable, True)
         self.setFlag(QGraphicsItem.ItemIsFocusable, True)
@@ -206,7 +206,7 @@ class Node(QGraphicsItem):
     def mousePressEvent(self, e: QGraphicsSceneMouseEvent):
         if e.button() == Qt.LeftButton:
             match e.modifiers():
-                case Qt.ControlModifier if GridAttr.selection_direct in self.grid_attr:
+                case Qt.ControlModifier if GridAttr.SELECTION_DIRECT in self.grid_attr:
                     self.setSelected(not self.isSelected())
                 case Qt.ShiftModifier if GridAttr.copy in self.grid_attr:
                     self.selection.copying = True
@@ -224,14 +224,14 @@ class Node(QGraphicsItem):
         return QRectF(self.rect.right() - 3, 0, 3, self.rect.height())
 
     def hoverMoveEvent(self, e: QGraphicsSceneHoverEvent):
-        if GridAttr.resize in self.grid_attr:
+        if GridAttr.RESIZE in self.grid_attr:
             if self.corner_rect().contains(e.pos()) and self.isSelected():
                 self.setCursor(Qt.SizeHorCursor)
             else:
                 self.unsetCursor()
 
     def hoverLeaveEvent(self, e: QGraphicsSceneHoverEvent):
-        if GridAttr.resize in self.grid_attr:
+        if GridAttr.RESIZE in self.grid_attr:
             self.unsetCursor()
 
 

@@ -7,10 +7,15 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeySequence
 from PySide6.QtWidgets import QWidget, QBoxLayout
 
+from src.app.gui.editor.generic_grid import GenericGridView, KeyboardGridBox
+from src.app.gui.editor.grid import GridScene
 from src.app.gui.menu import Action
-from src.app.gui.editor.grid import GridView
-from src.app.gui.editor.keyboard import PianoKeyboardView, PianoKeyboardWidget
-from src.app.gui.editor.ruler import RulerView, HeaderView
+from src.app.gui.editor.keyboard import (
+    KeyboardView,
+    PianoKeyboard,
+    MetaMidiKeyboard,
+)
+from src.app.gui.editor.ruler import HeaderView, RulerScene
 from src.app.gui.widgets import Box
 from src.app.utils.logger import get_console_logger
 from src.app.backend.midway_synth import MidwaySynth
@@ -47,31 +52,32 @@ class PianoRoll(QWidget):
         self.track_version = track_version
         self.synth = synth
         self.setAutoFillBackground(True)
-        self.grid_view = GridView(
-            num_of_bars=self.num_of_bars, channel=track_version.channel
+        self.grid_view = GenericGridView(
+            cls=GridScene,
+            num_of_bars=self.num_of_bars,
+            channel=track_version.channel,
+            synth=synth,
         )
         self.grid_view.verticalScrollBar().valueChanged.connect(self.on_change_ver)
         self.grid_view.horizontalScrollBar().valueChanged.connect(self.on_change_hor)
-        self.keyboard = PianoKeyboardView(
-            cls=PianoKeyboardWidget,
-            channel=self.channel,
-            callback=self.grid_view.mark,
-            synth=synth
+        self.grid_view.keyboard_view.verticalScrollBar().valueChanged.connect(
+            self.on_change_ver
         )
-        self.keyboard.verticalScrollBar().valueChanged.connect(self.on_change_ver)
-        self.keyboard.horizontalScrollBar().valueChanged.connect(self.on_change_hor)
-        self.grid_view.grid_scene.keyboard_view = self.keyboard
-        self.ruler_view = RulerView(channel=self.channel, grid_view=self.grid_view)
-        self.header_view = HeaderView()
-        self.box_piano = Box(direction=QBoxLayout.LeftToRight)
-        self.box_piano.addWidget(self.keyboard)
-        self.box_piano.addWidget(self.grid_view)
-        self.box_ruler = Box(direction=QBoxLayout.LeftToRight)
-        self.box_ruler.addWidget(self.header_view)
-        self.box_ruler.addWidget(self.ruler_view)
+        self.grid_view.keyboard_view.horizontalScrollBar().valueChanged.connect(
+            self.on_change_hor
+        )
+        self.ruler_view = GenericGridView(
+            cls=RulerScene,
+            num_of_bars=self.num_of_bars,
+            channel=track_version.channel,
+            synth=synth,
+        )
+        self.header_view = HeaderView(keyboard=self.ruler_view.keyboard_view.keyboard)
         self.box_main = Box(direction=QBoxLayout.TopToBottom)
-        self.box_main.addLayout(self.box_ruler)
-        self.box_main.addLayout(self.box_piano)
+        self.box_main.addLayout(KeyboardGridBox([self.header_view, self.ruler_view]))
+        self.box_main.addLayout(
+            KeyboardGridBox([self.grid_view.keyboard_view, self.grid_view])
+        )
 
         self.ac_select_all = Action(
             mf=self.mf,
@@ -202,7 +208,7 @@ class PianoRoll(QWidget):
         )
 
     def on_change_ver(self, value: int):
-        self.keyboard.verticalScrollBar().setValue(value)
+        self.grid_view.keyboard_view.verticalScrollBar().setValue(value)
         self.grid_view.verticalScrollBar().setValue(value)
 
     def on_change_hor(self, value: int):

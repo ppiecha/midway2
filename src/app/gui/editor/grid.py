@@ -1,41 +1,32 @@
 import logging
-import traceback
-from typing import List, Iterable, Optional
+from typing import Iterable, Optional
 
-from PySide6.QtCore import Qt, QLineF, QPointF, QRectF
+from PySide6.QtCore import Qt, QLineF, QPointF
 from PySide6.QtGui import QPen
 
 from pydantic import NonNegativeInt
 
 from src.app.gui.editor.generic_grid import GenericGridScene, GenericGridView
-from src.app.gui.editor.node import Node, NoteNode
-from src.app.gui.editor.keyboard import PianoKeyboardView, PianoKeyboardWidget
-from src.app.gui.widgets import GraphicsView
+from src.app.gui.editor.node import NoteNode
+from src.app.gui.editor.keyboard import KeyboardView, PianoKeyboard
 from src.app.model.event import EventType
 from src.app.model.midi_keyboard import MidiRange
-from src.app.utils.properties import KeyAttr, Color, GuiAttr
+from src.app.utils.properties import KeyAttr, Color, GuiAttr, GridAttr
 from src.app.utils.logger import get_console_logger
-from src.app.model.types import Int, Channel
+from src.app.model.types import Channel
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
 
-class GridView(GraphicsView, GenericGridView):
-    def __init__(self, num_of_bars: int, channel: Channel):
-        super().__init__(show_scrollbars=True)
-        self._num_of_bars = num_of_bars
-        self.grid_scene = GridScene(num_of_bars=num_of_bars, channel=channel)
-
-    def mark(self, show: bool, y: int):
-        if show:
-            self.grid_scene.selection.show_marker_at_pos(y=y)
-        else:
-            self.grid_scene.selection.remove_marker()
-
-
 class GridScene(GenericGridScene):
+    KEYBOARD_CLS = PianoKeyboard
+    GRID_ATTR = (
+        GridAttr.SELECTION_DIRECT | GridAttr.MOVE_HORIZONTAL | GridAttr.SHOW_SCROLLBARS,
+    )
+
     def __init__(
         self,
+        grid_view: GenericGridView,
         channel: Channel,
         num_of_bars: NonNegativeInt,
         numerator: int = 4,
@@ -43,6 +34,7 @@ class GridScene(GenericGridScene):
         grid_divider=GuiAttr.GRID_DIV_UNIT,
     ):
         super().__init__(
+            grid_view=grid_view,
             channel=channel,
             numerator=numerator,
             denominator=denominator,
@@ -50,7 +42,7 @@ class GridScene(GenericGridScene):
             num_of_bars=num_of_bars,
         )
         self.supported_event_types = [EventType.NOTE]
-        self._piano_keyboard_view: Optional[PianoKeyboardView] = None
+        self._piano_keyboard_view: Optional[KeyboardView] = None
 
     @property
     def white_key_count(self) -> int:
@@ -121,15 +113,3 @@ class GridScene(GenericGridScene):
                 if hl % self.grid_divider == self.grid_divider - 1
                 else pen_grid,
             )
-
-    @property
-    def keyboard_view(self) -> PianoKeyboardView:
-        return self._piano_keyboard_view
-
-    @keyboard_view.setter
-    def keyboard_view(self, value: PianoKeyboardView) -> None:
-        self._piano_keyboard_view = value
-
-    @property
-    def keyboard(self):
-        return self.keyboard_view.keyboard_scene.keyboard_widget

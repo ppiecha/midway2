@@ -83,7 +83,7 @@ class MetaKeyPos(int, Enum):
     MAX = GuiAttr.RULER_HEIGHT + 3 * KeyAttr.W_HEIGHT
 
 
-class MetaKeyboard(BaseKeyboard):
+class MetaMidiKeyboard(BaseKeyboard):
     def build_keyboard_keys(self) -> None:
         self.keys: Dict[EventType, MidiKey] = {
             EventType.PROGRAM: MidiKey(
@@ -103,8 +103,7 @@ class MetaKeyboard(BaseKeyboard):
                 event_type=EventType.PITCH_BEND,
                 key_top=int(MetaKeyPos.PITCH_BEND),
                 key_bottom=int(MetaKeyPos.MAX),
-            )
-
+            ),
         }
 
     def get_key_by_pitch(self, pitch: Pitch) -> MidiKey:
@@ -140,7 +139,7 @@ class MidiKeyboard(BaseKeyboard):
                 event_type=EventType.NOTE,
                 key_top=None,
                 key_bottom=None,
-                pitch=pitch
+                pitch=pitch,
             )
             if MidiRange.is_white(pitch=pitch):
                 key.key_top = MidiKeyboard.white_key_position(pitch=pitch)

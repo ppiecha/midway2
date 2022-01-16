@@ -99,8 +99,9 @@ class MelodyTrackVersion(QWidget):
         self.num_of_bars = self.track_version.num_of_bars()
 
     def set_keyboard_position(self):
-        self.piano_roll.keyboard.verticalScrollBar().setValue(
-            self.piano_roll.keyboard.verticalScrollBar().maximum() // 2
+        piano_keyboard = self.piano_roll.grid_view.keyboard_view
+        self.piano_roll.grid_view.keyboard_view.verticalScrollBar().setValue(
+            piano_keyboard.verticalScrollBar().maximum() // 2
         )
 
     def init_fonts(self):

@@ -14,8 +14,12 @@ from src.app.backend.midway_synth import MidwaySynth
 from src.app.gui.editor.key import WhitePianoKey, BlackPianoKey, PianoKey, MetaKey
 from src.app.gui.widgets import GraphicsView
 from src.app.model.event import EventType
-from src.app.model.midi_keyboard import MidiKeyboard, MidiRange, MetaKeyboard, \
-    BaseKeyboard
+from src.app.model.midi_keyboard import (
+    MidiKeyboard,
+    MidiRange,
+    MetaMidiKeyboard,
+    BaseKeyboard,
+)
 from src.app.model.types import Channel, Pitch, Midi
 from src.app.utils.properties import KeyAttr, get_app_palette
 from src.app.utils.logger import get_console_logger
@@ -24,7 +28,7 @@ from src.app.backend.synth import Synth
 logger = get_console_logger(name=__name__, log_level=logging.INFO)
 
 
-class PianoKeyboardView(GraphicsView):
+class KeyboardView(GraphicsView):
     def __init__(
         self,
         cls: Callable,
@@ -34,32 +38,27 @@ class PianoKeyboardView(GraphicsView):
     ):
         super().__init__()
         self.synth = synth
-        self.keyboard_scene = KeyboardScene(
-            cls=cls, synth=synth, channel=channel, callback=callback
-        )
-        self.setScene(self.keyboard_scene)
+        self.keyboard = cls(synth=synth, channel=channel, callback=callback)
+        keyboard_scene = QGraphicsScene()
+        keyboard_scene.setSceneRect(self.keyboard.rect())
+        keyboard_scene.addItem(self.keyboard)
+        self.setScene(keyboard_scene)
         self.setFixedWidth(self.sceneRect().width())
 
     def set_synth_and_channel(self, synth, channel):
-        self.keyboard_scene.keyboard_widget.synth = synth
-        self.keyboard_scene.keyboard_widget.channel = channel
+        self.keyboard.synth = synth
+        self.keyboard.channel = channel
 
 
-class KeyboardScene(QGraphicsScene):
-    def __init__(
-            self,
-            cls: Callable,
-            synth: Synth,
-            channel: int,
-            callback: callable
-    ):
-        super().__init__()
-        self.keyboard_widget = cls(synth=synth, channel=channel, callback=callback)
-        self.setSceneRect(self.keyboard_widget.rect())
-        self.addItem(self.keyboard_widget)
+# class KeyboardScene(QGraphicsScene):
+#     def __init__(self, cls: Callable, synth: Synth, channel: int, callback: callable):
+#         super().__init__()
+#         self.keyboard = cls(synth=synth, channel=channel, callback=callback)
+#         self.setSceneRect(self.keyboard.rect())
+#         self.addItem(self.keyboard)
 
 
-class PianoKeyboardWidget(QGraphicsWidget, MidiKeyboard):
+class PianoKeyboard(QGraphicsWidget, MidiKeyboard):
     def __init__(self, synth: Synth, channel: Channel, callback: callable):
         QGraphicsWidget.__init__(self)
         MidiKeyboard.__init__(self, channel=channel)
@@ -106,10 +105,12 @@ class PianoKeyboardWidget(QGraphicsWidget, MidiKeyboard):
             )
 
 
-class MetaKeyboardWidget(QGraphicsWidget, MetaKeyboard):
-    def __init__(self, synth: Synth, channel: Channel, callback: callable):
+class MetaKeyboard(QGraphicsWidget, MetaMidiKeyboard):
+    def __init__(
+        self, synth: Optional[Synth], channel: Channel, callback: Optional[callable]
+    ):
         QGraphicsWidget.__init__(self)
-        MetaKeyboard.__init__(self, channel=channel)
+        MetaMidiKeyboard.__init__(self, channel=channel)
         self.meta_keys: Dict[EventType, MetaKey] = {}
         self.callback = callback
         self.synth = synth
@@ -121,7 +122,7 @@ class MetaKeyboardWidget(QGraphicsWidget, MetaKeyboard):
 
     def get_key_by_pos(self, position: int) -> MetaKey:
         key: MetaKey = self.scene().itemAt(KeyAttr.B_WIDTH / 2, position, QTransform())
-        return key if key else None
+        return key if key and type(key) is MetaKey else None
 
     def draw_keys(self):
         for event_type, key in self.keys.items():
@@ -136,6 +137,6 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setStyle("Fusion")  # Style needed for palette to work
     app.setPalette(get_app_palette())
-    frame = PianoKeyboardView(cls=MetaKeyboardWidget, synth=MidwaySynth(), channel=0)
+    frame = KeyboardView(cls=MetaKeyboard, synth=MidwaySynth(), channel=0)
     frame.show()
     sys.exit(app.exec())
