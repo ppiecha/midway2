@@ -52,7 +52,7 @@ class GridScene(GenericGridScene):
         self.setSceneRect(
             0,
             0,
-            self.num_of_bars * self._width_bar,
+            self.num_of_bars * self.bar_width,
             self.white_key_count * KeyAttr.W_HEIGHT,
         )
         self.clear()

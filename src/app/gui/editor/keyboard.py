@@ -13,12 +13,13 @@ from PySide6.QtWidgets import (
 from src.app.backend.midway_synth import MidwaySynth
 from src.app.gui.editor.key import WhitePianoKey, BlackPianoKey, PianoKey, MetaKey
 from src.app.gui.widgets import GraphicsView
-from src.app.model.event import EventType
+from src.app.model.event import EventType, Event
 from src.app.model.midi_keyboard import (
     MidiKeyboard,
     MidiRange,
     MetaMidiKeyboard,
     BaseKeyboard,
+    MidiKey,
 )
 from src.app.model.types import Channel, Pitch, Midi
 from src.app.utils.properties import KeyAttr, get_app_palette
@@ -50,14 +51,6 @@ class KeyboardView(GraphicsView):
         self.keyboard.channel = channel
 
 
-# class KeyboardScene(QGraphicsScene):
-#     def __init__(self, cls: Callable, synth: Synth, channel: int, callback: callable):
-#         super().__init__()
-#         self.keyboard = cls(synth=synth, channel=channel, callback=callback)
-#         self.setSceneRect(self.keyboard.rect())
-#         self.addItem(self.keyboard)
-
-
 class PianoKeyboard(QGraphicsWidget, MidiKeyboard):
     def __init__(self, synth: Synth, channel: Channel, callback: callable):
         QGraphicsWidget.__init__(self)
@@ -73,14 +66,12 @@ class PianoKeyboard(QGraphicsWidget, MidiKeyboard):
 
     def get_key_by_pos(self, position: int) -> PianoKey:
         key: PianoKey = self.scene().itemAt(KeyAttr.B_WIDTH / 2, position, QTransform())
-        # if not key:
-        #     raise ValueError(f"Cannot get piano key by position {position}")
         return key if key and int(key.note) >= Midi.MIN_C1 else None
 
-    def get_key_by_pitch(self, pitch: Pitch) -> PianoKey:
-        if pitch not in self.piano_keys.keys():
-            raise ValueError(f"Pitch outside of range {pitch}")
-        return self.piano_keys[pitch]
+    def get_key_by_event(self, event: Event) -> PianoKey:
+        if event.pitch not in self.piano_keys.keys():
+            raise ValueError(f"Pitch outside of range {event.pitch}")
+        return self.piano_keys[event.pitch]
 
     def draw_keys(self):
         for pitch, key in {

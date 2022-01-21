@@ -1,7 +1,7 @@
 import pytest
 
 from src.app.model.event import EventType, Event
-from src.app.model.sequence import Sequence, BarNumEvent
+from src.app.model.sequence import Sequence
 
 
 @pytest.fixture()

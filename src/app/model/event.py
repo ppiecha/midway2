@@ -82,26 +82,26 @@ class Event(BaseModel):
             velocity=velocity,
         )
 
-    @staticmethod
-    def unit_diff(x: int, min_unit_width: int) -> int:
-        if x > 0 and abs(x - ceil(node.rect().right())) >= min_unit_width:
-            return min_unit_width if x - node.rect().right() > 0 else -min_unit_width
-        else:
-            return 0
-
-    def pitch_diff(self, y: int, keyboard) -> int:
-        if self.event.pitch is None:
-            return 0
-        if key := keyboard.get_key_by_pos(position=y) is None:
-            return 0
-        else:
-            return self.event.pitch - int(key.note)
-
-    @staticmethod
-    def beat_diff(x: int, node) -> int:
-        center = node.scenePos().x() + node.rect.width() / 2
-        dist = x - center
-        if abs(dist) >= node.grid_scene.min_unit_width:
-            return int(copysign(1 / node.grid_scene.min_unit, dist))
-        else:
-            return 0
+    # @staticmethod
+    # def unit_diff(x: int, min_unit_width: int) -> int:
+    #     if x > 0 and abs(x - ceil(node.rect().right())) >= min_unit_width:
+    #         return min_unit_width if x - node.rect().right() > 0 else -min_unit_width
+    #     else:
+    #         return 0
+    #
+    # def pitch_diff(self, y: int, keyboard) -> int:
+    #     if self.event.pitch is None:
+    #         return 0
+    #     if key := keyboard.get_key_by_pos(position=y) is None:
+    #         return 0
+    #     else:
+    #         return self.event.pitch - int(key.note)
+    #
+    # @staticmethod
+    # def beat_diff(x: int, node) -> int:
+    #     center = node.scenePos().x() + node.rect.width() / 2
+    #     dist = x - center
+    #     if abs(dist) >= node.grid_scene.min_unit_width:
+    #         return int(copysign(1 / node.grid_scene.min_unit, dist))
+    #     else:
+    #         return 0

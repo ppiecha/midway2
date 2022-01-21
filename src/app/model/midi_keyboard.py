@@ -3,7 +3,7 @@ from enum import Enum
 from functools import lru_cache
 from typing import List, Dict, NamedTuple, Optional
 
-from src.app.model.event import EventType
+from src.app.model.event import EventType, Event
 from src.app.model.types import Channel, Pitch, Midi
 from src.app.utils.properties import KeyAttr, GuiAttr
 
@@ -46,6 +46,15 @@ class MidiKey:
     event_type: EventType
     pitch: Optional[Pitch] = None
 
+    def event(self):
+        raise NotImplementedError
+
+    def play_note(self):
+        raise NotImplementedError
+
+    def play_note_in_thread(self, secs):
+        raise NotImplementedError
+
 
 class BaseKeyboard:
     def __init__(self, channel: Channel = None):
@@ -69,7 +78,7 @@ class BaseKeyboard:
                     f"Found more than one key {keys} " f"for position {position}"
                 )
 
-    def get_key_by_pitch(self, pitch: Pitch) -> MidiKey:
+    def get_key_by_event(self, event: Event) -> MidiKey:
         raise NotImplementedError
 
     def build_keyboard_keys(self) -> None:
@@ -106,7 +115,9 @@ class MetaMidiKeyboard(BaseKeyboard):
             ),
         }
 
-    def get_key_by_pitch(self, pitch: Pitch) -> MidiKey:
+    def get_key_by_event(self, event: Event) -> MidiKey:
+        if event.type != EventType.NOTE:
+            return self.keys[event.type]
         raise NotImplementedError
 
 
@@ -129,8 +140,11 @@ class MidiKeyboard(BaseKeyboard):
             - (KeyAttr.B_HEIGHT / 2)
         )
 
-    def get_key_by_pitch(self, pitch: Pitch) -> MidiKey:
-        return self.keys[pitch]
+    def get_key_by_event(self, event: Event) -> MidiKey:
+        if event.type == EventType.NOTE:
+            return self.keys[event.pitch]
+        else:
+            raise NotImplementedError
 
     def build_keyboard_keys(self) -> None:
         for pitch in MidiRange.WHITE_KEYS_RANGE:
@@ -148,3 +162,6 @@ class MidiKeyboard(BaseKeyboard):
                 key.key_top = MidiKeyboard.black_key_position(pitch=pitch)
                 key.key_bottom = key.key_top + KeyAttr.B_HEIGHT
             self.keys[pitch] = key
+
+
+MIDI_KEYBOARD = MidiKeyboard()

@@ -4,6 +4,7 @@ from pathlib import Path
 
 from PySide6.QtGui import QColor, QPalette, Qt
 
+from src.app.mingus.core import value
 from src.app.model.types import NoteUnit
 
 
@@ -61,6 +62,7 @@ class GuiAttr:
     # Grid
     RULER_HEIGHT = 20
     GRID_DIV_UNIT = NoteUnit.EIGHTH
+    GRID_MIN_UNIT = value.thirty_second
     # Custom sequences
     DEFAULT = "Default"
     SINGLE_TRACK = "Single"

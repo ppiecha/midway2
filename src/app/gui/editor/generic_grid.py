@@ -1,6 +1,7 @@
 from __future__ import annotations
 import logging
-from typing import Optional, List, Callable, Type
+from math import modf
+from typing import Optional, List, Type
 
 from PySide6.QtCore import QRectF, QPointF
 from PySide6.QtGui import Qt
@@ -13,15 +14,13 @@ from src.app.gui.editor.keyboard import KeyboardView
 from src.app.gui.editor.node import NoteNode, MetaNode, Node
 from src.app.gui.editor.selection import GridSelection
 from src.app.gui.widgets import GraphicsView, Box
-from src.app.mingus.core import value
 from src.app.model.bar import Bar
 from src.app.model.event import Event, EventType
 from src.app.model.midi_keyboard import BaseKeyboard
-from src.app.model.sequence import Sequence, BarNumEvent
-from src.app.model.types import Channel, Int, NoteUnit
+from src.app.model.sequence import Sequence
+from src.app.model.types import Channel
 from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import GuiAttr, KeyAttr, Notification, GridAttr, MidiAttr
-from src.app.utils.units import pos2bar_beat, round2cell
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
@@ -33,7 +32,6 @@ class KeyboardGridBox(Box):
             self.addWidget(component)
 
 
-
 class GenericGridView(GraphicsView):
     def __init__(
         self,
@@ -43,6 +41,7 @@ class GenericGridView(GraphicsView):
         synth: Synth,
     ):
         super().__init__(show_scrollbars=GridAttr.SHOW_SCROLLBARS in cls.GRID_ATTR)
+        print(cls.__name__, GridAttr.SHOW_SCROLLBARS in cls.GRID_ATTR, cls.GRID_ATTR)
         self._num_of_bars = num_of_bars
         self.grid_scene = cls(num_of_bars=num_of_bars, channel=channel, grid_view=self)
         self.setScene(self.grid_scene)
@@ -98,10 +97,10 @@ class GenericGridScene(QGraphicsScene):
         self._numerator = numerator
         self._denominator = denominator
         self._grid_divider = grid_divider
-        self._width_bar = grid_divider * KeyAttr.W_HEIGHT
-        self._width_beat = self._denominator / self._numerator * self._width_bar
-        self.min_unit = value.thirty_second
-        self.min_unit_width = self.get_unit_width(self.min_unit)
+        # self._width_bar = grid_divider * KeyAttr.W_HEIGHT
+        # self._width_beat = self._denominator / self._numerator * self._width_bar
+        # self.min_unit = value.thirty_second
+        # self.min_unit_width = self.get_unit_width(self.min_unit)
         self._sequence: Optional[Sequence] = None
         self._num_of_bars = num_of_bars
         self.redraw()
@@ -114,24 +113,87 @@ class GenericGridScene(QGraphicsScene):
         if not pub.subscribe(self.remove_node, Notification.EVENT_REMOVED.value):
             raise Exception(f"Cannot register listener {Notification.EVENT_REMOVED}")
 
-    def point_to_bar_event(
-        self, x: int, y: int, unit=NoteUnit.EIGHTH
-    ) -> Optional[BarNumEvent]:
-        key = self.keyboard.get_key_by_pos(position=y)
-        if key:
-            bar, beat = pos2bar_beat(
-                pos=round2cell(pos=x, cell_width=KeyAttr.W_HEIGHT),
-                cell_unit=GuiAttr.GRID_DIV_UNIT,
-                cell_width=KeyAttr.W_HEIGHT,
+    def ratio(self, x: float) -> float:
+        return x / self.bar_width
+
+    @staticmethod
+    def round_to_cell(x: float) -> float:
+        return (x // float(KeyAttr.W_HEIGHT)) * float(KeyAttr.W_HEIGHT)
+
+    def set_event_position(
+            self, event: Event, node: Node, x: int
+    ) -> Event:
+        if node:
+            event.bar_num = node.event.bar_num
+            event.beat = node.event.beat
+        else:
+            x = self.round_to_cell(x)
+            beat_ratio, bar_num = modf(self.ratio(x))
+            beat = self.sequence.meter().unit_from_ratio(ratio=beat_ratio)
+            event.bar_num = bar_num
+            event.beat = beat
+        return event
+
+    def set_event_unit(self, event: Event, node: Node) -> Event:
+        if node:
+            event.unit = node.event.unit
+        else:
+            event.unit = GuiAttr.GRID_DIV_UNIT
+        return event
+
+    def set_event_pitch(self, node: Node, y: int) -> Event:
+        if node:
+            if node.event.type != EventType.NOTE:
+                raise ValueError(f"Cannot set pitch for event which is not note")
+            return node.event
+        else:
+            key = self.keyboard.get_key_by_pos(position=y)
+            return key.event() if key else None
+
+    def point_to_event(
+            self,
+            e: QGraphicsSceneMouseEvent,
+            node: Node = None,
+            moving: bool = False,
+            resizing: bool = False
+    ) -> Optional[Event]:
+        x, y = e.scenePos().x(), e.scenePos().y()
+        event = self.set_event_pitch(node=node, y=y)
+        if event:
+            event = self.set_event_position(event=event, node=node, x=x)
+            event = self.set_event_unit(event=event, node=node)
+            beat_diff = 0
+            pitch_diff = 0
+            unit_diff = 0
+            if moving:
+                center = node.scenePos().x() + node.rect.width() / 2
+                dist = x - center
+                beat_diff_ratio, _ = modf(self.ratio(dist))
+                beat_diff = self.sequence.meter().unit_from_ratio(ratio=beat_diff_ratio)
+                key = self.keyboard.get_key_by_pos(position=y)
+                pitch_diff = int(key.event()) - int(event) if key else None
+            elif resizing:
+                if not node:
+                    raise ValueError(f"Cannot resize when node is undefined")
+                unit_ratio = y - self.ratio(node.rect.right())
+                unit_diff = self.sequence.meter().unit_from_ratio(ratio=unit_ratio)
+            return self.sequence.get_moved_event(
+                old_event=event,
+                beat_diff=beat_diff,
+                pitch_diff=pitch_diff,
+                unit_diff=unit_diff
             )
-            event = key.event.copy(deep=True)
-            Sequence.set_events_attr(
-                events=[event],
-                attr_val_map={"beat": beat, "unit": unit},
-            )
-            return BarNumEvent(bar_num=bar, event=event)
         else:
             return None
+
+    def event_to_point(self, event: Event) -> QPointF:
+        x = event.bar_num * self.bar_width
+        ratio = self.sequence.meter().unit_ratio(unit=event.beat)
+        x += ratio * self.bar_width
+        x = self.round_to_cell(x)
+        key = self.keyboard.get_key_by_event(event=event)
+        y = key.key_top
+        return QPointF(x, y)
 
     def is_matching(self, sequence_id, event_type: EventType):
         return (
@@ -139,22 +201,21 @@ class GenericGridScene(QGraphicsScene):
             and event_type in self.supported_event_types
         )
 
-    def remove_node(self, sequence_id, bar_event: BarNumEvent):
-        if self.is_matching(sequence_id=sequence_id, event_type=bar_event.event.type):
-            found = [node for node in self.nodes() if node.event == bar_event.event]
+    def remove_node(self, sequence_id, event: Event):
+        if self.is_matching(sequence_id=sequence_id, event_type=event.type):
+            found = [node for node in self.nodes() if node.event == event]
             if len(found) == 0:
-                raise ValueError(
-                    f"Event {bar_event.event} not found in bar {bar_event.bar_num}"
-                )
+                raise ValueError(f"Event {event} not found in bar {event.bar_num}")
             else:
                 self.delete_nodes(meta_notes=found, hard_delete=True)
 
-    def remove_event(self, bar_event: BarNumEvent):
-        self.sequence.remove_event(bar_num=bar_event.bar_num, event=bar_event.event)
+    def remove_event(self, event: Event):
+        self.sequence.remove_event(event=event)
         logger.debug(self.sequence)
 
     def _add_node(self, event: Event):
         node = self.node_from_event(event=event)
+        # print(node.scenePos(), node)
         self.addItem(node)
 
     def _add_bar(self, bar: Bar):
@@ -167,7 +228,7 @@ class GenericGridScene(QGraphicsScene):
 
     def add_event(self, event: Event):
         if not self.sequence.has_event(event=event):
-            self.sequence.add_event(event=event)
+            self.sequence.add_event(bar_num=event.bar_num, event=event)
             logger.debug(self.sequence)
 
     def node_from_event(self, event: Event):
@@ -273,20 +334,8 @@ class GenericGridScene(QGraphicsScene):
         self.set_grid_width_props()
 
     @property
-    def width_bar(self) -> int:
-        return self._width_bar
-
-    @width_bar.setter
-    def width_bar(self, value: int) -> None:
-        self._width_bar = value
-
-    @property
-    def width_beat(self) -> int:
-        return self._width_beat
-
-    @width_beat.setter
-    def width_beat(self, value: int) -> None:
-        self._width_beat = value
+    def bar_width(self) -> int:
+        return self.grid_divider * KeyAttr.W_HEIGHT
 
     @property
     def sequence(self):
@@ -327,17 +376,13 @@ class GenericGridScene(QGraphicsScene):
                         case Qt.NoModifier:
                             self.selection.selecting = False
                             key = self.keyboard.get_key_by_pos(position=y)
-                            bar_event = self.point_to_bar_event(x=x, y=y)
+                            event = self.point_to_event(e=e)
                             if key:
-                                self.add_event(bar_event=bar_event)
+                                self.add_event(event=event)
                                 key.play_note_in_thread(secs=MidiAttr.KEY_PLAY_TIME)
                 case Qt.RightButton:
                     for meta_node in self.nodes(pos):
-                        self.remove_event(
-                            BarNumEvent(
-                                bar_num=meta_node.bar_num, event=meta_node.event
-                            )
-                        )
+                        self.remove_event(event=meta_node.event)
 
     def mouseReleaseEvent(self, e: QGraphicsSceneMouseEvent):
         super().mouseReleaseEvent(e)

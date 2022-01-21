@@ -79,7 +79,10 @@ class Node(QGraphicsItem):
 
     @event.setter
     def event(self, new_event: Event):
-        self._event = new_event
+        if new_event != self._event:
+            point = self.grid_scene.event_to_point(event=new_event)
+            self.setPos(point)
+            self._event = new_event
 
     # @property
     # def channel(self) -> Channel:
@@ -180,22 +183,17 @@ class Node(QGraphicsItem):
     #     return super().itemChange(change, value)
 
     def __repr__(self):
-        temp = "T " if self.is_temporary else ""
-        return f"({temp}bar: {str(self.bar_num)}, {repr(self.event)})"
+        return str(self.event)
 
     def mouseMoveEvent(self, e: QGraphicsSceneMouseEvent):
-        x, y = e.pos().x(), e.pos().y()
-        bar_event = self.grid_scene.point_to_bar_event(x=x, y=y, unit=self.event.unit)
-        if bar_event:
-            params = {
-                "x": x,
-                "y": y,
-                "node": self,
-                "keyboard": self.grid_scene.keyboard,
-                "resizing": self.selection.resizing,
-            }
-            if self.bar_event.change_valid(**params):
-                pass
+        if self.selection.moving:
+            new_event = self.grid_scene.point_to_event(event=e, node=self, unit=self.event.unit)
+            if new_event:
+                self.grid_scene.sequence.replace_event(
+                    old_event=self.event, new_event=new_event
+                )
+        elif self.selection.resizing:
+            pass
 
     def mouseReleaseEvent(self, e: QGraphicsSceneMouseEvent):
         self.selection.resizing = False
@@ -252,10 +250,7 @@ class NoteNode(Node):
         def calc_unit(node: Node) -> float:
             unit_ = 0
             center = node.scenePos().x() + node.rect.width() / 2
-            # print(node is self, self.scenePos(), node.scenePos())
-            diff = node.scenePos().x() - self.scenePos().x()
-
-            dist = e.scenePos().x() - center - diff
+            dist = e.scenePos().x() - center
             if abs(dist) >= node.grid_scene.min_unit_width:
                 unit_ = 1 / node.grid_scene.min_unit
                 if dist < 0:

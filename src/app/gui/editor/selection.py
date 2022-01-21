@@ -4,7 +4,6 @@ from PySide6.QtCore import QPointF, QRect
 from PySide6.QtGui import QPen, QBrush
 from PySide6.QtWidgets import QGraphicsRectItem, QGraphicsItemGroup
 
-from src.app.gui.editor.key import BlackPianoKey
 from src.app.utils.properties import GridAttr, Color, KeyAttr
 
 
@@ -94,7 +93,6 @@ class GridSelection:
             for item in self.copied_grp.childItems():
                 self.removeItem(item)
             self.destroyItemGroup(self.copied_grp)
-            logger.debug("copy grp removed")
         self._is_copying = value
 
     def remove_selection_rect(self):
@@ -125,7 +123,9 @@ class GridSelection:
         if 0 < x < self.grid.width() and 0 < y < self.grid.height():
             self.show_marker_at_pos(y=y)
 
-    def remove_marker(self, ):
+    def remove_marker(
+        self,
+    ):
         if self.grid_options.SHOW_MARKER and self.marker_rect:
             self.grid.removeItem(self.marker_rect)
 
@@ -138,7 +138,7 @@ class GridSelection:
             y_height = key.boundingRect().height()
             self.marker_rect = self.grid.addRect(
                 QRect(
-                    0, y_start, self.grid.width_bar * self.grid.num_of_bars, y_height
+                    0, y_start, self.grid.bar_width * self.grid.num_of_bars, y_height
                 ),
                 QPen(Color.GRID_MARKER),
                 QBrush(Color.GRID_MARKER),

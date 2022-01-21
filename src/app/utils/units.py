@@ -120,22 +120,22 @@ def bpm2time_scale(bpm: float):
     return time_scale
 
 
-def bar_beat2pos(bar_beat: BarBeat, cell_unit: Unit, cell_width: int) -> float:
-    if bar_beat.bar is None or bar_beat.beat is None:
-        raise ValueError(
-            f"Incomplete bar/beat definition " f"{bar_beat.bar}/{bar_beat.beat}"
-        )
-    return (bar_beat.bar + bar_beat.beat) * cell_unit * cell_width
-
-
-def pos2bar_beat(pos: float, cell_unit: Unit, cell_width: int) -> BarBeat:
-    bar_width = cell_unit * cell_width
-    bar = floor(pos / bar_width)
-    pos = pos - (bar * bar_width)
-    beat_width = ceil(pos / cell_width) * cell_width
-    beat = beat_width / bar_width
-    return BarBeat(bar=bar, beat=beat)
-
-
-def round2cell(pos: float, cell_width: int) -> float:
-    return floor(pos / cell_width) * cell_width
+# def bar_beat2pos(bar_beat: BarBeat, cell_unit: Unit, cell_width: int) -> float:
+#     if bar_beat.bar is None or bar_beat.beat is None:
+#         raise ValueError(
+#             f"Incomplete bar/beat definition " f"{bar_beat.bar}/{bar_beat.beat}"
+#         )
+#     return (bar_beat.bar + bar_beat.beat) * cell_unit * cell_width
+#
+#
+# def pos2bar_beat(pos: float, cell_unit: Unit, cell_width: int) -> BarBeat:
+#     bar_width = cell_unit * cell_width
+#     bar = floor(pos / bar_width)
+#     pos = pos - (bar * bar_width)
+#     beat_width = ceil(pos / cell_width) * cell_width
+#     beat = beat_width / bar_width
+#     return BarBeat(bar=bar, beat=beat)
+#
+#
+# def round2cell(pos: float, cell_width: int) -> float:
+#     return floor(pos / cell_width) * cell_width

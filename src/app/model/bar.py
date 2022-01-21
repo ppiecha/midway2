@@ -1,9 +1,10 @@
 from __future__ import annotations
 import copy
-from typing import List, Union, Optional, Iterator, Any
+from typing import List, Union, Optional, Iterator
 
-from pydantic import BaseModel, PositiveInt, NonNegativeInt, NonNegativeFloat
+from pydantic import BaseModel, NonNegativeInt, NonNegativeFloat
 
+from src.app.model.meter import Meter, invert
 from src.app.utils.exceptions import BeatOutsideOfBar, EventAlreadyExists
 from src.app.utils.logger import get_console_logger
 from src.app.model.event import Event, EventType
@@ -12,14 +13,6 @@ import logging
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
 _notes = List[Union[Event, type(None)]]
-
-
-class Meter(BaseModel):
-    numerator: PositiveInt = 4
-    denominator: PositiveInt = 4
-
-    def length(self) -> NonNegativeFloat:
-        return float(self.numerator) * (1.0 / float(self.denominator))
 
 
 class Bar(BaseModel):
@@ -86,9 +79,9 @@ class Bar(BaseModel):
         self.bar.clear()
 
     def add_event(self, event: Event) -> None:
-        if event.beat >= self.length():
+        if not 0 <= invert(event.beat) < self.length():
             raise BeatOutsideOfBar(
-                f"Item outside of bar range {event.beat}/{self.length()}"
+                f"Item outside of bar range 0/{invert(event.beat)}/{self.length()}"
             )
         if self.has_event(event=event):
             raise EventAlreadyExists(f"Event {event} exists in bar {self.bar}")
