@@ -6,7 +6,7 @@ from PySide6.QtGui import QPen
 
 from pydantic import NonNegativeInt
 
-from src.app.gui.editor.generic_grid import GenericGridScene, GenericGridView
+from src.app.gui.editor.base_grid import BaseGridScene, BaseGridView
 from src.app.gui.editor.node import NoteNode
 from src.app.gui.editor.keyboard import KeyboardView, PianoKeyboard
 from src.app.model.event import EventType
@@ -18,15 +18,18 @@ from src.app.model.types import Channel
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
 
-class GridScene(GenericGridScene):
+class GridScene(BaseGridScene):
     KEYBOARD_CLS = PianoKeyboard
     GRID_ATTR = (
-        GridAttr.SELECTION_DIRECT | GridAttr.MOVE_HORIZONTAL | GridAttr.SHOW_SCROLLBARS,
+        GridAttr.DIRECT_SELECTION
+        | GridAttr.MOVE_HORIZONTAL
+        | GridAttr.SHOW_SCROLLBARS
+        | GridAttr.MOVE_VERTICAL
     )
 
     def __init__(
         self,
-        grid_view: GenericGridView,
+        grid_view: BaseGridView,
         channel: Channel,
         num_of_bars: NonNegativeInt,
         numerator: int = 4,
@@ -70,12 +73,6 @@ class GridScene(GenericGridScene):
     def resize_notes(self, notes: Iterable[NoteNode], diff: float):
         for note in notes:
             note.resize(diff=diff)
-
-    def select_all(self):
-        list(map(lambda note: note.setSelected(True), self.nodes()))
-
-    def invert_selection(self):
-        list(map(lambda note: note.setSelected(not note.isSelected()), self.nodes()))
 
     def copy_selection(self):
         if not self._is_copying:

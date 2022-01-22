@@ -9,8 +9,8 @@ from src.app.model.types import NoteUnit
 
 
 class GridAttr(Flag):
-    SELECTION_DIRECT = auto()
-    SELECTION_BACKGROUND = auto()
+    DIRECT_SELECTION = auto()
+    BACKGROUND_SELECTION = auto()
     MOVE_HORIZONTAL = auto()
     MOVE_VERTICAL = auto()
     SHOW_MARKER = auto()

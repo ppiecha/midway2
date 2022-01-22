@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.app.backend.midway_synth import MidwaySynth
-from src.app.gui.editor.generic_grid import GenericGridScene, GenericGridView
+from src.app.gui.editor.base_grid import BaseGridScene, BaseGridView
 from src.app.gui.editor.keyboard import MetaKeyboard
 from src.app.gui.widgets import GraphicsView, Box
 from src.app.model.midi_keyboard import (
@@ -149,13 +149,13 @@ class Header(QGraphicsItem):
         return self.get_rect()
 
 
-class RulerScene(GenericGridScene):
+class RulerScene(BaseGridScene):
     KEYBOARD_CLS = MetaKeyboard
     GRID_ATTR = (
-        GridAttr.SELECTION_DIRECT | GridAttr.MOVE_HORIZONTAL | GridAttr.FIXED_HEIGHT
+        GridAttr.DIRECT_SELECTION | GridAttr.MOVE_HORIZONTAL | GridAttr.FIXED_HEIGHT
     )
 
-    def __init__(self, channel: Channel, num_of_bars, grid_view: GenericGridView):
+    def __init__(self, channel: Channel, num_of_bars, grid_view: BaseGridView):
         self.ruler = Ruler(
             channel=channel, num_of_bars=num_of_bars, grid_view=grid_view
         )
@@ -323,7 +323,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setStyle("Fusion")  # Style needed for palette to work
     app.setPalette(get_app_palette())
-    ruler_view = GenericGridView(
+    ruler_view = BaseGridView(
         cls=RulerScene, num_of_bars=1, channel=0, synth=MidwaySynth()
     )
     keyboard = ruler_view.keyboard_view.keyboard

@@ -30,14 +30,11 @@ class Bar(BaseModel):
         if len(params) == 1:
             raise ValueError(f"Cannot compare units {e1.unit} {e2.unit}")
         if e1.unit:
-            # print(self.length())
-            # print(e1.beat, e2.beat, e1.beat + (self.length() / e1.unit))
-            # print(e2.beat, e1.beat, e2.beat + (self.length() / e2.unit))
-            # print(e1.beat <= e2.beat < e1.beat + (self.length() / e1.unit)
-            #         or e2.beat <= e1.beat < e2.beat + (self.length() / e2.unit))
-            return e1.beat <= e2.beat < e1.beat + (
-                self.length() / e1.unit
-            ) or e2.beat <= e1.beat < e2.beat + (self.length() / e2.unit)
+            return invert(e1.beat) <= invert(e2.beat) < invert(e1.beat) + (
+                invert(e1.unit)
+            ) or invert(e2.beat) <= invert(e1.beat) < invert(e2.beat) + (
+                invert(e2.unit)
+            )
         else:
             return e1.beat == e2.beat
 

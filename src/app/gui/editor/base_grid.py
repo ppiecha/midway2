@@ -4,18 +4,20 @@ from math import modf
 from typing import Optional, List, Type
 
 from PySide6.QtCore import QRectF, QPointF
-from PySide6.QtGui import Qt
+from PySide6.QtGui import Qt, QMouseEvent
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsSceneMouseEvent, QBoxLayout
 from pubsub import pub
 from pydantic import NonNegativeInt
 
 from src.app.backend.synth import Synth
+from src.app.gui.editor.key import BlackPianoKey
 from src.app.gui.editor.keyboard import KeyboardView
 from src.app.gui.editor.node import NoteNode, MetaNode, Node
 from src.app.gui.editor.selection import GridSelection
 from src.app.gui.widgets import GraphicsView, Box
 from src.app.model.bar import Bar
 from src.app.model.event import Event, EventType
+from src.app.model.meter import invert
 from src.app.model.midi_keyboard import BaseKeyboard
 from src.app.model.sequence import Sequence
 from src.app.model.types import Channel
@@ -32,16 +34,15 @@ class KeyboardGridBox(Box):
             self.addWidget(component)
 
 
-class GenericGridView(GraphicsView):
+class BaseGridView(GraphicsView):
     def __init__(
         self,
-        cls: Type[GenericGridScene],
+        cls: Type[BaseGridScene],
         num_of_bars: int,
         channel: Channel,
         synth: Synth,
     ):
         super().__init__(show_scrollbars=GridAttr.SHOW_SCROLLBARS in cls.GRID_ATTR)
-        print(cls.__name__, GridAttr.SHOW_SCROLLBARS in cls.GRID_ATTR, cls.GRID_ATTR)
         self._num_of_bars = num_of_bars
         self.grid_scene = cls(num_of_bars=num_of_bars, channel=channel, grid_view=self)
         self.setScene(self.grid_scene)
@@ -76,14 +77,23 @@ class GenericGridView(GraphicsView):
         self.grid_scene.selection.remove_marker()
         self.keyboard_view.keyboard.deactivate_all()
 
+    def mousePressEvent(self, e: QMouseEvent):
+        if (
+            self.grid_scene.nodes(pos=self.mapToScene(e.pos()))  # item under cursor
+            or not self.grid_scene.selected_nodes  # no selected items
+        ):
+            super().mousePressEvent(e)
+        else:
+            self.grid_scene.select_all(selected=False)
 
-class GenericGridScene(QGraphicsScene):
+
+class BaseGridScene(QGraphicsScene):
     KEYBOARD_CLS = None
-    GRID_ATTR = GridAttr.SELECTION_DIRECT | GridAttr.MOVE_HORIZONTAL
+    GRID_ATTR = GridAttr.DIRECT_SELECTION | GridAttr.MOVE_HORIZONTAL
 
     def __init__(
         self,
-        grid_view: GenericGridView,
+        grid_view: BaseGridView,
         channel: Channel,
         num_of_bars: NonNegativeInt,
         numerator: int = 4,
@@ -97,14 +107,10 @@ class GenericGridScene(QGraphicsScene):
         self._numerator = numerator
         self._denominator = denominator
         self._grid_divider = grid_divider
-        # self._width_bar = grid_divider * KeyAttr.W_HEIGHT
-        # self._width_beat = self._denominator / self._numerator * self._width_bar
-        # self.min_unit = value.thirty_second
-        # self.min_unit_width = self.get_unit_width(self.min_unit)
-        self._sequence: Optional[Sequence] = None
+        self._sequence = Sequence.from_num_of_bars(num_of_bars=num_of_bars)
         self._num_of_bars = num_of_bars
         self.redraw()
-        self.selection = GridSelection(grid=self, grid_attr=GenericGridScene.GRID_ATTR)
+        self.selection = GridSelection(grid=self, grid_attr=BaseGridScene.GRID_ATTR)
         self.register_listeners()
 
     def register_listeners(self):
@@ -116,13 +122,11 @@ class GenericGridScene(QGraphicsScene):
     def ratio(self, x: float) -> float:
         return x / self.bar_width
 
-    @staticmethod
-    def round_to_cell(x: float) -> float:
-        return (x // float(KeyAttr.W_HEIGHT)) * float(KeyAttr.W_HEIGHT)
+    def round_to_cell(self, x: float) -> float:
+        min_unit_width = invert(GuiAttr.GRID_MIN_UNIT) * self.bar_width
+        return (x // min_unit_width) * min_unit_width
 
-    def set_event_position(
-            self, event: Event, node: Node, x: int
-    ) -> Event:
+    def set_event_position(self, event: Event, node: Node, x: int) -> Event:
         if node:
             event.bar_num = node.event.bar_num
             event.beat = node.event.beat
@@ -151,11 +155,11 @@ class GenericGridScene(QGraphicsScene):
             return key.event() if key else None
 
     def point_to_event(
-            self,
-            e: QGraphicsSceneMouseEvent,
-            node: Node = None,
-            moving: bool = False,
-            resizing: bool = False
+        self,
+        e: QGraphicsSceneMouseEvent,
+        node: Node = None,
+        moving: bool = False,
+        resizing: bool = False,
     ) -> Optional[Event]:
         x, y = e.scenePos().x(), e.scenePos().y()
         event = self.set_event_pitch(node=node, y=y)
@@ -181,7 +185,7 @@ class GenericGridScene(QGraphicsScene):
                 old_event=event,
                 beat_diff=beat_diff,
                 pitch_diff=pitch_diff,
-                unit_diff=unit_diff
+                unit_diff=unit_diff,
             )
         else:
             return None
@@ -193,6 +197,8 @@ class GenericGridScene(QGraphicsScene):
         x = self.round_to_cell(x)
         key = self.keyboard.get_key_by_event(event=event)
         y = key.key_top
+        if type(key) is BlackPianoKey:
+            y = key.key_top - 4
         return QPointF(x, y)
 
     def is_matching(self, sequence_id, event_type: EventType):
@@ -210,12 +216,11 @@ class GenericGridScene(QGraphicsScene):
                 self.delete_nodes(meta_notes=found, hard_delete=True)
 
     def remove_event(self, event: Event):
-        self.sequence.remove_event(event=event)
+        self.sequence.remove_event(bar_num=event.bar_num, event=event)
         logger.debug(self.sequence)
 
     def _add_node(self, event: Event):
         node = self.node_from_event(event=event)
-        # print(node.scenePos(), node)
         self.addItem(node)
 
     def _add_bar(self, bar: Bar):
@@ -236,9 +241,6 @@ class GenericGridScene(QGraphicsScene):
         return cls(grid_scene=self, event=event)
 
     def draw_sequence(self, sequence: Sequence):
-        if not sequence:
-            logger.warning(f"Empty sequence. Nothing to draw. Returning...")
-            return
         self.delete_nodes(meta_notes=self.nodes(), hard_delete=True)
         for bar_num, bar in sequence.bars.items():
             filtered_bar = Bar(
@@ -246,8 +248,6 @@ class GenericGridScene(QGraphicsScene):
                 bar_num=bar_num,
                 bar=list(filter(lambda e: e.type in self.supported_event_types, bar)),
             )
-            # if not filtered_bar.is_empty():
-            #     logger.debug(f"draw bar {filtered_bar}")
             self._add_bar(bar=filtered_bar)
 
     def delete_node(self, meta_node: Node, hard_delete: bool = True) -> None:
@@ -282,8 +282,8 @@ class GenericGridScene(QGraphicsScene):
             lst = list(filter(lambda note: note.isSelected(), self.nodes()))
         return lst
 
-    def set_selected_moving(self):
-        list(map(lambda node: node.selection.set_moving(), self.selected_nodes))
+    def set_selected_moving(self, moving: bool = True):
+        list(map(lambda node: node.selection.set_moving(moving), self.selected_nodes))
 
     def get_unit_width(self, unit: float) -> float:
         return self.width_bar / unit
@@ -374,6 +374,11 @@ class GenericGridScene(QGraphicsScene):
                         case Qt.ShiftModifier | Qt.ControlModifier:
                             raise NotImplementedError
                         case Qt.NoModifier:
+                            logger.debug(self.selected_nodes)
+                            if self.selected_nodes:
+                                logger.debug("deselecting")
+                                self.select_all(False)
+                                return
                             self.selection.selecting = False
                             key = self.keyboard.get_key_by_pos(position=y)
                             event = self.point_to_event(e=e)
@@ -393,6 +398,20 @@ class GenericGridScene(QGraphicsScene):
         pass
 
     def mouseMoveEvent(self, e: QGraphicsSceneMouseEvent):
+        # self.grid_view.setUpdatesEnabled(False)
         super().mouseMoveEvent(e)
+        # if e.buttons() == Qt.LeftButton and not self.selection.selecting:
+        #     # nodes := self.nodes(pos=e.scenePos()
+        #     for node in self.selected_nodes:
+        #         node.setSelected(True)
+        #         self.set_selected_moving()
+        #         node.mouseMoveEvent(e=e)
         x, y = e.scenePos().x(), e.scenePos().y()
         self.selection.draw_selection(x=x, y=y)
+        # self.grid_view.setUpdatesEnabled(True)
+
+    def select_all(self, selected: bool = True):
+        list(map(lambda note: note.setSelected(selected), self.nodes()))
+
+    def invert_selection(self):
+        list(map(lambda note: note.setSelected(not note.isSelected()), self.nodes()))

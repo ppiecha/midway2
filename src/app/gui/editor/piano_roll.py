@@ -7,7 +7,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeySequence
 from PySide6.QtWidgets import QWidget, QBoxLayout
 
-from src.app.gui.editor.generic_grid import GenericGridView, KeyboardGridBox
+from src.app.gui.editor.base_grid import BaseGridView, KeyboardGridBox
 from src.app.gui.editor.grid import GridScene
 from src.app.gui.menu import Action
 from src.app.gui.editor.keyboard import (
@@ -52,7 +52,7 @@ class PianoRoll(QWidget):
         self.track_version = track_version
         self.synth = synth
         self.setAutoFillBackground(True)
-        self.grid_view = GenericGridView(
+        self.grid_view = BaseGridView(
             cls=GridScene,
             num_of_bars=self.num_of_bars,
             channel=track_version.channel,
@@ -66,7 +66,7 @@ class PianoRoll(QWidget):
         self.grid_view.keyboard_view.horizontalScrollBar().valueChanged.connect(
             self.on_change_hor
         )
-        self.ruler_view = GenericGridView(
+        self.ruler_view = BaseGridView(
             cls=RulerScene,
             num_of_bars=self.num_of_bars,
             channel=track_version.channel,

@@ -1,18 +1,20 @@
 from __future__ import annotations
-from functools import lru_cache
-from math import ceil, copysign
-from typing import Dict, Union, Optional, List, Any, NamedTuple
 
-from PySide6.QtCore import QRect, QPoint
+import logging
+from typing import Dict, Union, Optional, List, Any
+
 from pubsub import pub
-from pydantic import PositiveInt, BaseModel, NonNegativeInt, NonNegativeFloat
+from pydantic import PositiveInt, BaseModel, NonNegativeInt
 
 from src.app.model.bar import Bar
-from src.app.model.meter import Meter
+from src.app.model.meter import Meter, invert
 from src.app.model.event import Event, EventType
-from src.app.model.midi_keyboard import MIDI_KEYBOARD, MidiRange
+from src.app.model.midi_keyboard import MidiRange
 from src.app.model.types import Unit
-from src.app.utils.properties import Notification, KeyAttr, GuiAttr
+from src.app.utils.logger import get_console_logger
+from src.app.utils.properties import Notification
+
+logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
 _bars = Dict[int, Union[Bar, type(None)]]
 
@@ -95,14 +97,17 @@ class Sequence(BaseModel):
                 f"Bar number outside of range {bar_num} -> {self.num_of_bars()}"
             )
 
-    def add_event(self, bar_num: NonNegativeInt, event: Event) -> None:
+    def add_event(
+        self, bar_num: NonNegativeInt, event: Event, callback: bool = True
+    ) -> None:
         if bar_num in self.bars.keys():
             self.bars[bar_num] += event
-            pub.sendMessage(
-                topicName=Notification.EVENT_ADDED.value,
-                sequence_id=id(self),
-                event=event,
-            )
+            if callback:
+                pub.sendMessage(
+                    topicName=Notification.EVENT_ADDED.value,
+                    sequence_id=id(self),
+                    event=event,
+                )
         else:
             raise ValueError(
                 f"Bar number outside of range {bar_num} -> {self.num_of_bars()}"
@@ -112,17 +117,20 @@ class Sequence(BaseModel):
         for event in events:
             self.add_event(bar_num=bar_num, event=event)
 
-    def remove_event(self, bar_num: NonNegativeInt, event: Event) -> None:
+    def remove_event(
+        self, bar_num: NonNegativeInt, event: Event, callback: bool = True
+    ) -> None:
         if bar_num not in self.bars.keys():
             raise ValueError(
                 f"Bar number outside of range {bar_num} -> {self.num_of_bars()}"
             )
         self.bars[bar_num].remove_event(event=event)
-        pub.sendMessage(
-            topicName=Notification.EVENT_REMOVED.value,
-            sequence_id=id(self),
-            event=event,
-        )
+        if callback:
+            pub.sendMessage(
+                topicName=Notification.EVENT_REMOVED.value,
+                sequence_id=id(self),
+                event=event,
+            )
 
     def remove_events(
         self, bar_num: NonNegativeInt, events: Optional[List[Event]]
@@ -199,92 +207,52 @@ class Sequence(BaseModel):
     def get_moved_event(
         self, old_event: Event, beat_diff: Unit, pitch_diff: int, unit_diff: Unit
     ) -> Event:
-        if beat_diff == 0 and pitch_diff == 0 and unit_diff == 0:
-            return old_event
         meter = self.meter()
         event = old_event.copy(deep=True)
         # pitch
         if MidiRange.in_range(pitch=event.pitch + pitch_diff):
             event.pitch += pitch_diff
         # beat
-        moved_beat = meter.add(value=event.beat, value_diff=beat_diff)
-        if meter.exceeds_length(unit=moved_beat):
-            if old_event.bar_num + 1 < self.num_of_bars():
-                event.bar_num = old_event.bar_num + 1
-                event.beat = meter.bar_remainder(unit=moved_beat)
-        elif moved_beat < 0:
-            if old_event.bar_num - 1 >= 0:
-                event.bar_num = old_event.bar_num - 1
-                event.beat = meter.bar_remainder(unit=moved_beat)
-        else:
-            event.bar_num = old_event.bar_num
-            event.beat = moved_beat
+        if meter.significant_change(unit=beat_diff):
+            moved_beat = meter.add(value=event.beat, value_diff=beat_diff)
+            if meter.exceeds_length(unit=moved_beat):
+                if old_event.bar_num + 1 < self.num_of_bars():
+                    event.bar_num = old_event.bar_num + 1
+                    event.beat = meter.bar_remainder(unit=moved_beat)
+            elif moved_beat < 0:
+                if old_event.bar_num - 1 >= 0:
+                    event.bar_num = old_event.bar_num - 1
+                    event.beat = meter.bar_remainder(unit=moved_beat)
+            else:
+                event.bar_num = old_event.bar_num
+                event.beat = moved_beat
         # unit
-        new_unit = meter.add(value=old_event.unit, value_diff=unit_diff)
-        if not meter.below_limit(unit=new_unit):
-            event.unit = new_unit
+        if meter.significant_change(unit=unit_diff):
+            event.unit = meter.add(value=old_event.unit, value_diff=unit_diff)
         return event
 
-    def move_event(
-        self, event: Event, beat_diff: float = 0.0, pitch_diff: int = 0
-    ) -> Event:
-        moved_event = self.get_moved_event(
-            old_event=event, beat_diff=beat_diff, pitch_diff=pitch_diff
-        )
-        self.remove_event(event=event)
-        self.add_event(bar_num=event.bar_num, event=moved_event)
-        return moved_event
+    # def move_event(
+    #     self,
+    #         event: Event,
+    #         beat_diff: float = 0.0,
+    #         pitch_diff: int = 0,
+    #         unit_diff: float = 0.0
+    # ) -> Event:
+    #     moved_event = self.get_moved_event(
+    #         old_event=event,
+    #         beat_diff=beat_diff,
+    #         pitch_diff=pitch_diff,
+    #         unit_diff=unit_diff
+    #     )
+    #     self.remove_event(event=event, callback=False)
+    #     self.add_event(bar_num=event.bar_num, event=moved_event, callback=False)
+    #     pub.sendMessage(
+    #         topicName=Notification.EVENT_ADDED.value,
+    #         sequence_id=id(self),
+    #         event=event,
+    #     )
+    #     return moved_event
 
-    def replace_event(self, old_event: Event, new_event: Event) -> None:
-        self.remove_event(event=old_event)
-        self.add_event(event=new_event)
-
-    # def bar_num_diff(self, event: Event, value_diff: NonNegativeFloat) -> int:
-    #     # bar_num = self.meter().bar_num(pos=x)
-    #     # return event.bar_num - bar_num
-    #     pass
-    #
-    # def unit_diff(self, event: Event, x: int) -> int:
-    #     min_unit_width = self.meter().min_unit_width()
-    #     event_right = self.meter().event_right(event=event)
-    #     if x > 0 and abs(x - ceil(event_right)) >= min_unit_width:
-    #         return min_unit_width if x - event_right > 0 else -min_unit_width
-    #     else:
-    #         return 0
-    #
-    # def pitch_diff(self, event: Event, y: int) -> int:
-    #     if event.pitch is None:
-    #         return 0
-    #     if key := MIDI_KEYBOARD.get_key_by_pos(position=y) is None:
-    #         return 0
-    #     else:
-    #         return event.pitch - int(key.note)
-    #
-    # def beat_diff(self, event: Event, x: int) -> int:
-    #     min_unit_width = self.meter().min_unit_width()
-    #     center = (
-    #         self.meter().event_to_pos(event=event)
-    #         + self.meter().event_width(event=event) / 2
-    #     )
-    #     dist = x - center
-    #     if abs(dist) >= min_unit_width:
-    #         return int(copysign(1 / min_unit_width, dist))
-    #     else:
-    #         return 0
-    #
-    # def is_different(self, event: Event, x: int, y: int, resizing: bool) -> bool:
-    #     return (
-    #         (self.beat_diff(event=event, x=x) != 0 and not resizing)
-    #         or self.pitch_diff(event=event, y=y) != 0
-    #         or (self.unit_diff(event=event, x=x) != 0 and resizing)
-    #         or self.bar_num_diff(event=event, x=x) != 0
-    #     )
-    #
-    # def get_new_coordinates(
-    #     self, x: int, y: int, node, keyboard, resizing: bool
-    # ) -> QPoint:
-    #     bar, beat = pos2bar_beat(
-    #         pos=round2cell(pos=x, cell_width=KeyAttr.W_HEIGHT),
-    #         cell_unit=GuiAttr.GRID_DIV_UNIT,
-    #         cell_width=KeyAttr.W_HEIGHT,
-    #     )
+    def move_event(self, old_event: Event, new_event: Event) -> None:
+        self.remove_event(bar_num=old_event.bar_num, event=old_event, callback=False)
+        self.add_event(bar_num=new_event.bar_num, event=new_event, callback=False)

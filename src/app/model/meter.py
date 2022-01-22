@@ -17,8 +17,8 @@ class Meter(BaseModel):
     def length(self) -> NonNegativeFloat:
         return self.numerator * invert(value=self.denominator)
 
-    def below_limit(self, unit: Unit) -> NonNegativeFloat:
-        return invert(unit) < invert(self.min_unit)
+    def significant_change(self, unit: Unit) -> NonNegativeFloat:
+        return abs(invert(unit)) >= abs(invert(self.min_unit))
 
     def exceeds_length(self, unit: Unit):
         return invert(unit) > self.length()
@@ -26,6 +26,8 @@ class Meter(BaseModel):
     def add(self, value: float, value_diff: float) -> NonNegativeFloat:
         if value_diff == -value:
             return 0
+        if value == 0:
+            return value_diff
         if value_diff > 0:
             return add(value1=value, value2=value_diff)
         elif value_diff < 0:

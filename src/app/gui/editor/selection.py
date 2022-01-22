@@ -14,8 +14,8 @@ class NodeSelection:
         self._moving: bool = False
         self._resizing: bool = False
 
-    def set_moving(self):
-        self.moving = True
+    def set_moving(self, moving: bool = True):
+        self.moving = moving
 
     @property
     def moving(self) -> bool:

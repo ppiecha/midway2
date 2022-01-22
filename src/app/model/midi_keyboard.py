@@ -50,10 +50,10 @@ class MidiKey:
         raise NotImplementedError
 
     def play_note(self):
-        raise NotImplementedError
+        pass
 
     def play_note_in_thread(self, secs):
-        raise NotImplementedError
+        pass
 
 
 class BaseKeyboard:

@@ -4,13 +4,13 @@ from src.app.mingus.core import value
 
 def test_meter_exceeds_beat_limit():
     meter = Meter()
-    assert meter.below_limit(unit=value.sixty_fourth) is True
-    assert meter.below_limit(unit=value.eighth) is False
+    assert meter.significant_change(unit=value.sixty_fourth) is False
+    assert meter.significant_change(unit=value.eighth) is True
 
 
 def test_meter_unit_from_ratio(capsys):
     meter = Meter(numerator=3)
-    unit = meter.unit_from_ratio(ratio=1/3)
+    unit = meter.unit_from_ratio(ratio=1 / 3)
     print(unit)
     assert unit == 4.0
 
@@ -40,4 +40,3 @@ def test_meter_bar_remainder(capsys):
     val = meter.bar_remainder(val)
     print(val)
     assert 1 == 0
-

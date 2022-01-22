@@ -17,7 +17,7 @@ from src.app.gui.editor.selection import NodeSelection
 from src.app.utils.properties import Color, KeyAttr, GridAttr
 
 if TYPE_CHECKING:
-    from src.app.gui.editor.generic_grid import GenericGridScene
+    from src.app.gui.editor.base_grid import BaseGridScene
 from src.app.gui.editor.key import PianoKey
 from src.app.utils.logger import get_console_logger
 from src.app.model.event import Event
@@ -28,7 +28,7 @@ logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 class Node(QGraphicsItem):
     copied_grp: QGraphicsItemGroup = None
 
-    def __init__(self, grid_scene: GenericGridScene, event: Event):
+    def __init__(self, grid_scene: BaseGridScene, event: Event):
         super().__init__()
         self.sibling: Optional[Node] = None
         self.selection = NodeSelection(node=self)
@@ -185,13 +185,33 @@ class Node(QGraphicsItem):
     def __repr__(self):
         return str(self.event)
 
+    def move_is_allowed(self, old_event: Event, new_event: Event) -> bool:
+        if (
+            new_event.beat != old_event.beat
+            and GridAttr.MOVE_HORIZONTAL not in self.grid_attr
+        ):
+            return False
+        old_key = self.grid_scene.keyboard.get_key_by_event(event=old_event)
+        new_key = self.grid_scene.keyboard.get_key_by_event(event=new_event)
+        if (
+            old_key.key_top != new_key.key_top
+            and GridAttr.MOVE_VERTICAL not in self.grid_attr
+        ):
+            return False
+        return True
+
     def mouseMoveEvent(self, e: QGraphicsSceneMouseEvent):
         if self.selection.moving:
-            new_event = self.grid_scene.point_to_event(event=e, node=self, unit=self.event.unit)
-            if new_event:
-                self.grid_scene.sequence.replace_event(
+            new_event = self.grid_scene.point_to_event(e=e, node=self, moving=True)
+            if (
+                new_event
+                and new_event != self.event
+                and self.move_is_allowed(old_event=self.event, new_event=new_event)
+            ):
+                self.grid_scene.sequence.move_event(
                     old_event=self.event, new_event=new_event
                 )
+                self.event = new_event
         elif self.selection.resizing:
             pass
 
@@ -204,7 +224,7 @@ class Node(QGraphicsItem):
     def mousePressEvent(self, e: QGraphicsSceneMouseEvent):
         if e.button() == Qt.LeftButton:
             match e.modifiers():
-                case Qt.ControlModifier if GridAttr.SELECTION_DIRECT in self.grid_attr:
+                case Qt.ControlModifier if GridAttr.DIRECT_SELECTION in self.grid_attr:
                     self.setSelected(not self.isSelected())
                 case Qt.ShiftModifier if GridAttr.copy in self.grid_attr:
                     self.selection.copying = True
