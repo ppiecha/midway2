@@ -126,12 +126,23 @@ class BaseGridScene(QGraphicsScene):
         min_unit_width = invert(GuiAttr.GRID_MIN_UNIT) * self.bar_width
         return (x // min_unit_width) * min_unit_width
 
-    def set_event_position(self, event: Event, node: Node, x: int) -> Event:
+    def round_to_grid_line(self, x: float) -> float:
+        div_unit_width = invert(GuiAttr.GRID_DIV_UNIT) * self.bar_width
+        return (x // div_unit_width) * div_unit_width
+
+    def set_event_position(
+            self, event: Event, node: Node, x: int, user_defined: bool = False
+    ) -> Event:
         if node:
             event.bar_num = node.event.bar_num
             event.beat = node.event.beat
         else:
-            x = self.round_to_cell(x)
+            if user_defined:
+                logger.debug('user')
+                x = self.round_to_grid_line(x)
+            else:
+                logger.debug('not user')
+                x = self.round_to_cell(x)
             beat_ratio, bar_num = modf(self.ratio(x))
             beat = self.sequence.meter().unit_from_ratio(ratio=beat_ratio)
             event.bar_num = bar_num
@@ -160,11 +171,14 @@ class BaseGridScene(QGraphicsScene):
         node: Node = None,
         moving: bool = False,
         resizing: bool = False,
+        user_defined: bool = False
     ) -> Optional[Event]:
         x, y = e.scenePos().x(), e.scenePos().y()
         event = self.set_event_pitch(node=node, y=y)
         if event:
-            event = self.set_event_position(event=event, node=node, x=x)
+            event = self.set_event_position(
+                event=event, node=node, x=x, user_defined=user_defined
+            )
             event = self.set_event_unit(event=event, node=node)
             beat_diff = 0
             pitch_diff = 0
@@ -374,14 +388,9 @@ class BaseGridScene(QGraphicsScene):
                         case Qt.ShiftModifier | Qt.ControlModifier:
                             raise NotImplementedError
                         case Qt.NoModifier:
-                            logger.debug(self.selected_nodes)
-                            if self.selected_nodes:
-                                logger.debug("deselecting")
-                                self.select_all(False)
-                                return
                             self.selection.selecting = False
                             key = self.keyboard.get_key_by_pos(position=y)
-                            event = self.point_to_event(e=e)
+                            event = self.point_to_event(e=e, user_defined=True)
                             if key:
                                 self.add_event(event=event)
                                 key.play_note_in_thread(secs=MidiAttr.KEY_PLAY_TIME)

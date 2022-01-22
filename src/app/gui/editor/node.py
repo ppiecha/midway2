@@ -186,6 +186,8 @@ class Node(QGraphicsItem):
         return str(self.event)
 
     def move_is_allowed(self, old_event: Event, new_event: Event) -> bool:
+        if self.grid_scene.sequence.has_event(event=new_event):
+            return False
         if (
             new_event.beat != old_event.beat
             and GridAttr.MOVE_HORIZONTAL not in self.grid_attr
