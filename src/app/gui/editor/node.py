@@ -14,7 +14,8 @@ from PySide6.QtWidgets import (
 from pydantic import NonNegativeFloat
 
 from src.app.gui.editor.selection import NodeSelection
-from src.app.utils.properties import Color, KeyAttr, GridAttr
+from src.app.model.meter import invert
+from src.app.utils.properties import Color, KeyAttr, GridAttr, GuiAttr
 
 if TYPE_CHECKING:
     from src.app.gui.editor.base_grid import BaseGridScene
@@ -81,7 +82,14 @@ class Node(QGraphicsItem):
     def event(self, new_event: Event):
         if new_event != self._event:
             point = self.grid_scene.event_to_point(event=new_event)
+            self.prepareGeometryChange()
             self.setPos(point)
+            if self._event is not None:
+                diff = self.grid_scene.sequence.meter().add(new_event.unit, -self._event.unit)
+                ratio = self.grid_scene.sequence.meter().unit_ratio(unit=diff)
+                diff_width = ratio * self.grid_scene.bar_width
+                min_unit_width = invert(GuiAttr.GRID_MIN_UNIT) * self.grid_scene.bar_width
+                self.rect.setRight(self.rect.right() + min_unit_width)
             self._event = new_event
 
     # @property
@@ -187,6 +195,7 @@ class Node(QGraphicsItem):
 
     def move_is_allowed(self, old_event: Event, new_event: Event) -> bool:
         if self.grid_scene.sequence.has_event(event=new_event):
+            logger.debug("has event failed")
             return False
         if (
             new_event.beat != old_event.beat
@@ -203,19 +212,22 @@ class Node(QGraphicsItem):
         return True
 
     def mouseMoveEvent(self, e: QGraphicsSceneMouseEvent):
-        if self.selection.moving:
-            new_event = self.grid_scene.point_to_event(e=e, node=self, moving=True)
-            if (
-                new_event
-                and new_event != self.event
-                and self.move_is_allowed(old_event=self.event, new_event=new_event)
-            ):
-                self.grid_scene.sequence.move_event(
-                    old_event=self.event, new_event=new_event
-                )
-                self.event = new_event
-        elif self.selection.resizing:
-            pass
+        new_event = self.grid_scene.point_to_event(
+            e=e,
+            node=self,
+            moving=self.selection.moving,
+            resizing=self.selection.resizing,
+        )
+        print(new_event != self.event, self.move_is_allowed(old_event=self.event, new_event=new_event))
+        if (
+            new_event
+            and new_event != self.event
+            and self.move_is_allowed(old_event=self.event, new_event=new_event)
+        ):
+            self.grid_scene.sequence.move_event(
+                old_event=self.event, new_event=new_event
+            )
+            self.event = new_event
 
     def mouseReleaseEvent(self, e: QGraphicsSceneMouseEvent):
         self.selection.resizing = False

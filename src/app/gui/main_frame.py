@@ -75,7 +75,12 @@ class MainFrame(QMainWindow):
         self.config.setValue(IniAttr.MAIN_WIN_POS, self.pos())
         self.config.setValue(IniAttr.PROJECT_FILE, self.project_file)
         with open(self.project_file, "w", encoding="utf-8") as f:
-            json.dump(self.project.dict(), f, ensure_ascii=False, indent=2)
+            json.dump(
+                self.project.dict(exclude=AppAttr.EXCLUDED_JSON_FIELDS),
+                f,
+                ensure_ascii=False,
+                indent=2,
+            )
 
     def show_message(self, message: str, timeout: int = 5000):
         self.status_bar.showMessage(message, timeout)

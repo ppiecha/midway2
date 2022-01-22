@@ -25,6 +25,7 @@ class GridScene(BaseGridScene):
         | GridAttr.MOVE_HORIZONTAL
         | GridAttr.SHOW_SCROLLBARS
         | GridAttr.MOVE_VERTICAL
+        | GridAttr.RESIZE
     )
 
     def __init__(

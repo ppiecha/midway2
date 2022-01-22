@@ -15,3 +15,7 @@ Audio tests
 ```bash
 pytest -vv -k "test_play"
 ```
+Code formatting
+```bash
+black src --target-version py310
+```

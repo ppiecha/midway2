@@ -107,7 +107,7 @@ class BaseGridScene(QGraphicsScene):
         self._numerator = numerator
         self._denominator = denominator
         self._grid_divider = grid_divider
-        self._sequence = Sequence.from_num_of_bars(num_of_bars=num_of_bars)
+        self._sequence = None  # Sequence.from_num_of_bars(num_of_bars=num_of_bars)
         self._num_of_bars = num_of_bars
         self.redraw()
         self.selection = GridSelection(grid=self, grid_attr=BaseGridScene.GRID_ATTR)
@@ -131,17 +131,15 @@ class BaseGridScene(QGraphicsScene):
         return (x // div_unit_width) * div_unit_width
 
     def set_event_position(
-            self, event: Event, node: Node, x: int, user_defined: bool = False
+        self, event: Event, node: Node, x: int, user_defined: bool = False
     ) -> Event:
         if node:
             event.bar_num = node.event.bar_num
             event.beat = node.event.beat
         else:
             if user_defined:
-                logger.debug('user')
                 x = self.round_to_grid_line(x)
             else:
-                logger.debug('not user')
                 x = self.round_to_cell(x)
             beat_ratio, bar_num = modf(self.ratio(x))
             beat = self.sequence.meter().unit_from_ratio(ratio=beat_ratio)
@@ -171,7 +169,7 @@ class BaseGridScene(QGraphicsScene):
         node: Node = None,
         moving: bool = False,
         resizing: bool = False,
-        user_defined: bool = False
+        user_defined: bool = False,
     ) -> Optional[Event]:
         x, y = e.scenePos().x(), e.scenePos().y()
         event = self.set_event_pitch(node=node, y=y)
@@ -193,8 +191,12 @@ class BaseGridScene(QGraphicsScene):
             elif resizing:
                 if not node:
                     raise ValueError(f"Cannot resize when node is undefined")
-                unit_ratio = y - self.ratio(node.rect.right())
+                node_right = node.mapToScene(node.rect.topRight())
+                unit_ratio = self.ratio(y - node_right.y())
                 unit_diff = self.sequence.meter().unit_from_ratio(ratio=unit_ratio)
+                logger.debug(
+                    f"unit values {y} {node_right.y()} {unit_ratio} {unit_diff}"
+                )
             return self.sequence.get_moved_event(
                 old_event=event,
                 beat_diff=beat_diff,
@@ -255,6 +257,8 @@ class BaseGridScene(QGraphicsScene):
         return cls(grid_scene=self, event=event)
 
     def draw_sequence(self, sequence: Sequence):
+        if not sequence:
+            return
         self.delete_nodes(meta_notes=self.nodes(), hard_delete=True)
         for bar_num, bar in sequence.bars.items():
             filtered_bar = Bar(

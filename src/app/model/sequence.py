@@ -209,6 +209,8 @@ class Sequence(BaseModel):
     ) -> Event:
         meter = self.meter()
         event = old_event.copy(deep=True)
+        old_event.id = id(old_event)
+        event.parent_id = old_event.id
         # pitch
         if MidiRange.in_range(pitch=event.pitch + pitch_diff):
             event.pitch += pitch_diff

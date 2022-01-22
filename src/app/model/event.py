@@ -1,6 +1,6 @@
 from __future__ import annotations
+
 from enum import Enum
-from math import ceil
 from typing import Optional, List
 
 from pydantic import BaseModel, NonNegativeFloat, NonNegativeInt
@@ -35,6 +35,8 @@ class Event(BaseModel):
     pitch_bend_chain: Optional[PitchBendChain]
     active: Optional[bool] = True
     bar_num: Optional[NonNegativeInt]
+    id: Optional[int] = None
+    parent_id: Optional[int] = None
 
     def __eq__(self, other):
         params = list(filter(lambda x: x is None, [self, other]))
@@ -49,6 +51,11 @@ class Event(BaseModel):
             self.type == other.type
             and self.channel == other.channel
             and self.beat == other.beat
+            and (
+                (self.id is None and other.id is None)
+                or (self.id and other.parent_id != self.id)
+                or (other.id and self.parent_id != other.id)
+            )
             and (
                 self.type != EventType.NOTE
                 or (self.type == EventType.NOTE and self.pitch == other.pitch)

@@ -115,6 +115,7 @@ class PianoRoll(QWidget):
 
         self.setLayout(self.box_main)
         self.sequence = self.track_version.sequence
+        assert self.sequence is not None
 
     def play(self, mf: MainFrame):
         loop = self.composition.loops[LoopType.custom].get_loop_by_name(
