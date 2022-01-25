@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, List
+from typing import Optional, List, NamedTuple
 
 from pydantic import BaseModel, NonNegativeFloat, NonNegativeInt
 
@@ -35,7 +36,6 @@ class Event(BaseModel):
     pitch_bend_chain: Optional[PitchBendChain]
     active: Optional[bool] = True
     bar_num: Optional[NonNegativeInt]
-    id: Optional[int] = None
     parent_id: Optional[int] = None
 
     def __eq__(self, other):
@@ -52,15 +52,18 @@ class Event(BaseModel):
             and self.channel == other.channel
             and self.beat == other.beat
             and (
-                (self.id is None and other.id is None)
-                or (self.id and other.parent_id != self.id)
-                or (other.id and self.parent_id != other.id)
+                (self.id() is None and other.id() is None)
+                or (self.id() and other.parent_id != self.id())
+                or (other.id() and self.parent_id != other.id())
             )
             and (
                 self.type != EventType.NOTE
                 or (self.type == EventType.NOTE and self.pitch == other.pitch)
             )
         )
+
+    def id(self):
+        return id(self)
 
     def __int__(self) -> int:
         if not hasattr(self, "pitch"):
@@ -112,3 +115,16 @@ class Event(BaseModel):
     #         return int(copysign(1 / node.grid_scene.min_unit, dist))
     #     else:
     #         return 0
+
+
+@dataclass
+class Diff:
+    beat_diff: Unit = 0
+    pitch_diff: int = 0
+    unit_diff: Unit = 0
+
+
+@dataclass
+class EventDiff:
+    event: Event
+    diff: Diff

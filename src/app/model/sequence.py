@@ -8,7 +8,7 @@ from pydantic import PositiveInt, BaseModel, NonNegativeInt
 
 from src.app.model.bar import Bar
 from src.app.model.meter import Meter, invert
-from src.app.model.event import Event, EventType
+from src.app.model.event import Event, EventType, Diff
 from src.app.model.midi_keyboard import MidiRange
 from src.app.model.types import Unit
 from src.app.utils.logger import get_console_logger
@@ -204,19 +204,16 @@ class Sequence(BaseModel):
                 if hasattr(event, attr):
                     setattr(event, attr, value)
 
-    def get_moved_event(
-        self, old_event: Event, beat_diff: Unit, pitch_diff: int, unit_diff: Unit
-    ) -> Event:
+    def get_moved_event(self, old_event: Event, diff: Diff) -> Event:
         meter = self.meter()
         event = old_event.copy(deep=True)
-        old_event.id = id(old_event)
-        event.parent_id = old_event.id
+        event.parent_id = old_event.id()
         # pitch
-        if MidiRange.in_range(pitch=event.pitch + pitch_diff):
-            event.pitch += pitch_diff
+        if MidiRange.in_range(pitch=event.pitch + diff.pitch_diff):
+            event.pitch += diff.pitch_diff
         # beat
-        if meter.significant_change(unit=beat_diff):
-            moved_beat = meter.add(value=event.beat, value_diff=beat_diff)
+        if meter.significant_change(unit=diff.beat_diff):
+            moved_beat = meter.add(value=event.beat, value_diff=diff.beat_diff)
             if meter.exceeds_length(unit=moved_beat):
                 if old_event.bar_num + 1 < self.num_of_bars():
                     event.bar_num = old_event.bar_num + 1
@@ -229,32 +226,22 @@ class Sequence(BaseModel):
                 event.bar_num = old_event.bar_num
                 event.beat = moved_beat
         # unit
-        if meter.significant_change(unit=unit_diff):
-            event.unit = meter.add(value=old_event.unit, value_diff=unit_diff)
+        if meter.significant_change(unit=diff.unit_diff):
+            event.unit = meter.add(value=old_event.unit, value_diff=diff.unit_diff)
+        # logger.debug(f"moved event {event}")
         return event
 
-    # def move_event(
-    #     self,
-    #         event: Event,
-    #         beat_diff: float = 0.0,
-    #         pitch_diff: int = 0,
-    #         unit_diff: float = 0.0
-    # ) -> Event:
-    #     moved_event = self.get_moved_event(
-    #         old_event=event,
-    #         beat_diff=beat_diff,
-    #         pitch_diff=pitch_diff,
-    #         unit_diff=unit_diff
-    #     )
-    #     self.remove_event(event=event, callback=False)
-    #     self.add_event(bar_num=event.bar_num, event=moved_event, callback=False)
-    #     pub.sendMessage(
-    #         topicName=Notification.EVENT_ADDED.value,
-    #         sequence_id=id(self),
-    #         event=event,
-    #     )
-    #     return moved_event
+    def move_event(self, event: Event, diff: Diff, moved_event: Event) -> Event:
+        self.remove_event(bar_num=event.bar_num, event=event, callback=False)
+        self.add_event(bar_num=moved_event.bar_num, event=moved_event, callback=False)
+        pub.sendMessage(
+            topicName=Notification.EVENT_MOVED.value,
+            event=event,
+            moved_event=moved_event,
+            diff=diff
+        )
+        return moved_event
 
-    def move_event(self, old_event: Event, new_event: Event) -> None:
-        self.remove_event(bar_num=old_event.bar_num, event=old_event, callback=False)
-        self.add_event(bar_num=new_event.bar_num, event=new_event, callback=False)
+    # def move_event(self, old_event: Event, new_event: Event) -> None:
+    #     self.remove_event(bar_num=old_event.bar_num, event=old_event, callback=False)
+    #     self.add_event(bar_num=new_event.bar_num, event=new_event, callback=False)

@@ -16,7 +16,7 @@ from src.app.gui.editor.node import NoteNode, MetaNode, Node
 from src.app.gui.editor.selection import GridSelection
 from src.app.gui.widgets import GraphicsView, Box
 from src.app.model.bar import Bar
-from src.app.model.event import Event, EventType
+from src.app.model.event import Event, EventType, Diff, EventDiff
 from src.app.model.meter import invert
 from src.app.model.midi_keyboard import BaseKeyboard
 from src.app.model.sequence import Sequence
@@ -163,14 +163,14 @@ class BaseGridScene(QGraphicsScene):
             key = self.keyboard.get_key_by_pos(position=y)
             return key.event() if key else None
 
-    def point_to_event(
+    def point_to_event_diff(
         self,
         e: QGraphicsSceneMouseEvent,
         node: Node = None,
         moving: bool = False,
         resizing: bool = False,
-        user_defined: bool = False,
-    ) -> Optional[Event]:
+        user_defined: bool = False
+    ) -> Optional[EventDiff]:
         x, y = e.scenePos().x(), e.scenePos().y()
         event = self.set_event_pitch(node=node, y=y)
         if event:
@@ -178,33 +178,71 @@ class BaseGridScene(QGraphicsScene):
                 event=event, node=node, x=x, user_defined=user_defined
             )
             event = self.set_event_unit(event=event, node=node)
-            beat_diff = 0
-            pitch_diff = 0
-            unit_diff = 0
+            diff = Diff()
             if moving:
                 center = node.scenePos().x() + node.rect.width() / 2
                 dist = x - center
                 beat_diff_ratio, _ = modf(self.ratio(dist))
-                beat_diff = self.sequence.meter().unit_from_ratio(ratio=beat_diff_ratio)
+                diff.beat_diff = self.sequence.meter().unit_from_ratio(ratio=beat_diff_ratio)
                 key = self.keyboard.get_key_by_pos(position=y)
-                pitch_diff = int(key.event()) - int(event) if key else None
+                diff.pitch_diff = int(key.event()) - int(event) if key else None
             elif resizing:
                 if not node:
                     raise ValueError(f"Cannot resize when node is undefined")
                 node_right = node.mapToScene(node.rect.topRight())
                 unit_ratio = self.ratio(y - node_right.y())
-                unit_diff = self.sequence.meter().unit_from_ratio(ratio=unit_ratio)
+                diff.unit_diff = self.sequence.meter().unit_from_ratio(ratio=unit_ratio)
                 logger.debug(
-                    f"unit values {y} {node_right.y()} {unit_ratio} {unit_diff}"
+                    f"unit values {y} {node_right.y()} {unit_ratio} {diff.unit_diff}"
                 )
-            return self.sequence.get_moved_event(
-                old_event=event,
-                beat_diff=beat_diff,
-                pitch_diff=pitch_diff,
-                unit_diff=unit_diff,
-            )
-        else:
-            return None
+            return EventDiff(event=event, diff=diff)
+        return None
+
+    def point_to_event(
+        self,
+        e: QGraphicsSceneMouseEvent,
+        node: Node = None,
+        moving: bool = False,
+        resizing: bool = False,
+        user_defined: bool = False
+    ) -> Optional[Event]:
+        event_diff = self.point_to_event_diff(
+            e=e,
+            node=node,
+            moving=moving,
+            resizing=resizing,
+            user_defined=user_defined
+        )
+        return self.sequence.get_moved_event(
+            old_event=event_diff.event, diff=event_diff.diff
+        )
+
+    # def point_to_event(
+    #     self,
+    #     e: QGraphicsSceneMouseEvent,
+    #     node: Node = None,
+    #     moving: bool = False,
+    #     resizing: bool = False,
+    #     user_defined: bool = False,
+    # ) -> Optional[Event]:
+    #     event_diff = self.point_to_event_diff(
+    #         e=e,
+    #         node=node,
+    #         moving=moving,
+    #         resizing=resizing,
+    #     )
+    #     x, y = e.scenePos().x(), e.scenePos().y()
+    #     event = self.set_event_pitch(node=node, y=y)
+    #     if event:
+    #         event = self.set_event_position(
+    #             event=event, node=node, x=x, user_defined=user_defined
+    #         )
+    #         event = self.set_event_unit(event=event, node=node)
+    #         new_event = self.sequence.get_moved_event(
+    #             old_event=event, event_diff=event_diff
+    #         )
+    #         return new_event
+    #     return None
 
     def event_to_point(self, event: Event) -> QPointF:
         x = event.bar_num * self.bar_width
@@ -237,6 +275,7 @@ class BaseGridScene(QGraphicsScene):
 
     def _add_node(self, event: Event):
         node = self.node_from_event(event=event)
+        logger.debug(f"adding note {node}")
         self.addItem(node)
 
     def _add_bar(self, bar: Bar):

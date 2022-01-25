@@ -23,12 +23,15 @@ class GridAttr(Flag):
 class Notification(Enum):
     EVENT_ADDED = "EVENT_ADDED"
     EVENT_REMOVED = "EVENT_REMOVED"
+    EVENT_MOVED = "EVENT_MOVED"
+    EVENT_RESIZED = "EVENT_RESIZED"
+    EVENT_COPIED = "EVENT_COPIED"
 
 
 class AppAttr:
     APP_NAME = "Midway"
     CONFIG_FILE = "config.ini"
-    EXCLUDED_JSON_FIELDS = {"id", "parent_id"}
+    EXCLUDED_JSON_FIELDS = {"parent_id"}
     SF2_DIR = "sf2"
     PATH_UTILS = os.path.dirname(os.path.abspath(__file__))
     PATH_APP = str(Path(PATH_UTILS).parent)

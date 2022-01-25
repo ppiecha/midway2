@@ -26,7 +26,7 @@ class Bar(BaseModel):
     def have_same_beat(self, e1: Event, e2: Event) -> bool:
         if e1.type != e2.type:
             return False
-        if (e1.id and e2.parent_id == e1.id) or (e2.id and e1.parent_id == e2.id):
+        if (e1.id and e2.parent_id == e1.id()) or (e2.id() and e1.parent_id == e2.id()):
             return False
         params = list(filter(lambda x: x.unit is None, [e1, e2]))
         if len(params) == 1:

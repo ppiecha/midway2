@@ -11,17 +11,18 @@ from PySide6.QtWidgets import (
     QGraphicsSceneHoverEvent,
     QGraphicsItemGroup,
 )
+from pubsub import pub
 from pydantic import NonNegativeFloat
 
 from src.app.gui.editor.selection import NodeSelection
 from src.app.model.meter import invert
-from src.app.utils.properties import Color, KeyAttr, GridAttr, GuiAttr
+from src.app.utils.properties import Color, KeyAttr, GridAttr, GuiAttr, Notification
 
 if TYPE_CHECKING:
     from src.app.gui.editor.base_grid import BaseGridScene
 from src.app.gui.editor.key import PianoKey
 from src.app.utils.logger import get_console_logger
-from src.app.model.event import Event
+from src.app.model.event import Event, Diff
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
@@ -44,6 +45,20 @@ class Node(QGraphicsItem):
         self._event = None
         self.rect = QRectF(0, 0, KeyAttr.W_HEIGHT, KeyAttr.W_HEIGHT)
         self.event = event
+        self.register_listeners()
+
+    def register_listeners(self):
+        if not pub.subscribe(self.move, Notification.EVENT_MOVED.value):
+            raise Exception(f"Cannot register listener {Notification.EVENT_MOVED}")
+        if not pub.subscribe(self.resize, Notification.EVENT_RESIZED.value):
+            raise Exception(f"Cannot register listener {Notification.EVENT_RESIZED}")
+
+    def move(self, event: Event, moved_event: Event, diff: Diff):
+        if event.id() == self.event.id():
+            self.event = moved_event
+
+    def resize(self):
+        pass
 
     def copy_node(self):
         self.sibling = self.grid_scene.node_from_event(
@@ -82,14 +97,15 @@ class Node(QGraphicsItem):
     def event(self, new_event: Event):
         if new_event != self._event:
             point = self.grid_scene.event_to_point(event=new_event)
+            logger.debug(f"point {point}")
             self.prepareGeometryChange()
             self.setPos(point)
-            if self._event is not None:
-                diff = self.grid_scene.sequence.meter().add(new_event.unit, -self._event.unit)
-                ratio = self.grid_scene.sequence.meter().unit_ratio(unit=diff)
-                diff_width = ratio * self.grid_scene.bar_width
-                min_unit_width = invert(GuiAttr.GRID_MIN_UNIT) * self.grid_scene.bar_width
-                self.rect.setRight(self.rect.right() + min_unit_width)
+            # if self._event is not None:
+            #     diff = self.grid_scene.sequence.meter().add(new_event.unit, -self._event.unit)
+            #     ratio = self.grid_scene.sequence.meter().unit_ratio(unit=diff)
+            #     diff_width = ratio * self.grid_scene.bar_width
+            #     min_unit_width = invert(GuiAttr.GRID_MIN_UNIT) * self.grid_scene.bar_width
+            #     self.rect.setRight(self.rect.right() + min_unit_width)
             self._event = new_event
 
     # @property
@@ -191,7 +207,7 @@ class Node(QGraphicsItem):
     #     return super().itemChange(change, value)
 
     def __repr__(self):
-        return str(self.event)
+        return f"{str(self.scenePos())} {str(self.event)}"
 
     def move_is_allowed(self, old_event: Event, new_event: Event) -> bool:
         if self.grid_scene.sequence.has_event(event=new_event):
@@ -212,22 +228,24 @@ class Node(QGraphicsItem):
         return True
 
     def mouseMoveEvent(self, e: QGraphicsSceneMouseEvent):
-        new_event = self.grid_scene.point_to_event(
+        event_diff = self.grid_scene.point_to_event_diff(
             e=e,
             node=self,
             moving=self.selection.moving,
             resizing=self.selection.resizing,
         )
-        print(new_event != self.event, self.move_is_allowed(old_event=self.event, new_event=new_event))
-        if (
-            new_event
-            and new_event != self.event
-            and self.move_is_allowed(old_event=self.event, new_event=new_event)
+        moved_event = self.grid_scene.sequence.get_moved_event(
+            old_event=self.event, diff=event_diff.diff
+        )
+        if (moved_event
+            and moved_event != self.event
+            and self.move_is_allowed(old_event=self.event, new_event=moved_event)
         ):
+            logger.debug(f"{self.event.beat} {moved_event.beat}, {event_diff}")
             self.grid_scene.sequence.move_event(
-                old_event=self.event, new_event=new_event
+                event=self.event, diff=event_diff.diff, moved_event=moved_event
             )
-            self.event = new_event
+            # self.event = moved_event
 
     def mouseReleaseEvent(self, e: QGraphicsSceneMouseEvent):
         self.selection.resizing = False
@@ -344,22 +362,22 @@ class NoteNode(Node):
                 self.rect.setRight(self.rect.right() + diff)
                 self.unit = self.grid_scene.width_beat / self.rect.width()
 
-    def move(self, unit_diff: float, key_diff: int):
-        # notes = []
-        # logger.debug(f"moving note {self}, unit_diff {unit_diff}, key_diff {key_diff}")
-        if unit_diff != 0 or key_diff != 0:
-            if self.is_moving:
-                # logger.debug(f"moving note {self}, unit_diff {unit_diff}, key_diff {key_diff}")
-                if unit_diff != 0:
-                    self.beat = self.beat + unit_diff
-                if key_diff != 0:
-                    key = self.grid_scene.keyboard.get_key_by_pitch(
-                        int(self.key.note) + key_diff
-                    )
-                    key.event.beat = self.beat
-                    self.key = key
-            else:
-                logger.debug(f"not moved")
+    # def move(self, unit_diff: float, key_diff: int):
+    #     # notes = []
+    #     # logger.debug(f"moving note {self}, unit_diff {unit_diff}, key_diff {key_diff}")
+    #     if unit_diff != 0 or key_diff != 0:
+    #         if self.is_moving:
+    #             # logger.debug(f"moving note {self}, unit_diff {unit_diff}, key_diff {key_diff}")
+    #             if unit_diff != 0:
+    #                 self.beat = self.beat + unit_diff
+    #             if key_diff != 0:
+    #                 key = self.grid_scene.keyboard.get_key_by_pitch(
+    #                     int(self.key.note) + key_diff
+    #                 )
+    #                 key.event.beat = self.beat
+    #                 self.key = key
+    #         else:
+    #             logger.debug(f"not moved")
             # if self.is_moving:
             #     notes = [note for note in self.grid_scene.selected_notes if note not in (self, self.sibling)]
             # elif self.is_copying:
