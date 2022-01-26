@@ -136,13 +136,13 @@ def test_move_event(bar0, bar1, capsys):
     sequence = Sequence.from_bars([bar0, bar1])
     event = Event(type=EventType.NOTE, pitch=50, beat=0.5)
     sequence.add_event(bar_num=0, event=event)
-    moved_event = sequence.move_event(
+    moved_event = sequence.change_event(
         BarNumEvent(bar_num=0, event=event), beat_diff=0.25, pitch_diff=1
     )
     assert moved_event.bar_num == 0
     assert moved_event.event.pitch == 51
     assert moved_event.event.beat == 0.75
-    moved_event = sequence.move_event(
+    moved_event = sequence.change_event(
         BarNumEvent(bar_num=0, event=moved_event.event), beat_diff=0.25, pitch_diff=1
     )
     assert moved_event.bar_num == 1

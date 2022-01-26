@@ -1,6 +1,6 @@
 from __future__ import annotations
 import logging
-from math import modf
+from math import modf, copysign
 from typing import Optional, List, Type
 
 from PySide6.QtCore import QRectF, QPointF
@@ -123,11 +123,11 @@ class BaseGridScene(QGraphicsScene):
         return x / self.bar_width
 
     def round_to_cell(self, x: float) -> float:
-        min_unit_width = invert(GuiAttr.GRID_MIN_UNIT) * self.bar_width
+        min_unit_width = self.get_unit_width(unit=GuiAttr.GRID_MIN_UNIT)
         return (x // min_unit_width) * min_unit_width
 
     def round_to_grid_line(self, x: float) -> float:
-        div_unit_width = invert(GuiAttr.GRID_DIV_UNIT) * self.bar_width
+        div_unit_width = self.get_unit_width(unit=GuiAttr.GRID_DIV_UNIT)
         return (x // div_unit_width) * div_unit_width
 
     def set_event_position(
@@ -169,8 +169,9 @@ class BaseGridScene(QGraphicsScene):
         node: Node = None,
         moving: bool = False,
         resizing: bool = False,
-        user_defined: bool = False
+        user_defined: bool = False,
     ) -> Optional[EventDiff]:
+        meter = self.sequence.meter()
         x, y = e.scenePos().x(), e.scenePos().y()
         event = self.set_event_pitch(node=node, y=y)
         if event:
@@ -183,18 +184,22 @@ class BaseGridScene(QGraphicsScene):
                 center = node.scenePos().x() + node.rect.width() / 2
                 dist = x - center
                 beat_diff_ratio, _ = modf(self.ratio(dist))
-                diff.beat_diff = self.sequence.meter().unit_from_ratio(ratio=beat_diff_ratio)
+                diff.beat_diff = meter.unit_from_ratio(ratio=beat_diff_ratio)
                 key = self.keyboard.get_key_by_pos(position=y)
                 diff.pitch_diff = int(key.event()) - int(event) if key else None
             elif resizing:
                 if not node:
                     raise ValueError(f"Cannot resize when node is undefined")
                 node_right = node.mapToScene(node.rect.topRight())
-                unit_ratio = self.ratio(y - node_right.y())
-                diff.unit_diff = self.sequence.meter().unit_from_ratio(ratio=unit_ratio)
-                logger.debug(
-                    f"unit values {y} {node_right.y()} {unit_ratio} {diff.unit_diff}"
-                )
+                min_unit_width = self.get_unit_width(unit=GuiAttr.GRID_MIN_UNIT)
+                unit_diff = x - node_right.x()
+                if abs(unit_diff) >= min_unit_width:
+                    unit_ratio = self.ratio(copysign(min_unit_width, unit_diff))
+                    unit_diff = meter.unit_from_ratio(ratio=unit_ratio)
+                    if meter.significant_value(
+                        unit=meter.add(value=event.unit, value_diff=unit_diff)
+                    ):
+                        diff.unit_diff = unit_diff
             return EventDiff(event=event, diff=diff)
         return None
 
@@ -204,16 +209,12 @@ class BaseGridScene(QGraphicsScene):
         node: Node = None,
         moving: bool = False,
         resizing: bool = False,
-        user_defined: bool = False
+        user_defined: bool = False,
     ) -> Optional[Event]:
         event_diff = self.point_to_event_diff(
-            e=e,
-            node=node,
-            moving=moving,
-            resizing=resizing,
-            user_defined=user_defined
+            e=e, node=node, moving=moving, resizing=resizing, user_defined=user_defined
         )
-        return self.sequence.get_moved_event(
+        return self.sequence.get_changed_event(
             old_event=event_diff.event, diff=event_diff.diff
         )
 
@@ -343,7 +344,7 @@ class BaseGridScene(QGraphicsScene):
         list(map(lambda node: node.selection.set_moving(moving), self.selected_nodes))
 
     def get_unit_width(self, unit: float) -> float:
-        return self.width_bar / unit
+        return invert(unit) * self.bar_width
 
     def set_grid_width_props(self):
         self.width_bar = self.grid_divider * KeyAttr.W_HEIGHT

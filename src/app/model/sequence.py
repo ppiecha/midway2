@@ -204,7 +204,7 @@ class Sequence(BaseModel):
                 if hasattr(event, attr):
                     setattr(event, attr, value)
 
-    def get_moved_event(self, old_event: Event, diff: Diff) -> Event:
+    def get_changed_event(self, old_event: Event, diff: Diff) -> Event:
         meter = self.meter()
         event = old_event.copy(deep=True)
         event.parent_id = old_event.id()
@@ -212,7 +212,7 @@ class Sequence(BaseModel):
         if MidiRange.in_range(pitch=event.pitch + diff.pitch_diff):
             event.pitch += diff.pitch_diff
         # beat
-        if meter.significant_change(unit=diff.beat_diff):
+        if meter.significant_value(unit=diff.beat_diff):
             moved_beat = meter.add(value=event.beat, value_diff=diff.beat_diff)
             if meter.exceeds_length(unit=moved_beat):
                 if old_event.bar_num + 1 < self.num_of_bars():
@@ -226,21 +226,23 @@ class Sequence(BaseModel):
                 event.bar_num = old_event.bar_num
                 event.beat = moved_beat
         # unit
-        if meter.significant_change(unit=diff.unit_diff):
+        if meter.significant_value(unit=diff.unit_diff):
             event.unit = meter.add(value=old_event.unit, value_diff=diff.unit_diff)
-        # logger.debug(f"moved event {event}")
+            # logger.debug(f"resized event {event}")
         return event
 
-    def move_event(self, event: Event, diff: Diff, moved_event: Event) -> Event:
+    def change_event(self, event: Event, diff: Diff, changed_event: Event) -> Event:
         self.remove_event(bar_num=event.bar_num, event=event, callback=False)
-        self.add_event(bar_num=moved_event.bar_num, event=moved_event, callback=False)
-        pub.sendMessage(
-            topicName=Notification.EVENT_MOVED.value,
-            event=event,
-            moved_event=moved_event,
-            diff=diff
+        self.add_event(
+            bar_num=changed_event.bar_num, event=changed_event, callback=False
         )
-        return moved_event
+        pub.sendMessage(
+            topicName=Notification.EVENT_CHANGED.value,
+            event=event,
+            changed_event=changed_event,
+            diff=diff,
+        )
+        return changed_event
 
     # def move_event(self, old_event: Event, new_event: Event) -> None:
     #     self.remove_event(bar_num=old_event.bar_num, event=old_event, callback=False)

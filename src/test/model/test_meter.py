@@ -4,8 +4,8 @@ from src.app.mingus.core import value
 
 def test_meter_exceeds_beat_limit():
     meter = Meter()
-    assert meter.significant_change(unit=value.sixty_fourth) is False
-    assert meter.significant_change(unit=value.eighth) is True
+    assert meter.significant_value(unit=value.sixty_fourth) is False
+    assert meter.significant_value(unit=value.eighth) is True
 
 
 def test_meter_unit_from_ratio(capsys):

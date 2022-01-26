@@ -69,7 +69,7 @@ class GridScene(BaseGridScene):
 
     def move_notes(self, notes: Iterable[NoteNode], unit_diff: float, key_diff: int):
         for note in notes:
-            note.move(unit_diff=unit_diff, key_diff=key_diff)
+            note.event_changed(unit_diff=unit_diff, key_diff=key_diff)
 
     def resize_notes(self, notes: Iterable[NoteNode], diff: float):
         for note in notes:

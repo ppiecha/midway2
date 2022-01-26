@@ -60,6 +60,7 @@ class Event(BaseModel):
                 self.type != EventType.NOTE
                 or (self.type == EventType.NOTE and self.pitch == other.pitch)
             )
+            and self.unit == other.unit
         )
 
     def id(self):

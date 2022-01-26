@@ -42,23 +42,20 @@ class Node(QGraphicsItem):
         self.setFlag(QGraphicsItem.ItemSendsScenePositionChanges)
         self.setAcceptHoverEvents(True)
         self.grid_scene = grid_scene
-        self._event = None
+        self._event: Optional[Event] = None
         self.rect = QRectF(0, 0, KeyAttr.W_HEIGHT, KeyAttr.W_HEIGHT)
         self.event = event
         self.register_listeners()
 
     def register_listeners(self):
-        if not pub.subscribe(self.move, Notification.EVENT_MOVED.value):
-            raise Exception(f"Cannot register listener {Notification.EVENT_MOVED}")
-        if not pub.subscribe(self.resize, Notification.EVENT_RESIZED.value):
-            raise Exception(f"Cannot register listener {Notification.EVENT_RESIZED}")
+        if not pub.subscribe(self.event_changed, Notification.EVENT_CHANGED.value):
+            raise Exception(f"Cannot register listener {Notification.EVENT_CHANGED}")
 
-    def move(self, event: Event, moved_event: Event, diff: Diff):
+    def event_changed(self, event: Event, changed_event: Event, diff: Diff):
+        logger.debug(f"event changed {diff}")
         if event.id() == self.event.id():
-            self.event = moved_event
-
-    def resize(self):
-        pass
+            logger.debug(f"event changed {diff}")
+            self.event = changed_event
 
     def copy_node(self):
         self.sibling = self.grid_scene.node_from_event(
@@ -97,15 +94,12 @@ class Node(QGraphicsItem):
     def event(self, new_event: Event):
         if new_event != self._event:
             point = self.grid_scene.event_to_point(event=new_event)
-            logger.debug(f"point {point}")
             self.prepareGeometryChange()
             self.setPos(point)
-            # if self._event is not None:
-            #     diff = self.grid_scene.sequence.meter().add(new_event.unit, -self._event.unit)
-            #     ratio = self.grid_scene.sequence.meter().unit_ratio(unit=diff)
-            #     diff_width = ratio * self.grid_scene.bar_width
-            #     min_unit_width = invert(GuiAttr.GRID_MIN_UNIT) * self.grid_scene.bar_width
-            #     self.rect.setRight(self.rect.right() + min_unit_width)
+            if self._event is None or (
+                self._event is not None and self._event.unit != new_event.unit
+            ):
+                self.rect.setWidth(self.grid_scene.get_unit_width(new_event.unit))
             self._event = new_event
 
     # @property
@@ -234,16 +228,22 @@ class Node(QGraphicsItem):
             moving=self.selection.moving,
             resizing=self.selection.resizing,
         )
-        moved_event = self.grid_scene.sequence.get_moved_event(
+        moved_event = self.grid_scene.sequence.get_changed_event(
             old_event=self.event, diff=event_diff.diff
         )
-        if (moved_event
+        logger.debug(
+            f"checking criteria {self.move_is_allowed(old_event=self.event, new_event=moved_event)}"
+            f"{moved_event != self.event}"
+            f"{moved_event}"
+        )
+        if (
+            moved_event
             and moved_event != self.event
             and self.move_is_allowed(old_event=self.event, new_event=moved_event)
         ):
-            logger.debug(f"{self.event.beat} {moved_event.beat}, {event_diff}")
-            self.grid_scene.sequence.move_event(
-                event=self.event, diff=event_diff.diff, moved_event=moved_event
+            logger.debug(f"event meets criteria")
+            self.grid_scene.sequence.change_event(
+                event=self.event, diff=event_diff.diff, changed_event=moved_event
             )
             # self.event = moved_event
 
@@ -345,12 +345,12 @@ class NoteNode(Node):
             moving_diff = calc_unit(node=self)
             for node in nodes:
                 if node.is_temporary:
-                    node.move(
+                    node.event_changed(
                         unit_diff=calc_unit(node=node),
                         key_diff=int(key_.note) - self_key if key_ else 0,
                     )
                 else:
-                    node.move(
+                    node.event_changed(
                         unit_diff=moving_diff,
                         key_diff=int(key_.note) - self_key if key_ else 0,
                     )
@@ -378,13 +378,13 @@ class NoteNode(Node):
     #                 self.key = key
     #         else:
     #             logger.debug(f"not moved")
-            # if self.is_moving:
-            #     notes = [note for note in self.grid_scene.selected_notes if note not in (self, self.sibling)]
-            # elif self.is_copying:
-            #     notes = [note for note in self.copied_grp.childItems() if note not in (self, self.sibling)]
-            # if notes:
-            #     logger.debug(f"MOVING GROUP {notes}")
-            #     self.grid_scene.move_notes(notes=notes, unit_diff=unit_diff, key_diff=key_diff)
+    # if self.is_moving:
+    #     notes = [note for note in self.grid_scene.selected_notes if note not in (self, self.sibling)]
+    # elif self.is_copying:
+    #     notes = [note for note in self.copied_grp.childItems() if note not in (self, self.sibling)]
+    # if notes:
+    #     logger.debug(f"MOVING GROUP {notes}")
+    #     self.grid_scene.move_notes(notes=notes, unit_diff=unit_diff, key_diff=key_diff)
 
     @property
     def unit(self) -> NonNegativeFloat:
@@ -397,7 +397,7 @@ class NoteNode(Node):
 
 
 class MetaNode(Node):
-    def move(self, unit: float):
+    def event_changed(self, unit: float):
         if unit != 0:
             self.beat = self.beat + unit
 
@@ -420,7 +420,7 @@ class MetaNode(Node):
                 logger.debug(
                     f"bar/beat {self.bar_num} {self.beat} {self.grid_scene.sequence} {unit}"
                 )
-            self.move(unit=unit)
+            self.event_changed(unit=unit)
 
     def mouseReleaseEvent(self, e: QGraphicsSceneMouseEvent):
         logger.debug(f"Meta note mouse release {e.pos()}")
