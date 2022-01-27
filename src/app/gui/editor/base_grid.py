@@ -163,6 +163,7 @@ class BaseGridScene(QGraphicsScene):
             key = self.keyboard.get_key_by_pos(position=y)
             return key.event() if key else None
 
+    # TODO Does copy of event but should take it from node
     def point_to_event_diff(
         self,
         e: QGraphicsSceneMouseEvent,
@@ -179,6 +180,7 @@ class BaseGridScene(QGraphicsScene):
                 event=event, node=node, x=x, user_defined=user_defined
             )
             event = self.set_event_unit(event=event, node=node)
+
             diff = Diff()
             if moving:
                 center = node.scenePos().x() + node.rect.width() / 2
@@ -279,8 +281,8 @@ class BaseGridScene(QGraphicsScene):
         logger.debug(f"adding note {node}")
         self.addItem(node)
 
-    def _add_bar(self, bar: Bar):
-        for event in bar:
+    def _add_nodes(self, events: List[Event]):
+        for event in events:
             self._add_node(event=event)
 
     def add_node(self, sequence_id, event: Event):
@@ -301,12 +303,8 @@ class BaseGridScene(QGraphicsScene):
             return
         self.delete_nodes(meta_notes=self.nodes(), hard_delete=True)
         for bar_num, bar in sequence.bars.items():
-            filtered_bar = Bar(
-                meter=sequence.meter(),
-                bar_num=bar_num,
-                bar=list(filter(lambda e: e.type in self.supported_event_types, bar)),
-            )
-            self._add_bar(bar=filtered_bar)
+            filtered_bar = [e for e in bar if e.type in self.supported_event_types]
+            self._add_nodes(events=filtered_bar)
 
     def delete_node(self, meta_node: Node, hard_delete: bool = True) -> None:
         self.removeItem(meta_node)

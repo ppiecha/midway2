@@ -52,9 +52,7 @@ class Node(QGraphicsItem):
             raise Exception(f"Cannot register listener {Notification.EVENT_CHANGED}")
 
     def event_changed(self, event: Event, changed_event: Event, diff: Diff):
-        logger.debug(f"event changed {diff}")
         if event.id() == self.event.id():
-            logger.debug(f"event changed {diff}")
             self.event = changed_event
 
     def copy_node(self):
@@ -205,7 +203,7 @@ class Node(QGraphicsItem):
 
     def move_is_allowed(self, old_event: Event, new_event: Event) -> bool:
         if self.grid_scene.sequence.has_event(event=new_event):
-            logger.debug("has event failed")
+            logger.debug(f"has event failed {old_event.id()} {new_event.parent_id}")
             return False
         if (
             new_event.beat != old_event.beat
@@ -232,9 +230,9 @@ class Node(QGraphicsItem):
             old_event=self.event, diff=event_diff.diff
         )
         logger.debug(
-            f"checking criteria {self.move_is_allowed(old_event=self.event, new_event=moved_event)}"
-            f"{moved_event != self.event}"
-            f"{moved_event}"
+            f"checking criteria {self.move_is_allowed(old_event=self.event, new_event=moved_event)} "
+            f"{moved_event != self.event} "
+            f"{self.event.id()}"
         )
         if (
             moved_event

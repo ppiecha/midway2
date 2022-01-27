@@ -28,6 +28,8 @@ class Bar(BaseModel):
             return False
         if (e1.id and e2.parent_id == e1.id()) or (e2.id() and e1.parent_id == e2.id()):
             return False
+        else:
+            logger.debug(f"not parent {e1.id()} {e2.id()} {e1.parent_id} {e2.parent_id}")
         params = list(filter(lambda x: x.unit is None, [e1, e2]))
         if len(params) == 1:
             raise ValueError(f"Cannot compare units {e1.unit} {e2.unit}")

@@ -101,6 +101,7 @@ class Sequence(BaseModel):
         self, bar_num: NonNegativeInt, event: Event, callback: bool = True
     ) -> None:
         if bar_num in self.bars.keys():
+            event.parent_id = None
             self.bars[bar_num] += event
             if callback:
                 pub.sendMessage(
