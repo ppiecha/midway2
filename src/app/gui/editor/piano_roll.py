@@ -133,7 +133,7 @@ class PianoRoll(QWidget):
 
     def delete_selected(self, mf: MainFrame):
         self.grid_view.grid_scene.delete_nodes(
-            meta_notes=self.grid_view.grid_scene.selected_nodes, hard_delete=True
+            meta_notes=self.grid_view.grid_scene.selected_nodes(), hard_delete=True
         )
 
     def invert_selection(self, mf: MainFrame):

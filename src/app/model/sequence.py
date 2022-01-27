@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, Union, Optional, List, Any
+from typing import Dict, Union, Optional, List, Any, Tuple
 
 from pubsub import pub
 from pydantic import PositiveInt, BaseModel, NonNegativeInt
@@ -245,6 +245,7 @@ class Sequence(BaseModel):
         )
         return changed_event
 
-    # def move_event(self, old_event: Event, new_event: Event) -> None:
-    #     self.remove_event(bar_num=old_event.bar_num, event=old_event, callback=False)
-    #     self.add_event(bar_num=new_event.bar_num, event=new_event, callback=False)
+    def change_events(self, event_pairs: List[Tuple[Event, Event]], diff: Diff):
+        for event, changed_event in event_pairs:
+            self.change_event(event=event, diff=diff, changed_event=changed_event)
+

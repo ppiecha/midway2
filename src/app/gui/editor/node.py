@@ -217,32 +217,50 @@ class Node(QGraphicsItem):
             and GridAttr.MOVE_VERTICAL not in self.grid_attr
         ):
             return False
+        if
         return True
 
     def mouseMoveEvent(self, e: QGraphicsSceneMouseEvent):
+        def pass_criteria(old_event: Event, new_event: Event) -> bool:
+            return (
+                new_event
+                and new_event != old_event
+                and self.move_is_allowed(old_event=old_event, new_event=new_event)
+            )
+
+        sequence = self.grid_scene.sequence
         event_diff = self.grid_scene.point_to_event_diff(
             e=e,
             node=self,
             moving=self.selection.moving,
             resizing=self.selection.resizing,
         )
-        moved_event = self.grid_scene.sequence.get_changed_event(
-            old_event=self.event, diff=event_diff.diff
-        )
-        logger.debug(
-            f"checking criteria {self.move_is_allowed(old_event=self.event, new_event=moved_event)} "
-            f"{moved_event != self.event} "
-            f"{self.event.id()}"
-        )
-        if (
-            moved_event
-            and moved_event != self.event
-            and self.move_is_allowed(old_event=self.event, new_event=moved_event)
-        ):
-            logger.debug(f"event meets criteria")
-            self.grid_scene.sequence.change_event(
-                event=self.event, diff=event_diff.diff, changed_event=moved_event
+        old_events = self.grid_scene.selected_events()
+        new_events = [
+            sequence.get_changed_event(old_event=event, diff=event_diff.diff)
+            for event in old_events
+        ]
+        if all([pass_criteria(old, new) for old, new in zip(old_events, new_events)]):
+            sequence.change_events(
+                event_pairs=zip(old_events, new_events), diff=event_diff.diff
             )
+        # moved_event = self.grid_scene.sequence.get_changed_event(
+        #     old_event=self.event, diff=event_diff.diff
+        # )
+        # logger.debug(
+        #     f"checking criteria {self.move_is_allowed(old_event=self.event, new_event=moved_event)} "
+        #     f"{moved_event != self.event} "
+        #     f"{self.event.id()}"
+        # )
+        # if (
+        #     moved_event
+        #     and moved_event != self.event
+        #     and self.move_is_allowed(old_event=self.event, new_event=moved_event)
+        # ):
+        #     logger.debug(f"event meets criteria")
+        #     self.grid_scene.sequence.change_event(
+        #         event=self.event, diff=event_diff.diff, changed_event=moved_event
+        #     )
             # self.event = moved_event
 
     def mouseReleaseEvent(self, e: QGraphicsSceneMouseEvent):
@@ -334,7 +352,7 @@ class NoteNode(Node):
         if self.is_moving or self.is_copying:
             key_: PianoKey = self.grid_scene.keyboard.get_key_by_pos(e.scenePos().y())
             nodes = (
-                self.grid_scene.selected_nodes
+                self.grid_scene.selected_nodes()
                 if self.is_moving
                 else self.copied_grp.childItems()
             )

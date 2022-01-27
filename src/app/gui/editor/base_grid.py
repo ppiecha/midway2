@@ -80,7 +80,7 @@ class BaseGridView(GraphicsView):
     def mousePressEvent(self, e: QMouseEvent):
         if (
             self.grid_scene.nodes(pos=self.mapToScene(e.pos()))  # item under cursor
-            or not self.grid_scene.selected_nodes  # no selected items
+            or not self.grid_scene.selected_nodes()  # no selected items
         ):
             super().mousePressEvent(e)
         else:
@@ -327,7 +327,6 @@ class BaseGridScene(QGraphicsScene):
         else:
             return list(filter(lambda item: issubclass(type(item), Node), self.items()))
 
-    @property
     def selected_nodes(self, rect: QRectF = None, pos: QPointF = None) -> List[Node]:
         lst = []
         if rect:
@@ -338,8 +337,11 @@ class BaseGridScene(QGraphicsScene):
             lst = list(filter(lambda note: note.isSelected(), self.nodes()))
         return lst
 
+    def selected_events(self, rect: QRectF = None, pos: QPointF = None) -> List[Event]:
+        return [node.event for node in self.selected_nodes(rect=rect, pos=pos)]
+
     def set_selected_moving(self, moving: bool = True):
-        list(map(lambda node: node.selection.set_moving(moving), self.selected_nodes))
+        list(map(lambda node: node.selection.set_moving(moving), self.selected_nodes()))
 
     def get_unit_width(self, unit: float) -> float:
         return invert(unit) * self.bar_width
