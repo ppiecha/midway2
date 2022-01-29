@@ -163,7 +163,6 @@ class BaseGridScene(QGraphicsScene):
             key = self.keyboard.get_key_by_pos(position=y)
             return key.event() if key else None
 
-    # TODO Does copy of event but should take it from node
     def point_to_event_diff(
         self,
         e: QGraphicsSceneMouseEvent,
@@ -180,7 +179,6 @@ class BaseGridScene(QGraphicsScene):
                 event=event, node=node, x=x, user_defined=user_defined
             )
             event = self.set_event_unit(event=event, node=node)
-
             diff = Diff()
             if moving:
                 center = node.scenePos().x() + node.rect.width() / 2
@@ -435,7 +433,7 @@ class BaseGridScene(QGraphicsScene):
                             self.selection.selecting = False
                             key = self.keyboard.get_key_by_pos(position=y)
                             event = self.point_to_event(e=e, user_defined=True)
-                            if key:
+                            if key and event:
                                 self.add_event(event=event)
                                 key.play_note_in_thread(secs=MidiAttr.KEY_PLAY_TIME)
                 case Qt.RightButton:

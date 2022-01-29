@@ -20,38 +20,29 @@ class Bar(BaseModel):
     bar_num: Optional[NonNegativeInt]
     bar: List[Event] = []
 
+    def dbg(self) -> str:
+        return str([e.dbg() for e in self.bar])
+
     def is_empty(self) -> bool:
         return len(list(self.events())) == 0
 
-    def have_same_beat(self, e1: Event, e2: Event) -> bool:
-        if e1.type != e2.type:
+    def is_event_allowed(self, event: Event) -> bool:
+        if self.has_event(event=event):
             return False
-        if (e1.id and e2.parent_id == e1.id()) or (e2.id() and e1.parent_id == e2.id()):
+        if self.has_conflict(event=event):
             return False
-        else:
-            logger.debug(
-                f"not parent {e1.id()} {e2.id()} {e1.parent_id} {e2.parent_id}"
-            )
-        params = list(filter(lambda x: x.unit is None, [e1, e2]))
-        if len(params) == 1:
-            raise ValueError(f"Cannot compare units {e1.unit} {e2.unit}")
-        if e1.unit:
-            return invert(e1.beat) <= invert(e2.beat) < invert(e1.beat) + (
-                invert(e1.unit)
-            ) or invert(e2.beat) <= invert(e1.beat) < invert(e2.beat) + (
-                invert(e2.unit)
-            )
-        else:
-            return e1.beat == e2.beat
+        return True
 
     def has_event(self, event: Event) -> bool:
-        expr_beat = lambda e: self.have_same_beat(e, event)
-        expr_pitch = lambda e: self.have_same_beat(e, event) and e.pitch == event.pitch
-        match event.type:
-            case EventType.NOTE:
-                return len(list(filter(expr_pitch, self.bar))) > 0
-            case _:
-                return len(list(filter(expr_beat, self.bar))) > 0
+        found = [e for e in self.bar if e == event and not e.is_related(other=event)]
+        if len(found) > 1:
+            raise ValueError(
+                f"Found more than one event {event.dbg()} in bar {self.dbg()}"
+            )
+        return len(found) == 1
+
+    def has_conflict(self, event: Event) -> bool:
+        return len([e for e in self.bar if e.has_conflict(other=event)]) > 0
 
     def __eq__(self, other):
         params = list(filter(lambda x: x is None, [self, other]))
@@ -84,10 +75,10 @@ class Bar(BaseModel):
     def add_event(self, event: Event) -> None:
         if not 0 <= invert(event.beat) < self.length():
             raise BeatOutsideOfBar(
-                f"Item outside of bar range 0/{invert(event.beat)}/{self.length()}"
+                f"Item outside of bar 0 <= {invert(event.beat)} <= {self.length()}"
             )
         if self.has_event(event=event):
-            raise EventAlreadyExists(f"Event {event} exists in bar {self.bar}")
+            raise EventAlreadyExists(f"Event {event.dbg()} exists in bar {self.dbg()}")
         self.bar.append(event)
         self.bar.sort(key=lambda e: (e.beat, e.type))
 
@@ -100,10 +91,14 @@ class Bar(BaseModel):
         return self.bar.index(event)
 
     def remove_event(self, event: Event) -> None:
-        try:
-            self.bar.remove(event)
-        except ValueError as e:
-            raise ValueError(f"Event {event} not found")
+        if not self.has_event(event=event):
+            raise ValueError(f"Event {event.dbg()} not found in bar {self.dbg()}")
+        count = len(self.bar)
+        self.bar = [e for e in self.bar if e != event]
+        if len(self.bar) != count - 1:
+            raise ValueError(
+                f"Event {event.dbg()} was not removed from bar {self.dbg()}"
+            )
 
     def remove_events(self, events: Optional[List[Event]]) -> None:
         for event in events:

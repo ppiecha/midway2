@@ -8,9 +8,8 @@ from pydantic import PositiveInt, BaseModel, NonNegativeInt
 
 from src.app.model.bar import Bar
 from src.app.model.meter import Meter, invert
-from src.app.model.event import Event, EventType, Diff
+from src.app.model.event import Event, EventType, Diff, PairOfEvents
 from src.app.model.midi_keyboard import MidiRange
-from src.app.model.types import Unit
 from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import Notification
 
@@ -101,7 +100,6 @@ class Sequence(BaseModel):
         self, bar_num: NonNegativeInt, event: Event, callback: bool = True
     ) -> None:
         if bar_num in self.bars.keys():
-            event.parent_id = None
             self.bars[bar_num] += event
             if callback:
                 pub.sendMessage(
@@ -205,13 +203,17 @@ class Sequence(BaseModel):
                 if hasattr(event, attr):
                     setattr(event, attr, value)
 
-    def get_changed_event(self, old_event: Event, diff: Diff) -> Event:
+    def get_changed_event(self, old_event: Event, diff: Diff) -> Optional[Event]:
         meter = self.meter()
         event = old_event.copy(deep=True)
-        event.parent_id = old_event.id()
+        event.parent_id = id(old_event)
         # pitch
+        if diff.pitch_diff is None:  # not proper note key
+            return None
         if MidiRange.in_range(pitch=event.pitch + diff.pitch_diff):
             event.pitch += diff.pitch_diff
+        else:
+            return None
         # beat
         if meter.significant_value(unit=diff.beat_diff):
             moved_beat = meter.add(value=event.beat, value_diff=diff.beat_diff)
@@ -219,33 +221,42 @@ class Sequence(BaseModel):
                 if old_event.bar_num + 1 < self.num_of_bars():
                     event.bar_num = old_event.bar_num + 1
                     event.beat = meter.bar_remainder(unit=moved_beat)
+                else:
+                    return None
             elif moved_beat < 0:
                 if old_event.bar_num - 1 >= 0:
                     event.bar_num = old_event.bar_num - 1
                     event.beat = meter.bar_remainder(unit=moved_beat)
+                else:
+                    return None
             else:
-                event.bar_num = old_event.bar_num
                 event.beat = moved_beat
         # unit
         if meter.significant_value(unit=diff.unit_diff):
             event.unit = meter.add(value=old_event.unit, value_diff=diff.unit_diff)
-            # logger.debug(f"resized event {event}")
+        if (
+            invert(meter.add(value=event.unit, value_diff=event.beat))
+            > self.num_of_bars() * meter.length()
+        ):
+            return None
+        if self.has_event(event=event):
+            return None
         return event
 
-    def change_event(self, event: Event, diff: Diff, changed_event: Event) -> Event:
-        self.remove_event(bar_num=event.bar_num, event=event, callback=False)
-        self.add_event(
-            bar_num=changed_event.bar_num, event=changed_event, callback=False
-        )
-        pub.sendMessage(
-            topicName=Notification.EVENT_CHANGED.value,
-            event=event,
-            changed_event=changed_event,
-            diff=diff,
-        )
-        return changed_event
+    def is_change_valid(self, event_pairs: List[PairOfEvents]):
+        invalid = [old for old, new in event_pairs if new is None]
+        # logger.debug(f"change is {'valid' if len(invalid) == 0 else 'invalid'}")
+        return len(invalid) == 0
 
-    def change_events(self, event_pairs: List[Tuple[Event, Event]], diff: Diff):
-        for event, changed_event in event_pairs:
-            self.change_event(event=event, diff=diff, changed_event=changed_event)
-
+    def change_events(self, event_pairs: List[PairOfEvents]):
+        for old, new in event_pairs:
+            self.remove_event(bar_num=old.bar_num, event=old, callback=False)
+        for old, new in event_pairs:
+            self.add_event(bar_num=new.bar_num, event=new, callback=False)
+        for old, new in event_pairs:
+            # logger.debug(f"event sent {[old.dbg(), new.dbg()]}")
+            pub.sendMessage(
+                topicName=Notification.EVENT_CHANGED.value,
+                event=old,
+                changed_event=new,
+            )

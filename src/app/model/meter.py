@@ -21,7 +21,7 @@ class Meter(BaseModel):
         return abs(invert(unit)) >= abs(invert(self.min_unit))
 
     def exceeds_length(self, unit: Unit):
-        return invert(unit) > self.length()
+        return invert(unit) >= self.length()
 
     def add(self, value: float, value_diff: float) -> NonNegativeFloat:
         if value_diff == -value:
@@ -37,9 +37,16 @@ class Meter(BaseModel):
 
     def bar_remainder(self, unit: Unit) -> NonNegativeFloat:
         if unit < 0:
-            return invert(self.length() + invert(unit))
+            new_unit = self.length() + invert(unit)
         elif self.exceeds_length(unit=unit):
-            return invert(invert(unit) - self.length())
+            new_unit = invert(unit) - self.length()
+        else:
+            raise ValueError(f"Remainder shouldn't be calculated in this case")
+        if not 0 <= new_unit <= self.length():
+            raise ValueError(
+                f"Unit outside of bar range 0 <= {new_unit} <= {self.length()}"
+            )
+        return invert(new_unit)
 
     def unit_from_ratio(self, ratio: float) -> Unit:
         value = ratio * self.length()

@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, List, NamedTuple
+from typing import Optional, List, Tuple
 
 from pydantic import BaseModel, NonNegativeFloat, NonNegativeInt
 
 from src.app.mingus.containers.note import Note
 from src.app.model.control import Control, PitchBendChain
+from src.app.model.meter import invert
 from src.app.model.types import Unit, Channel, Beat, Pitch, MidiValue, MidiBankValue
 
 
@@ -36,7 +37,36 @@ class Event(BaseModel):
     pitch_bend_chain: Optional[PitchBendChain]
     active: Optional[bool] = True
     bar_num: Optional[NonNegativeInt]
-    parent_id: Optional[int] = None
+
+    class Config:
+        extra = "allow"
+
+    def dbg(self) -> str:
+        return f"b:{round(self.beat, 2)} p:{self.pitch} u:{self.unit} bar:{int(self.bar_num)}"
+
+    def is_related(self, other) -> bool:
+        if hasattr(self, "parent_id") and self.parent_id == id(other):
+            return True
+        elif hasattr(other, "parent_id") and other.parent_id == id(self):
+            return True
+        else:
+            return False
+
+    def has_conflict(self, other) -> bool:
+        if self.is_related(other):
+            return False
+        if self == other:
+            return True
+        if self.type == other.type == EventType.NOTE and self.pitch != other.pitch:
+            return False
+        if self.unit is not None and other.unit is not None:
+            return invert(self.beat) <= invert(other.beat) <= invert(self.beat) + (
+                invert(self.unit)
+            ) or invert(other.beat) <= invert(self.beat) <= invert(other.beat) + (
+                invert(other.unit)
+            )
+        else:
+            raise ValueError(f"Cannot compare units {self.unit} {other.unit}")
 
     def __eq__(self, other):
         params = list(filter(lambda x: x is None, [self, other]))
@@ -52,19 +82,11 @@ class Event(BaseModel):
             and self.channel == other.channel
             and self.beat == other.beat
             and (
-                (self.id() is None and other.id() is None)
-                or (self.id() and other.parent_id != self.id())
-                or (other.id() and self.parent_id != other.id())
-            )
-            and (
                 self.type != EventType.NOTE
                 or (self.type == EventType.NOTE and self.pitch == other.pitch)
             )
             and self.unit == other.unit
         )
-
-    def id(self):
-        return id(self)
 
     def __int__(self) -> int:
         if not hasattr(self, "pitch"):
@@ -93,29 +115,8 @@ class Event(BaseModel):
             velocity=velocity,
         )
 
-    # @staticmethod
-    # def unit_diff(x: int, min_unit_width: int) -> int:
-    #     if x > 0 and abs(x - ceil(node.rect().right())) >= min_unit_width:
-    #         return min_unit_width if x - node.rect().right() > 0 else -min_unit_width
-    #     else:
-    #         return 0
-    #
-    # def pitch_diff(self, y: int, keyboard) -> int:
-    #     if self.event.pitch is None:
-    #         return 0
-    #     if key := keyboard.get_key_by_pos(position=y) is None:
-    #         return 0
-    #     else:
-    #         return self.event.pitch - int(key.note)
-    #
-    # @staticmethod
-    # def beat_diff(x: int, node) -> int:
-    #     center = node.scenePos().x() + node.rect.width() / 2
-    #     dist = x - center
-    #     if abs(dist) >= node.grid_scene.min_unit_width:
-    #         return int(copysign(1 / node.grid_scene.min_unit, dist))
-    #     else:
-    #         return 0
+
+PairOfEvents = Tuple[Event, Event]
 
 
 @dataclass
