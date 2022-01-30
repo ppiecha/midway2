@@ -30,6 +30,10 @@ class Sequence(BaseModel):
     def has_event(self, event: Event) -> bool:
         return self.bars[event.bar_num].has_event(event=event)
 
+    @staticmethod
+    def has_conflict(event: Event, events: List[Event]) -> bool:
+        return len([e for e in events if e.has_conflict(other=event)]) > 0
+
     def __eq__(self, other):
         params = list(filter(lambda x: x is None, [self, other]))
         match len(params):
@@ -243,10 +247,21 @@ class Sequence(BaseModel):
             return None
         return event
 
-    def is_change_valid(self, event_pairs: List[PairOfEvents]):
+    def is_change_valid(self, event_pairs: List[PairOfEvents]) -> bool:
         invalid = [old for old, new in event_pairs if new is None]
-        # logger.debug(f"change is {'valid' if len(invalid) == 0 else 'invalid'}")
-        return len(invalid) == 0
+        if len(invalid) > 0:
+            return False
+        conflicted = [
+            old
+            for old, new in event_pairs
+            if id(old) != id(new)
+            and self.has_conflict(
+                event=new, events=[n for o, n in event_pairs if id(n) != id(new)]
+            )
+        ]
+        if len(conflicted) > 0:
+            return False
+        return True
 
     def change_events(self, event_pairs: List[PairOfEvents]):
         for old, new in event_pairs:

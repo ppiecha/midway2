@@ -60,9 +60,9 @@ class Event(BaseModel):
         if self.type == other.type == EventType.NOTE and self.pitch != other.pitch:
             return False
         if self.unit is not None and other.unit is not None:
-            return invert(self.beat) <= invert(other.beat) <= invert(self.beat) + (
+            return invert(self.beat) < invert(other.beat) < invert(self.beat) + (
                 invert(self.unit)
-            ) or invert(other.beat) <= invert(self.beat) <= invert(other.beat) + (
+            ) or invert(other.beat) < invert(self.beat) < invert(other.beat) + (
                 invert(other.unit)
             )
         else:

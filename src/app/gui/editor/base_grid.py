@@ -326,17 +326,37 @@ class BaseGridScene(QGraphicsScene):
             return list(filter(lambda item: issubclass(type(item), Node), self.items()))
 
     def selected_nodes(self, rect: QRectF = None, pos: QPointF = None) -> List[Node]:
-        lst = []
         if rect:
-            lst = list(filter(lambda note: note.isSelected(), self.nodes(rect)))
+            lst = list(filter(lambda node: node.isSelected(), self.nodes(rect)))
         elif pos:
-            lst = list(filter(lambda note: note.isSelected(), self.nodes(pos)))
+            lst = list(filter(lambda node: node.isSelected(), self.nodes(pos)))
         else:
-            lst = list(filter(lambda note: note.isSelected(), self.nodes()))
+            lst = list(filter(lambda node: node.isSelected(), self.nodes()))
         return lst
+
+    def not_selected_nodes(
+        self, rect: QRectF = None, pos: QPointF = None
+    ) -> List[Node]:
+        return [
+            node
+            for node in self.nodes(rect=rect, pos=pos)
+            if node not in self.selected_nodes(rect=rect, pos=pos)
+        ]
+
+    def events(self, rect: QRectF = None, pos: QPointF = None) -> List[Event]:
+        return [node.event for node in self.nodes(rect=rect, pos=pos)]
 
     def selected_events(self, rect: QRectF = None, pos: QPointF = None) -> List[Event]:
         return [node.event for node in self.selected_nodes(rect=rect, pos=pos)]
+
+    def not_selected_events(
+        self, rect: QRectF = None, pos: QPointF = None
+    ) -> List[Event]:
+        return [
+            event
+            for event in self.events(rect=rect, pos=pos)
+            if event not in self.selected_events(rect=rect, pos=pos)
+        ]
 
     def set_selected_moving(self, moving: bool = True):
         list(map(lambda node: node.selection.set_moving(moving), self.selected_nodes()))

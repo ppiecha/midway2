@@ -129,12 +129,15 @@ class Node(QGraphicsItem):
         )
         if not event_diff:
             return
+        static_events = self.grid_scene.not_selected_events()
         old_events = self.grid_scene.selected_events()
         new_events = [
             sequence.get_changed_event(old_event=event, diff=event_diff.diff)
             for event in old_events
         ]
         pairs = list(zip(old_events, new_events))
+        pairs.extend(list(zip(static_events, static_events)))
+        logger.debug(f"pairs {pairs}")
         if sequence.is_change_valid(event_pairs=pairs) and all(
             [self.is_move_allowed(old, new) for old, new in pairs]
         ):
