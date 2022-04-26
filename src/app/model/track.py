@@ -47,9 +47,7 @@ class TrackVersion(BaseModel):
                     type=EventType.PROGRAM,
                     channel=self.channel,
                     beat=0,
-                    preset=Preset(
-                        sf_name=self.sf_name, bank=self.bank, patch=self.patch
-                    ),
+                    preset=Preset(sf_name=self.sf_name, bank=self.bank, patch=self.patch),
                 )
                 first_bar.add_event(event=event)
                 return Sequence.from_bars(bars=bars)
@@ -76,49 +74,31 @@ class Track(BaseModel):
         default = self.get_default_version(raise_not_found=False)
         if default and default.num_of_bars != track_version.num_of_bars:
             raise ValueError(
-                f"Number of bars does not match. New "
-                f"{track_version.num_of_bars} existing "
-                f"{default.num_of_bars}"
+                f"Number of bars does not match. New " f"{track_version.num_of_bars} existing " f"{default.num_of_bars}"
             )
         self.versions.append(track_version)
 
     def delete_track_version(self, track_version: TrackVersion):
         self.versions.remove(track_version)
 
-    def track_version_by_name(
-        self, track_version_name: str, raise_not_found: bool = True
-    ) -> Optional[TrackVersion]:
+    def track_version_by_name(self, track_version_name: str, raise_not_found: bool = True) -> Optional[TrackVersion]:
         for version in self.versions:
             if version.version_name == track_version_name:
                 return version
         if raise_not_found:
-            raise ValueError(
-                f"Cannot find version {track_version_name} "
-                f"in versions {self.versions}"
-            )
+            raise ValueError(f"Cannot find version {track_version_name} " f"in versions {self.versions}")
         else:
             return None
 
-    def track_version_exists(
-        self, version_name: str, current_version: TrackVersion
-    ) -> bool:
-        version = self.track_version_by_name(
-            track_version_name=version_name, raise_not_found=False
-        )
+    def track_version_exists(self, version_name: str, current_version: TrackVersion) -> bool:
+        version = self.track_version_by_name(track_version_name=version_name, raise_not_found=False)
         return version and version != current_version
 
-    def get_version(
-        self, version_name: str, raise_not_found: bool = False
-    ) -> Optional[TrackVersion]:
-        version = [
-            version for version in self.versions if version_name == version.version_name
-        ]
+    def get_version(self, version_name: str, raise_not_found: bool = False) -> Optional[TrackVersion]:
+        version = [version for version in self.versions if version_name == version.version_name]
         if version:
             if len(version) > 1:
-                raise ValueError(
-                    f"Found more than one version with name "
-                    f"{version_name} in track {self.name}"
-                )
+                raise ValueError(f"Found more than one version with name " f"{version_name} in track {self.name}")
             else:
                 version, *rest = version
                 return version
@@ -127,16 +107,12 @@ class Track(BaseModel):
                 raise ValueError(f"Cannot find version {version_name} in track {self}")
             return None
 
-    def get_default_version(
-        self, raise_not_found: bool = True
-    ) -> Optional[TrackVersion]:
+    def get_default_version(self, raise_not_found: bool = True) -> Optional[TrackVersion]:
         if self.versions:
             return self.versions[0]
         else:
             if raise_not_found:
-                raise ValueError(
-                    f"Cannot get default track version. No version defined"
-                )
+                raise ValueError(f"Cannot get default track version. No version defined")
             else:
                 return None
 

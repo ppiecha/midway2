@@ -47,16 +47,12 @@ def note0() -> Event:
 
 @pytest.fixture
 def note1() -> Event:
-    return Event(
-        type=EventType.NOTE, channel=0, beat=0.125, pitch=80, unit=NoteUnit.EIGHTH
-    )
+    return Event(type=EventType.NOTE, channel=0, beat=0.125, pitch=80, unit=NoteUnit.EIGHTH)
 
 
 @pytest.fixture
 def note2() -> Event:
-    return Event(
-        type=EventType.NOTE, channel=0, beat=0.250, pitch=81, unit=NoteUnit.QUARTER
-    )
+    return Event(type=EventType.NOTE, channel=0, beat=0.250, pitch=81, unit=NoteUnit.QUARTER)
 
 
 @pytest.fixture
@@ -78,9 +74,7 @@ def note4() -> Event:
 
 @pytest.fixture
 def note5() -> Event:
-    return Event(
-        type=EventType.NOTE, channel=0, beat=0.250, pitch=81, unit=NoteUnit.HALF
-    )
+    return Event(type=EventType.NOTE, channel=0, beat=0.250, pitch=81, unit=NoteUnit.HALF)
 
 
 @pytest.fixture
@@ -197,10 +191,7 @@ def rhythm() -> Rhythm:
 
 @pytest.fixture()
 def drums_sequence(rhythm, num_of_bars) -> Sequence:
-    bars = [
-        rhythm.bar_of_notes(note_unit=NoteUnit.QUARTER, bar_num=bar_num)
-        for bar_num in range(num_of_bars)
-    ]
+    bars = [rhythm.bar_of_notes(note_unit=NoteUnit.QUARTER, bar_num=bar_num) for bar_num in range(num_of_bars)]
     sequence = Sequence.from_bars(bars=bars)
     down = [event for index, event in enumerate(sequence.events()) if index % 2 == 0]
     up = [event for index, event in enumerate(sequence.events()) if index % 2 == 1]
@@ -225,17 +216,12 @@ def drums_sequence(rhythm, num_of_bars) -> Sequence:
 
 @pytest.fixture()
 def bass_sequence(rhythm, num_of_bars) -> Sequence:
-    bars = [
-        rhythm.bar_of_notes(note_unit=NoteUnit.EIGHTH, bar_num=bar_num)
-        for bar_num in range(num_of_bars)
-    ]
+    bars = [rhythm.bar_of_notes(note_unit=NoteUnit.EIGHTH, bar_num=bar_num) for bar_num in range(num_of_bars)]
     return Sequence.from_bars(bars=bars)
 
 
 @pytest.fixture()
 def drums_composition(drums_sequence, bass_sequence, capsys) -> Composition:
-    track_version = RhythmTrackVersion(
-        sf_name=MidiAttr.DEFAULT_SF2, sequence=drums_sequence
-    )
+    track_version = RhythmTrackVersion(sf_name=MidiAttr.DEFAULT_SF2, sequence=drums_sequence)
     track = Track(name="Drums", versions=[track_version])
     return Composition.from_tracks(tracks=[track], name="drums_composition")

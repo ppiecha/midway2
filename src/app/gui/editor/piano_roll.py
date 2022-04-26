@@ -60,12 +60,8 @@ class PianoRoll(QWidget):
         )
         self.grid_view.verticalScrollBar().valueChanged.connect(self.on_change_ver)
         self.grid_view.horizontalScrollBar().valueChanged.connect(self.on_change_hor)
-        self.grid_view.keyboard_view.verticalScrollBar().valueChanged.connect(
-            self.on_change_ver
-        )
-        self.grid_view.keyboard_view.horizontalScrollBar().valueChanged.connect(
-            self.on_change_hor
-        )
+        self.grid_view.keyboard_view.verticalScrollBar().valueChanged.connect(self.on_change_ver)
+        self.grid_view.keyboard_view.horizontalScrollBar().valueChanged.connect(self.on_change_hor)
         self.ruler_view = BaseGridView(
             cls=RulerScene,
             num_of_bars=self.num_of_bars,
@@ -75,9 +71,7 @@ class PianoRoll(QWidget):
         self.header_view = HeaderView(keyboard=self.ruler_view.keyboard_view.keyboard)
         self.box_main = Box(direction=QBoxLayout.TopToBottom)
         self.box_main.addLayout(KeyboardGridBox([self.header_view, self.ruler_view]))
-        self.box_main.addLayout(
-            KeyboardGridBox([self.grid_view.keyboard_view, self.grid_view])
-        )
+        self.box_main.addLayout(KeyboardGridBox([self.grid_view.keyboard_view, self.grid_view]))
 
         self.ac_select_all = Action(
             mf=self.mf,
@@ -109,32 +103,22 @@ class PianoRoll(QWidget):
             shortcut=QKeySequence(Qt.Key_Enter),
             slot=self.play,
         )
-        self.ac_escape = Action(
-            mf=self.mf, caption="Escape", shortcut=QKeySequence.Cancel, slot=self.escape
-        )
+        self.ac_escape = Action(mf=self.mf, caption="Escape", shortcut=QKeySequence.Cancel, slot=self.escape)
 
         self.setLayout(self.box_main)
         self.sequence = self.track_version.sequence
         assert self.sequence is not None
 
     def play(self, mf: MainFrame):
-        loop = self.composition.loops[LoopType.custom].get_loop_by_name(
-            loop_name=GuiAttr.SINGLE_TRACK
-        )
-        loop.set_single_track_version(
-            track=self.track, track_version=self.track_version
-        )
-        self.synth.play_composition(
-            self.composition, loop_type=LoopType.custom, loop_name=GuiAttr.SINGLE_TRACK
-        )
+        loop = self.composition.loops[LoopType.custom].get_loop_by_name(loop_name=GuiAttr.SINGLE_TRACK)
+        loop.set_single_track_version(track=self.track, track_version=self.track_version)
+        self.synth.play_composition(self.composition, loop_type=LoopType.custom, loop_name=GuiAttr.SINGLE_TRACK)
 
     def select_all(self, mf: MainFrame):
         self.grid_view.grid_scene.select_all()
 
     def delete_selected(self, mf: MainFrame):
-        self.grid_view.grid_scene.delete_nodes(
-            meta_notes=self.grid_view.grid_scene.selected_nodes(), hard_delete=True
-        )
+        self.grid_view.grid_scene.delete_nodes(meta_notes=self.grid_view.grid_scene.selected_nodes(), hard_delete=True)
 
     def invert_selection(self, mf: MainFrame):
         self.grid_view.grid_scene.invert_selection()
@@ -204,9 +188,7 @@ class PianoRoll(QWidget):
         bank, patch = value
         self.track_version.bank = bank
         self.track_version.patch = patch
-        self.synth.program_select(
-            self.track_version.channel, self.synth.sfid(self.sf_name), bank, patch
-        )
+        self.synth.program_select(self.track_version.channel, self.synth.sfid(self.sf_name), bank, patch)
 
     def on_change_ver(self, value: int):
         self.grid_view.keyboard_view.verticalScrollBar().setValue(value)

@@ -135,9 +135,7 @@ class PianoKey(Key):
         )
 
     def play_note_in_thread(self, secs):
-        self.keyboard.synth.play_note_in_thread(
-            channel=self.note.channel, pitch=int(self.note), secs=secs
-        )
+        self.keyboard.synth.play_note_in_thread(channel=self.note.channel, pitch=int(self.note), secs=secs)
 
     def stop_note(self):
         self.keyboard.synth.noteoff(chan=self.note.channel, key=int(self.note))

@@ -44,15 +44,11 @@ class CompositionTab(QWidget):
         tracks_splitter.addWidget(self.map[composition.name])
         tracks_splitter.addWidget(tracks_stack)
         vert_splitter = QSplitter(Qt.Vertical)
-        seq_box = SequencerBox(
-            parent=vert_splitter, mf=self.mf, composition=composition
-        )
+        seq_box = SequencerBox(parent=vert_splitter, mf=self.mf, composition=composition)
         vert_splitter.addWidget(tracks_splitter)
         vert_splitter.addWidget(seq_box)
         vert_splitter.track_list = self.map[composition.name]
-        self.tab_box.addTab(
-            vert_splitter, QIcon(":/icons/composition.png"), composition.name
-        )
+        self.tab_box.addTab(vert_splitter, QIcon(":/icons/composition.png"), composition.name)
 
     def index_of_track_list(self, track_list: TrackList) -> int:
         for index in range(self.tab_box.count()):
@@ -65,9 +61,7 @@ class CompositionTab(QWidget):
         track_list = self.map.pop(composition.name)
         index = self.index_of_track_list(track_list=track_list)
         for track_name in list(track_list.map.keys()):
-            track_list.delete_track(
-                composition=composition, track=track_list[track_name].track
-            )
+            track_list.delete_track(composition=composition, track=track_list[track_name].track)
         self.tab_box.removeTab(index)
         self.project.delete_composition(composition=composition)
         track_list.deleteLater()
@@ -90,17 +84,13 @@ class CompositionTab(QWidget):
         for composition in self:
             for track in self[composition]:
                 for track_version in self[composition][track].version_tab:
-                    self[composition][track].version_tab[
-                        track_version
-                    ].track_item.init_fonts()
+                    self[composition][track].version_tab[track_version].track_item.init_fonts()
 
     def set_keyboard_position(self):
         for composition in self:
             for track in self[composition]:
                 for track_version in self[composition][track].version_tab:
-                    self[composition][track].version_tab[
-                        track_version
-                    ].track_item.set_keyboard_position()
+                    self[composition][track].version_tab[track_version].track_item.set_keyboard_position()
 
     @property
     def name(self) -> str:
@@ -129,13 +119,9 @@ class SequencerBox(QWidget):
         super().__init__(parent=parent)
         self.composition = composition
         self.splitter = QSplitter(Qt.Horizontal)
-        self.custom_loop_box = CustomLoopBox(
-            parent=self.splitter, mf=mf, composition=composition
-        )
+        self.custom_loop_box = CustomLoopBox(parent=self.splitter, mf=mf, composition=composition)
         self.splitter.addWidget(self.custom_loop_box)
-        self.composition_loop_box = CompositionLoopBox(
-            parent=self.splitter, mf=mf, composition=composition
-        )
+        self.composition_loop_box = CompositionLoopBox(parent=self.splitter, mf=mf, composition=composition)
         self.splitter.addWidget(self.composition_loop_box)
         self.main_box = Box(direction=QBoxLayout.TopToBottom)
         # self.main_box.setContentsMargins(5, 5, 5, 5)
@@ -159,9 +145,7 @@ class CustomLoopBox(QWidget):
     def __init__(self, mf, parent, composition: Composition):
         super().__init__(parent=parent)
         self.main_box = Box(direction=QBoxLayout.LeftToRight)
-        self.custom_loop_grid = CustomLoopGrid(
-            parent=self, mf=mf, composition=composition
-        )
+        self.custom_loop_grid = CustomLoopGrid(parent=self, mf=mf, composition=composition)
         self.main_box.addWidget(self.custom_loop_grid, stretch=1)
         self.setLayout(self.main_box)
 
@@ -170,8 +154,6 @@ class CompositionLoopBox(QWidget):
     def __init__(self, mf, parent, composition: Composition):
         super().__init__(parent=parent)
         self.main_box = Box(direction=QBoxLayout.TopToBottom)
-        self.composition_loop_grid = CompositionLoopGrid(
-            parent=self, mf=mf, composition=composition
-        )
+        self.composition_loop_grid = CompositionLoopGrid(parent=self, mf=mf, composition=composition)
         self.main_box.addWidget(self.composition_loop_grid)
         self.setLayout(self.main_box)

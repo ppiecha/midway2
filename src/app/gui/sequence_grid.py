@@ -137,20 +137,14 @@ class CustomLoopGrid(LoopGrid):
     def load_loops(self):
         super().load_loops()
         if not self.composition.get_loops(LoopType.custom):
-            loops = CustomLoops(
-                loops=[self.get_default_loop(), self.get_single_track_loop()]
-            )
+            loops = CustomLoops(loops=[self.get_default_loop(), self.get_single_track_loop()])
         else:
             loops = CustomLoops(**self.composition.get_loops(LoopType.custom).dict())
         self.composition.loops[LoopType.custom] = loops
         self.table.setRowCount(len(self.composition.tracks) + 1)
-        self.table.setVerticalHeaderLabels(
-            ["Current"] + [track.name for track in self.composition.tracks]
-        )
+        self.table.setVerticalHeaderLabels(["Current"] + [track.name for track in self.composition.tracks])
         for loop_index, loop in enumerate(loops.loops):
-            self.insert_loop(
-                loop_index=loop_index, loop=loop, grid_type=LoopType.custom
-            )
+            self.insert_loop(loop_index=loop_index, loop=loop, grid_type=LoopType.custom)
         self.set_updates_enabled()
 
 
@@ -163,17 +157,11 @@ class CompositionLoopGrid(LoopGrid):
         if not self.composition.get_loops(LoopType.composition):
             loops = CompositionLoops(loops=[])
         else:
-            loops = CompositionLoops(
-                **self.composition.get_loops(LoopType.composition).dict()
-            )
+            loops = CompositionLoops(**self.composition.get_loops(LoopType.composition).dict())
         self.composition.loops[LoopType.composition] = loops
         self.table.setRowCount(len(self.composition.tracks))
-        self.table.setVerticalHeaderLabels(
-            [track.name for track in self.composition.tracks]
-        )
+        self.table.setVerticalHeaderLabels([track.name for track in self.composition.tracks])
         if loops:
             for loop_index, loop in enumerate(loops.loops):
-                self.insert_loop(
-                    loop_index=loop_index, loop=loop, grid_type=LoopType.composition
-                )
+                self.insert_loop(loop_index=loop_index, loop=loop, grid_type=LoopType.composition)
         self.set_updates_enabled()

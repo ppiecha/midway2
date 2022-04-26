@@ -47,9 +47,7 @@ class TrackListItem(QWidget):
         super().__init__(parent=parent)
         self.track = track
         self.list_item = list_item
-        self.version_tab = TrackVersionTab(
-            mf=mf, list_item=self, track=track, synth=mf.synth, composition=composition
-        )
+        self.version_tab = TrackVersionTab(mf=mf, list_item=self, track=track, synth=mf.synth, composition=composition)
         self.icon = QLabel()
         self.icon.setPixmap(QPixmap(":/icons/track_item.png"))
         self.name = QLabel(track.name)
@@ -97,9 +95,7 @@ class TrackListItem(QWidget):
 
 
 class TrackList(QListWidget):
-    def __init__(
-        self, mf: MainFrame, parent, stack: QStackedWidget, composition: Composition
-    ):
+    def __init__(self, mf: MainFrame, parent, stack: QStackedWidget, composition: Composition):
         super().__init__(parent=parent)
         self.mf = mf
         self.composition = composition
@@ -124,9 +120,7 @@ class TrackList(QListWidget):
     def current_track_list_item(self) -> TrackListItem:
         current_item = self.list.currentItem()
         if not current_item:
-            raise ValueError(
-                f"Cannot determine current item in track list in composition {self.composition}"
-            )
+            raise ValueError(f"Cannot determine current item in track list in composition {self.composition}")
         return self.list.itemWidget(current_item)
 
     def select_first_item(self):
@@ -159,18 +153,14 @@ class TrackList(QListWidget):
 
     def _delete_track(self, track: Track):
         if not self.composition.track_name_exists(track_name=track.name):
-            raise ValueError(
-                f"Track with name {track.name} does not exist in composition {self.composition.name}"
-            )
+            raise ValueError(f"Track with name {track.name} does not exist in composition {self.composition.name}")
         else:
             track_list_item: TrackListItem = self.map.pop(track.name)
             self.list.removeItemWidget(track_list_item.list_item)
             self.stack.removeWidget(track_list_item)
             for track_version_name in list(track_list_item.version_tab.map.keys()):
                 track_list_item.version_tab._delete_track_version(
-                    track_version=track_list_item.track.get_version(
-                        version_name=track_version_name
-                    )
+                    track_version=track_list_item.track.get_version(version_name=track_version_name)
                 )
             self.composition.delete_track(track=track)
             track_list_item.deleteLater()

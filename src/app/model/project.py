@@ -20,16 +20,12 @@ class Project(BaseModel):
         else:
             raise ValueError(f"List of compositions is empty {self.compositions}")
 
-    def composition_by_name(
-        self, composition_name: str, raise_not_found: bool = True
-    ) -> Optional[Composition]:
+    def composition_by_name(self, composition_name: str, raise_not_found: bool = True) -> Optional[Composition]:
         for composition in self.compositions:
             if composition.name == composition_name:
                 return composition
         if raise_not_found:
-            raise ValueError(
-                f"Cannot find name {composition_name} in compositions {self.compositions}"
-            )
+            raise ValueError(f"Cannot find name {composition_name} in compositions {self.compositions}")
         else:
             return None
 
@@ -51,9 +47,7 @@ def simple_project() -> Project:
             Composition(
                 name="First composition",
                 tracks=[
-                    Track(
-                        name="Bass", current_version="Default", versions=[track_version]
-                    ),
+                    Track(name="Bass", current_version="Default", versions=[track_version]),
                 ],
             ),
         ],
@@ -86,9 +80,7 @@ def empty_project() -> Project:
             Composition(
                 name="Default",
                 tracks=[
-                    Track(
-                        name="Bass", current_version="Default", versions=[track_version]
-                    ),
+                    Track(name="Bass", current_version="Default", versions=[track_version]),
                     Track(
                         name="Guitar",
                         current_version="Default",

@@ -44,17 +44,13 @@ def copy(src, dst: str, auto_rename: bool = False) -> bool:
     if auto_rename:
         flags = flags | shellcon.FOF_RENAMEONCOLLISION
 
-    result, aborted = shell.SHFileOperation(
-        (0, shellcon.FO_COPY, src, os.path.abspath(dst), flags, None, None)
-    )
+    result, aborted = shell.SHFileOperation((0, shellcon.FO_COPY, src, os.path.abspath(dst), flags, None, None))
 
     if not aborted and result != 0:
         # Note: raising a WindowsError with correct error code is quite
         # difficult due to SHFileOperation historical idiosyncrasies.
         # Therefore we simply pass a message.
-        raise Exception(
-            "Cannot copy. Windows error - SHFileOperation failed: 0x%08x" % result
-        )
+        raise Exception("Cannot copy. Windows error - SHFileOperation failed: 0x%08x" % result)
 
     return not aborted
 
@@ -85,17 +81,13 @@ def move(src, dst: str, auto_rename: bool = False) -> bool:
     if auto_rename:
         flags = flags | shellcon.FOF_RENAMEONCOLLISION
 
-    result, aborted = shell.SHFileOperation(
-        (0, shellcon.FO_MOVE, src, os.path.abspath(dst), flags, None, None)
-    )
+    result, aborted = shell.SHFileOperation((0, shellcon.FO_MOVE, src, os.path.abspath(dst), flags, None, None))
 
     if not aborted and result != 0:
         # Note: raising a WindowsError with correct error code is quite
         # difficult due to SHFileOperation historical idiosyncrasies.
         # Therefore we simply pass a message.
-        raise Exception(
-            "Cannot copy. Windows error - SHFileOperation failed: 0x%08x" % result
-        )
+        raise Exception("Cannot copy. Windows error - SHFileOperation failed: 0x%08x" % result)
 
     return not aborted
 
@@ -126,17 +118,13 @@ def rename(src, dst: str, auto_rename: bool = False) -> bool:
     if auto_rename:
         flags = flags | shellcon.FOF_RENAMEONCOLLISION
 
-    result, aborted = shell.SHFileOperation(
-        (0, shellcon.FO_RENAME, src, os.path.abspath(dst), flags, None, None)
-    )
+    result, aborted = shell.SHFileOperation((0, shellcon.FO_RENAME, src, os.path.abspath(dst), flags, None, None))
 
     if not aborted and result != 0:
         # Note: raising a WindowsError with correct error code is quite
         # difficult due to SHFileOperation historical idiosyncrasies.
         # Therefore we simply pass a message.
-        raise Exception(
-            "Cannot rename. Windows error - SHFileOperation failed: 0x%08x" % result
-        )
+        raise Exception("Cannot rename. Windows error - SHFileOperation failed: 0x%08x" % result)
 
     return not aborted
 
@@ -169,17 +157,13 @@ def delete(src, hard_delete: bool) -> bool:
 
     logger.debug(f"deleting {src}")
 
-    result, aborted = shell.SHFileOperation(
-        (0, shellcon.FO_DELETE, src, None, flags, None, None)  # Flags
-    )
+    result, aborted = shell.SHFileOperation((0, shellcon.FO_DELETE, src, None, flags, None, None))  # Flags
 
     if not aborted and result != 0:
         # Note: raising a WindowsError with correct error code is quite
         # difficult due to SHFileOperation historical idiosyncrasies.
         # Therefore we simply pass a message.
-        raise Exception(
-            "Cannot delete. Windows error - SHFileOperation failed: 0x%08x" % result
-        )
+        raise Exception("Cannot delete. Windows error - SHFileOperation failed: 0x%08x" % result)
         # raise WindowsError('SHFileOperation failed: 0x%08x' % result)
 
     return not aborted
@@ -190,9 +174,7 @@ def new_file(file_name: str) -> None:
         handle = win32file.CreateFile(
             file_name,
             win32file.GENERIC_WRITE,
-            win32file.FILE_SHARE_READ
-            | win32file.FILE_SHARE_WRITE
-            | win32file.FILE_SHARE_DELETE,
+            win32file.FILE_SHARE_READ | win32file.FILE_SHARE_WRITE | win32file.FILE_SHARE_DELETE,
             None,
             win32con.CREATE_NEW,
             win32con.FILE_ATTRIBUTE_NORMAL,
@@ -217,12 +199,7 @@ def get_new_name(full_name: str) -> str:
             except:
                 return str(path.parent.joinpath(path.stem)) + "(1)" + path.suffix
             else:
-                return (
-                    str(path.parent.joinpath(path.stem[:start]))
-                    + str(num + 1)
-                    + ")"
-                    + path.suffix
-                )
+                return str(path.parent.joinpath(path.stem[:start])) + str(num + 1) + ")" + path.suffix
         else:
             _name = str(path.parent.joinpath(path.stem)) + "(1)" + path.suffix
             if Path(_name).exists():
@@ -258,13 +235,9 @@ def paste_file(path):
     item = Path(path)
     path = item.parent
     parent_pidl = shell.SHILCreateFromPath(str(path), 0)[0]
-    parent_folder = desktop_folder.BindToObject(
-        parent_pidl, None, shell.IID_IShellFolder
-    )
+    parent_folder = desktop_folder.BindToObject(parent_pidl, None, shell.IID_IShellFolder)
     pidl = parent_folder.ParseDisplayName(hwnd, None, item.name)[1]
-    context_menu = parent_folder.GetUIObjectOf(hwnd, [pidl], shell.IID_IContextMenu, 0)[
-        1
-    ]
+    context_menu = parent_folder.GetUIObjectOf(hwnd, [pidl], shell.IID_IContextMenu, 0)[1]
     menu = win32gui.CreatePopupMenu()
     context_menu.QueryContextMenu(
         menu,
@@ -361,9 +334,7 @@ def get_drives():
         6: "RAM Disk",
     }
 
-    drives = (
-        drive for drive in win32api.GetLogicalDriveStrings().split("\000") if drive
-    )
+    drives = (drive for drive in win32api.GetLogicalDriveStrings().split("\000") if drive)
     drive_dict = {}
     for drive in drives:
         try:
@@ -387,15 +358,9 @@ def get_drives():
 def extension_to_bitmap(extension):
     """dot is mandatory in extension"""
 
-    flags = (
-        shellcon.SHGFI_SMALLICON
-        | shellcon.SHGFI_ICON
-        | shellcon.SHGFI_USEFILEATTRIBUTES
-    )
+    flags = shellcon.SHGFI_SMALLICON | shellcon.SHGFI_ICON | shellcon.SHGFI_USEFILEATTRIBUTES
 
-    retval, info = shell.SHGetFileInfo(
-        extension, win32file.FILE_ATTRIBUTE_NORMAL, flags
-    )
+    retval, info = shell.SHGetFileInfo(extension, win32file.FILE_ATTRIBUTE_NORMAL, flags)
     # non-zero on success
     assert retval
 
@@ -413,29 +378,21 @@ def get_context_menu(path, file_names):
     desktop_folder = shell.SHGetDesktopFolder()
     hwnd = win32gui.GetForegroundWindow()
     parent_pidl = shell.SHILCreateFromPath(path, 0)[0]
-    parent_folder = desktop_folder.BindToObject(
-        parent_pidl, None, shell.IID_IShellFolder
-    )
+    parent_folder = desktop_folder.BindToObject(parent_pidl, None, shell.IID_IShellFolder)
     if file_names:
         pidls = []
         for item in file_names:
             pidl = parent_folder.ParseDisplayName(hwnd, None, item)[1]
             pidls.append(pidl)
-        context_menu = parent_folder.GetUIObjectOf(
-            hwnd, pidls, shell.IID_IContextMenu, 0
-        )[1]
+        context_menu = parent_folder.GetUIObjectOf(hwnd, pidls, shell.IID_IContextMenu, 0)[1]
         # print(parent_folder.GetDisplayNameOf(pidls[0], shellcon.SHGDN_FORPARSING | shellcon.SHGDN_FORADDRESSBAR))
     else:
         item = Path(path)
         path = item.parent
         parent_pidl = shell.SHILCreateFromPath(str(path), 0)[0]
-        parent_folder = desktop_folder.BindToObject(
-            parent_pidl, None, shell.IID_IShellFolder
-        )
+        parent_folder = desktop_folder.BindToObject(parent_pidl, None, shell.IID_IShellFolder)
         pidl = parent_folder.ParseDisplayName(hwnd, None, item.name)[1]
-        context_menu = parent_folder.GetUIObjectOf(
-            hwnd, [pidl], shell.IID_IContextMenu, 0
-        )[1]
+        context_menu = parent_folder.GetUIObjectOf(hwnd, [pidl], shell.IID_IContextMenu, 0)[1]
         # context_menu = parent_folder.CreateViewObject(hwnd, shell.IID_IContextMenu)
     cm_plus = None
     if context_menu:

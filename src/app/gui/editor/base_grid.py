@@ -130,9 +130,7 @@ class BaseGridScene(QGraphicsScene):
         div_unit_width = self.get_unit_width(unit=GuiAttr.GRID_DIV_UNIT)
         return (x // div_unit_width) * div_unit_width
 
-    def set_event_position(
-        self, event: Event, node: Node, x: int, user_defined: bool = False
-    ) -> Event:
+    def set_event_position(self, event: Event, node: Node, x: int, user_defined: bool = False) -> Event:
         if node:
             event.bar_num = node.event.bar_num
             event.beat = node.event.beat
@@ -175,9 +173,7 @@ class BaseGridScene(QGraphicsScene):
         x, y = e.scenePos().x(), e.scenePos().y()
         event = self.set_event_pitch(node=node, y=y)
         if event:
-            event = self.set_event_position(
-                event=event, node=node, x=x, user_defined=user_defined
-            )
+            event = self.set_event_position(event=event, node=node, x=x, user_defined=user_defined)
             event = self.set_event_unit(event=event, node=node)
             diff = Diff()
             if moving:
@@ -196,9 +192,7 @@ class BaseGridScene(QGraphicsScene):
                 if abs(unit_diff) >= min_unit_width:
                     unit_ratio = self.ratio(copysign(min_unit_width, unit_diff))
                     unit_diff = meter.unit_from_ratio(ratio=unit_ratio)
-                    if meter.significant_value(
-                        unit=meter.add(value=event.unit, value_diff=unit_diff)
-                    ):
+                    if meter.significant_value(unit=meter.add(value=event.unit, value_diff=unit_diff)):
                         diff.unit_diff = unit_diff
             return EventDiff(event=event, diff=diff)
         return None
@@ -214,9 +208,7 @@ class BaseGridScene(QGraphicsScene):
         event_diff = self.point_to_event_diff(
             e=e, node=node, moving=moving, resizing=resizing, user_defined=user_defined
         )
-        return self.sequence.get_changed_event(
-            old_event=event_diff.event, diff=event_diff.diff
-        )
+        return self.sequence.get_changed_event(old_event=event_diff.event, diff=event_diff.diff)
 
     # def point_to_event(
     #     self,
@@ -257,10 +249,7 @@ class BaseGridScene(QGraphicsScene):
         return QPointF(x, y)
 
     def is_matching(self, sequence_id, event_type: EventType):
-        return (
-            sequence_id == id(self._sequence)
-            and event_type in self.supported_event_types
-        )
+        return sequence_id == id(self._sequence) and event_type in self.supported_event_types
 
     def remove_node(self, sequence_id, event: Event):
         if self.is_matching(sequence_id=sequence_id, event_type=event.type):
@@ -315,13 +304,9 @@ class BaseGridScene(QGraphicsScene):
 
     def nodes(self, rect: QRectF = None, pos: QPointF = None) -> List[Node]:
         if rect:
-            return list(
-                filter(lambda item: issubclass(type(item), Node), self.items(rect))
-            )
+            return list(filter(lambda item: issubclass(type(item), Node), self.items(rect)))
         elif pos:
-            return list(
-                filter(lambda item: issubclass(type(item), Node), self.items(pos))
-            )
+            return list(filter(lambda item: issubclass(type(item), Node), self.items(pos)))
         else:
             return list(filter(lambda item: issubclass(type(item), Node), self.items()))
 
@@ -334,14 +319,8 @@ class BaseGridScene(QGraphicsScene):
             lst = list(filter(lambda node: node.isSelected(), self.nodes()))
         return lst
 
-    def not_selected_nodes(
-        self, rect: QRectF = None, pos: QPointF = None
-    ) -> List[Node]:
-        return [
-            node
-            for node in self.nodes(rect=rect, pos=pos)
-            if node not in self.selected_nodes(rect=rect, pos=pos)
-        ]
+    def not_selected_nodes(self, rect: QRectF = None, pos: QPointF = None) -> List[Node]:
+        return [node for node in self.nodes(rect=rect, pos=pos) if node not in self.selected_nodes(rect=rect, pos=pos)]
 
     def events(self, rect: QRectF = None, pos: QPointF = None) -> List[Event]:
         return [node.event for node in self.nodes(rect=rect, pos=pos)]
@@ -349,13 +328,9 @@ class BaseGridScene(QGraphicsScene):
     def selected_events(self, rect: QRectF = None, pos: QPointF = None) -> List[Event]:
         return [node.event for node in self.selected_nodes(rect=rect, pos=pos)]
 
-    def not_selected_events(
-        self, rect: QRectF = None, pos: QPointF = None
-    ) -> List[Event]:
+    def not_selected_events(self, rect: QRectF = None, pos: QPointF = None) -> List[Event]:
         return [
-            event
-            for event in self.events(rect=rect, pos=pos)
-            if event not in self.selected_events(rect=rect, pos=pos)
+            event for event in self.events(rect=rect, pos=pos) if event not in self.selected_events(rect=rect, pos=pos)
         ]
 
     def set_selected_moving(self, moving: bool = True):
@@ -366,9 +341,7 @@ class BaseGridScene(QGraphicsScene):
 
     def set_grid_width_props(self):
         self.width_bar = self.grid_divider * KeyAttr.W_HEIGHT
-        self.width_beat = (self.width_bar / self.numerator) * (
-            self.grid_divider / self.denominator
-        )
+        self.width_beat = (self.width_bar / self.numerator) * (self.grid_divider / self.denominator)
 
     @property
     def numerator(self) -> int:

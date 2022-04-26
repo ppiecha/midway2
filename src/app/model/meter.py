@@ -43,9 +43,7 @@ class Meter(BaseModel):
         else:
             raise ValueError(f"Remainder shouldn't be calculated in this case")
         if not 0 <= new_unit <= self.length():
-            raise ValueError(
-                f"Unit outside of bar range 0 <= {new_unit} <= {self.length()}"
-            )
+            raise ValueError(f"Unit outside of bar range 0 <= {new_unit} <= {self.length()}")
         return invert(new_unit)
 
     def unit_from_ratio(self, ratio: float) -> Unit:

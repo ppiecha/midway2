@@ -107,7 +107,5 @@ class GridScene(BaseGridScene):
             x = (hl + 1) * KeyAttr.W_HEIGHT
             self.addLine(
                 QLineF(QPointF(x, 0), QPointF(x, self.height())),
-                pen_bar
-                if hl % self.grid_divider == self.grid_divider - 1
-                else pen_grid,
+                pen_bar if hl % self.grid_divider == self.grid_divider - 1 else pen_grid,
             )

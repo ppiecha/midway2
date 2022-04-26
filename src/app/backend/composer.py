@@ -31,9 +31,7 @@ class Composer:
             scale = scale[::-1]
         beats = [start_beat + ind * step for ind, _ in enumerate(scale)]
         return [
-            Event.from_note(
-                note=note, channel=channel, beat=beat, unit=unit, velocity=velocity
-            )
+            Event.from_note(note=note, channel=channel, beat=beat, unit=unit, velocity=velocity)
             for beat, note in zip(beats, scale)
         ]
 

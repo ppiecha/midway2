@@ -96,13 +96,9 @@ class Sequence(BaseModel):
         if bar_num in self.bars.keys():
             return self.bars[bar_num].event_index(event=event)
         else:
-            raise ValueError(
-                f"Bar number outside of range {bar_num} -> {self.num_of_bars()}"
-            )
+            raise ValueError(f"Bar number outside of range {bar_num} -> {self.num_of_bars()}")
 
-    def add_event(
-        self, bar_num: NonNegativeInt, event: Event, callback: bool = True
-    ) -> None:
+    def add_event(self, bar_num: NonNegativeInt, event: Event, callback: bool = True) -> None:
         if bar_num in self.bars.keys():
             self.bars[bar_num] += event
             if callback:
@@ -112,21 +108,15 @@ class Sequence(BaseModel):
                     event=event,
                 )
         else:
-            raise ValueError(
-                f"Bar number outside of range {bar_num} -> {self.num_of_bars()}"
-            )
+            raise ValueError(f"Bar number outside of range {bar_num} -> {self.num_of_bars()}")
 
     def add_events(self, bar_num: NonNegativeInt, events: List[Event]):
         for event in events:
             self.add_event(bar_num=bar_num, event=event)
 
-    def remove_event(
-        self, bar_num: NonNegativeInt, event: Event, callback: bool = True
-    ) -> None:
+    def remove_event(self, bar_num: NonNegativeInt, event: Event, callback: bool = True) -> None:
         if bar_num not in self.bars.keys():
-            raise ValueError(
-                f"Bar number outside of range {bar_num} -> {self.num_of_bars()}"
-            )
+            raise ValueError(f"Bar number outside of range {bar_num} -> {self.num_of_bars()}")
         self.bars[bar_num].remove_event(event=event)
         if callback:
             pub.sendMessage(
@@ -135,9 +125,7 @@ class Sequence(BaseModel):
                 event=event,
             )
 
-    def remove_events(
-        self, bar_num: NonNegativeInt, events: Optional[List[Event]]
-    ) -> None:
+    def remove_events(self, bar_num: NonNegativeInt, events: Optional[List[Event]]) -> None:
         self.bars[bar_num].remove_events(events=events)
         # for event in events:
         #     self.remove_event(bar_num=bar_num, event=event)
@@ -150,8 +138,7 @@ class Sequence(BaseModel):
         if isinstance(other, Sequence):
             if other.num_of_bars() != this.num_of_bars():
                 raise ValueError(
-                    f"Sequence has different number of bars {this.num_of_bars()} -> "
-                    f"{other.num_of_bars()}"
+                    f"Sequence has different number of bars {this.num_of_bars()} -> " f"{other.num_of_bars()}"
                 )
             else:
                 for bar_num in this.bars.keys():
@@ -196,9 +183,7 @@ class Sequence(BaseModel):
     def from_num_of_bars(cls, num_of_bars: PositiveInt, meter: Meter = None):
         if meter is None:
             meter = Meter()
-        return cls.from_bars(
-            [Bar(meter=meter, bar_num=bar_num) for bar_num in range(num_of_bars)]
-        )
+        return cls.from_bars([Bar(meter=meter, bar_num=bar_num) for bar_num in range(num_of_bars)])
 
     @staticmethod
     def set_events_attr(events: List[Event], attr_val_map: Dict[str, Any]):
@@ -238,10 +223,7 @@ class Sequence(BaseModel):
         # unit
         if meter.significant_value(unit=diff.unit_diff):
             event.unit = meter.add(value=old_event.unit, value_diff=diff.unit_diff)
-        if (
-            invert(meter.add(value=event.unit, value_diff=event.beat))
-            > self.num_of_bars() * meter.length()
-        ):
+        if invert(meter.add(value=event.unit, value_diff=event.beat)) > self.num_of_bars() * meter.length():
             return None
         if self.has_event(event=event):
             return None
@@ -255,9 +237,7 @@ class Sequence(BaseModel):
             old
             for old, new in event_pairs
             if id(old) != id(new)
-            and self.has_conflict(
-                event=new, events=[n for o, n in event_pairs if id(n) != id(new)]
-            )
+            and self.has_conflict(event=new, events=[n for o, n in event_pairs if id(n) != id(new)])
         ]
         if len(conflicted) > 0:
             return False

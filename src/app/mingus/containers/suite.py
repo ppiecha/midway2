@@ -46,8 +46,7 @@ class Suite(object):
         """
         if not hasattr(composition, "tracks"):
             raise UnexpectedObjectError(
-                "Object '%s' not expected. Expecting "
-                "a mingus.containers.Composition object." % composition
+                "Object '%s' not expected. Expecting " "a mingus.containers.Composition object." % composition
             )
         self.compositions.append(composition)
         return self
@@ -74,9 +73,7 @@ class Suite(object):
         """Enable the '[] =' notation."""
         if not hasattr(value, "tracks"):
             raise UnexpectedObjectError(
-                "Object '%s' is not expected. "
-                "Expecting a "
-                "mingus.containers.Composition object." % value
+                "Object '%s' is not expected. " "Expecting a " "mingus.containers.Composition object." % value
             )
         self.compositions[index] = value
 

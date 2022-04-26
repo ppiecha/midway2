@@ -37,9 +37,7 @@ class AppAttr:
     PATH_SRC = str(Path(PATH_APP).parent)
     PATH_ROOT = str(Path(PATH_SRC).parent)
     PATH_SF2 = os.path.join(PATH_ROOT, SF2_DIR)
-    PATH_FS = os.path.join(
-        PATH_ROOT, os.path.join("ext", os.path.join("fluidsynth-2.1.2-win64", "bin"))
-    )
+    PATH_FS = os.path.join(PATH_ROOT, os.path.join("ext", os.path.join("fluidsynth-2.1.2-win64", "bin")))
     os.environ["PATH"] += PATH_FS + ";"
 
 
@@ -258,9 +256,7 @@ DRUM_KIT = [
     "Open Triangle",
 ]
 
-DRUM_NAME_TO_PATCH = {
-    name: patch for name, patch in zip(DRUM_KIT, [0] + list(range(35, 82)))
-}
+DRUM_NAME_TO_PATCH = {name: patch for name, patch in zip(DRUM_KIT, [0] + list(range(35, 82)))}
 
 DRUM_PATCH_TO_NAME = {patch: name for name, patch in DRUM_NAME_TO_PATCH.items()}
 

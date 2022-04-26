@@ -88,9 +88,7 @@ class MidwaySynth(Synth):
 
     def preset_change(self, channel: int, preset: Preset):
         sfid = self.sfid(sf_name=preset.sf_name)
-        self.program_select(
-            chan=channel, sfid=sfid, bank=preset.bank, preset=preset.patch
-        )
+        self.program_select(chan=channel, sfid=sfid, bank=preset.bank, preset=preset.patch)
 
     def note_on(self, channel: int, pitch: int, velocity: int, preset: Preset = None):
         # current_preset = self.get_current_preset(channel=channel)
@@ -131,9 +129,7 @@ class MidwaySynth(Synth):
         sfid = fs.sfload(MidiAttr.DEFAULT_SF2)
         fs.program_select(chan=channel, sfid=sfid, bank=bank, preset=patch)
         fs.start(driver=MidiAttr.DRIVER)
-        sequencer = Sequencer(
-            synth=fs, time_scale=bpm2time_scale(bpm=bpm), use_system_timer=False
-        )
+        sequencer = Sequencer(synth=fs, time_scale=bpm2time_scale(bpm=bpm), use_system_timer=False)
         sequencer.play_bar(synth=fs, bar=bar, bpm=bpm, repeat=repeat)
         sleep(bar_length2sec(bar=bar, bpm=bpm) * repeat)
 
@@ -318,16 +314,10 @@ class LoopPlayer:
 
     def seq_callback(self, time, event, seq, data):
         def should_stop() -> bool:
-            return (
-                time >= self.event_provider().stop_time
-                and not self.event_provider().repeat
-            )
+            return time >= self.event_provider().stop_time and not self.event_provider().repeat
 
         def skip_next_bar() -> bool:
-            return (
-                time >= self.event_provider().skip_time
-                and not self.event_provider().repeat
-            )
+            return time >= self.event_provider().skip_time and not self.event_provider().repeat
 
         if time not in self.callbacks:
             self.callbacks.add(time)
@@ -350,9 +340,7 @@ class LoopPlayer:
     def schedule_callback(self, time):
         if not self.event_provider().sequencer().client_id:
             raise ValueError("Client callback not registered")
-        self.event_provider().sequencer().timer(
-            time=time, dest=self.event_provider().sequencer().client_id
-        )
+        self.event_provider().sequencer().timer(time=time, dest=self.event_provider().sequencer().client_id)
 
     def schedule_next_callback(self):
         self.schedule_callback(time=self.event_provider().next_callback_time())

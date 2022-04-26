@@ -21,14 +21,9 @@ def test_play_custom_composition(track_c_major):
 
 def test_play_composition(track_c_major):
     composition = Composition.from_tracks(name="test_scale", tracks=[track_c_major])
-    composition_loops = CompositionLoops.from_list(
-        loop_lst=[composition.default_loop, composition.default_loop]
-    )
+    composition_loops = CompositionLoops.from_list(loop_lst=[composition.default_loop, composition.default_loop])
     assert composition_loops.get_first_loop_name() == "0"
-    assert (
-        composition_loops.get_next_loop(loop_name=GuiAttr.FIRST_COMPOSITION_LOOP).name
-        == "1"
-    )
+    assert composition_loops.get_next_loop(loop_name=GuiAttr.FIRST_COMPOSITION_LOOP).name == "1"
     composition.loops[LoopType.composition] = composition_loops
     ms = MidwaySynth()
     ms.play_composition_loop(composition=composition, bpm=120, repeat=False)

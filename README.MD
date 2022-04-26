@@ -17,5 +17,9 @@ pytest -vv -k "test_play"
 ```
 Code formatting
 ```bash
-black src --target-version py310
+black -l 120 src --target-version py310
+```
+Quality check
+```commandline
+
 ```

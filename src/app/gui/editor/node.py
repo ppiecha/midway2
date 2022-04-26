@@ -53,9 +53,7 @@ class Node(QGraphicsItem):
             self.event = changed_event
 
     def copy_node(self):
-        self.sibling = self.grid_scene.node_from_event(
-            event=self.event, bar_num=self.bar_num
-        )
+        self.sibling = self.grid_scene.node_from_event(event=self.event, bar_num=self.bar_num)
         return self.sibling
 
     @property
@@ -67,17 +65,13 @@ class Node(QGraphicsItem):
         point = self.grid_scene.event_to_point(event=new_event)
         self.prepareGeometryChange()
         self.setPos(point)
-        if self._event is None or (
-            self._event is not None and self._event.unit != new_event.unit
-        ):
+        if self._event is None or (self._event is not None and self._event.unit != new_event.unit):
             self.rect.setWidth(self.grid_scene.get_unit_width(new_event.unit))
         self._event = new_event
 
     def paint(self, painter: QPainter, option, widget=None):
         painter.setPen(QColor(32, 32, 32))
-        gradient = QLinearGradient(
-            self.boundingRect().topLeft(), self.boundingRect().bottomLeft()
-        )
+        gradient = QLinearGradient(self.boundingRect().topLeft(), self.boundingRect().bottomLeft())
         color: QColor = Color.NODE_START
         if self.isSelected():
             color = Color.NODE_SELECTED
@@ -105,17 +99,11 @@ class Node(QGraphicsItem):
         return f"{str(self.scenePos())} {str(self.event)}"
 
     def is_move_allowed(self, old_event: Event, new_event: Event) -> bool:
-        if (
-            new_event.beat != old_event.beat
-            and GridAttr.MOVE_HORIZONTAL not in self.grid_attr
-        ):
+        if new_event.beat != old_event.beat and GridAttr.MOVE_HORIZONTAL not in self.grid_attr:
             return False
         old_key = self.grid_scene.keyboard.get_key_by_event(event=old_event)
         new_key = self.grid_scene.keyboard.get_key_by_event(event=new_event)
-        if (
-            old_key.key_top != new_key.key_top
-            and GridAttr.MOVE_VERTICAL not in self.grid_attr
-        ):
+        if old_key.key_top != new_key.key_top and GridAttr.MOVE_VERTICAL not in self.grid_attr:
             return False
         return True
 
@@ -131,16 +119,11 @@ class Node(QGraphicsItem):
             return
         static_events = self.grid_scene.not_selected_events()
         old_events = self.grid_scene.selected_events()
-        new_events = [
-            sequence.get_changed_event(old_event=event, diff=event_diff.diff)
-            for event in old_events
-        ]
+        new_events = [sequence.get_changed_event(old_event=event, diff=event_diff.diff) for event in old_events]
         pairs = list(zip(old_events, new_events))
         pairs.extend(list(zip(static_events, static_events)))
         logger.debug(f"pairs {pairs}")
-        if sequence.is_change_valid(event_pairs=pairs) and all(
-            [self.is_move_allowed(old, new) for old, new in pairs]
-        ):
+        if sequence.is_change_valid(event_pairs=pairs) and all([self.is_move_allowed(old, new) for old, new in pairs]):
             count = len(self.grid_scene.nodes())
             sequence.change_events(event_pairs=pairs)
             assert count == len(self.grid_scene.nodes())

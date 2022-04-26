@@ -69,10 +69,7 @@ class Track(object):
         """
         if self.instrument != None:
             if not self.instrument.can_play_notes(note):
-                raise InstrumentRangeError(
-                    "Note '%s' is not in range of the instrument (%s)"
-                    % (note, self.instrument)
-                )
+                raise InstrumentRangeError("Note '%s' is not in range of the instrument (%s)" % (note, self.instrument))
         if duration == None:
             duration = 4
 
@@ -117,9 +114,7 @@ class Track(object):
             else:
                 chord = NoteContainer().from_chord(chord)
                 if tun:
-                    chord = tun.find_chord_fingering(
-                        chord, return_best_as_NoteContainer=True
-                    )
+                    chord = tun.find_chord_fingering(chord, return_best_as_NoteContainer=True)
                 if not self.add_notes(chord, duration):
                     # This should be the standard behaviour of add_notes
                     dur = self.bars[-1].value_left()
@@ -215,10 +210,7 @@ class Track(object):
         mingus.containers.Bar object.
         """
         if not hasattr(value, "bar"):
-            raise UnexpectedObjectError(
-                "Unexpected object '%s', "
-                "expecting a mingus.containers.Barobject" % value
-            )
+            raise UnexpectedObjectError("Unexpected object '%s', " "expecting a mingus.containers.Barobject" % value)
         self.bars[index] = value
 
     def __repr__(self):

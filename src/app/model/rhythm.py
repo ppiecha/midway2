@@ -61,9 +61,7 @@ class PatternVersion(BaseModel):
     @classmethod
     def from_str(cls, pattern: str) -> PatternVersion:
         elements = pattern.split(",")
-        return cls(
-            elements=[PatternElement.from_str(pattern=element) for element in elements]
-        )
+        return cls(elements=[PatternElement.from_str(pattern=element) for element in elements])
 
 
 class Pattern(BaseModel):
@@ -73,9 +71,7 @@ class Pattern(BaseModel):
     @classmethod
     def from_str(cls, pattern: str) -> Pattern:
         versions = pattern.split("|")
-        pattern = cls(
-            versions=[PatternVersion.from_str(pattern=version) for version in versions]
-        )
+        pattern = cls(versions=[PatternVersion.from_str(pattern=version) for version in versions])
         for version in pattern.versions:
             pattern.validate(version=version)
         return pattern
@@ -84,8 +80,7 @@ class Pattern(BaseModel):
         length = sum([(1.0 / elem.value) * elem.repeat for elem in version.elements])
         if length != self.meter.length():
             raise ValueError(
-                f"Sum of pattern elements duration {length} is not equal "
-                f"to bar length {self.meter.length()}"
+                f"Sum of pattern elements duration {length} is not equal " f"to bar length {self.meter.length()}"
             )
 
     def bar(self, version: int = 0, bar_num: int = None) -> Bar:
@@ -100,9 +95,7 @@ class Pattern(BaseModel):
             for counter in range(element.repeat):
                 if element.type != PatternElementType.pause:
                     if not element.chord:
-                        events = [
-                            Event(type=EventType.NOTE, beat=last_beat, unit=duration)
-                        ]
+                        events = [Event(type=EventType.NOTE, beat=last_beat, unit=duration)]
                     else:
                         events = [
                             Event(
@@ -138,10 +131,7 @@ class Rhythm:
         timeline = np.arange(0.0, self.meter.length(), beat_step)
         logger.debug(f"timeline {timeline}")
         note_duration = note_duration or note_unit
-        notes = [
-            Event(type=EventType.NOTE, beat=beat, unit=note_duration)
-            for beat in timeline
-        ]
+        notes = [Event(type=EventType.NOTE, beat=beat, unit=note_duration) for beat in timeline]
         logger.debug(f"notes {notes}")
         bar = Bar(meter=self.meter, bar_num=bar_num)
         bar.add_events(events=notes)

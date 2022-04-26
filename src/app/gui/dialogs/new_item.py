@@ -44,14 +44,10 @@ class NewItemDlg(QDialog):
         self.track = track
         self.set_title()
         # self.setSizeGripEnabled(True)
-        self.buttons = QDialogButtonBox(
-            QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal
-        )
+        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal)
         self.main_box = Box(direction=QBoxLayout.TopToBottom)
         self.main_box.setContentsMargins(5, 5, 5, 5)
-        self._main_layout = self.get_main_layout(
-            composition=self.composition, track=self.track
-        )
+        self._main_layout = self.get_main_layout(composition=self.composition, track=self.track)
         self.main_box.addLayout(self.main_layout)
         self.main_box.addWidget(self.buttons)
         self.setLayout(self.main_box)
@@ -132,31 +128,14 @@ class NewTrackForm(NewNameForm):
         self.track_color.clicked.connect(self.get_track_color)
 
     def init_ui(self):
-        self.name.setText(
-            self.track.name if self.mode == TrackEditMode.edit_track else ""
-        )
-        self.name.setEnabled(
-            self.mode in (TrackEditMode.new_track, TrackEditMode.edit_track)
-        )
-        self.show_track_color(
-            color=QColor.fromRgba(self.track.default_color)
-            if self.track
-            else CLR_NODE_START
-        )
-        self.track_color.setEnabled(
-            self.mode in (TrackEditMode.new_track, TrackEditMode.edit_track)
-        )
+        self.name.setText(self.track.name if self.mode == TrackEditMode.edit_track else "")
+        self.name.setEnabled(self.mode in (TrackEditMode.new_track, TrackEditMode.edit_track))
+        self.show_track_color(color=QColor.fromRgba(self.track.default_color) if self.track else CLR_NODE_START)
+        self.track_color.setEnabled(self.mode in (TrackEditMode.new_track, TrackEditMode.edit_track))
         self.version_name.setText(
-            self.track_version.version_name
-            if self.track_version
-            else DEFAULT_VERSION_NAME
-            if not self.track
-            else ""
+            self.track_version.version_name if self.track_version else DEFAULT_VERSION_NAME if not self.track else ""
         )
-        self.version_name.setEnabled(
-            self.mode
-            in (TrackEditMode.new_track_version, TrackEditMode.edit_track_version)
-        )
+        self.version_name.setEnabled(self.mode in (TrackEditMode.new_track_version, TrackEditMode.edit_track_version))
         self.version_channel.setCurrentIndex(
             self.track_version.channel
             if self.track_version
@@ -165,15 +144,12 @@ class NewTrackForm(NewNameForm):
             else self.composition.get_next_free_channel()
         )
         self.version_channel.setEnabled(
-            self.mode
-            in (TrackEditMode.new_track_version, TrackEditMode.edit_track_version)
+            self.mode in (TrackEditMode.new_track_version, TrackEditMode.edit_track_version)
         )
 
     def get_track_color(self):
         color = QColorDialog.getColor(
-            self.track_color.default
-            if hasattr(self.track_color, DEFAULT)
-            else CLR_NODE_START
+            self.track_color.default if hasattr(self.track_color, DEFAULT) else CLR_NODE_START
         )
         if color:
             self.track_color.default = color.rgba()
@@ -192,9 +168,7 @@ class NewTrackForm(NewNameForm):
             return valid
         valid = not self.composition.track_name_exists(track_name=self.get_name())
         if not valid:
-            self.mf.show_message_box(
-                f"Track name {self.get_name()} exists in composition"
-            )
+            self.mf.show_message_box(f"Track name {self.get_name()} exists in composition")
         return valid
 
     def is_track_version_name_valid(self) -> bool:
@@ -255,9 +229,7 @@ class NewTrackDlg(NewItemDlg):
             channel=ml.version_channel.get_channel(),
             version_name=ml.get_version_name(),
             sf_name=DEFAULT_SF2,
-            sequence=Sequence.from_num_of_bars(
-                num_of_bars=ml.get_default_num_of_bars()
-            ),
+            sequence=Sequence.from_num_of_bars(num_of_bars=ml.get_default_num_of_bars()),
         )
         return Track(
             name=ml.get_name(),

@@ -853,10 +853,7 @@ def from_shorthand(shorthand_string, slash=None):
 
     # Get the note name
     if not notes.is_valid_note(shorthand_string[0]):
-        raise NoteFormatError(
-            "Unrecognised note '%s' in chord '%s'"
-            % (shorthand_string[0], shorthand_string)
-        )
+        raise NoteFormatError("Unrecognised note '%s' in chord '%s'" % (shorthand_string[0], shorthand_string))
     name = shorthand_string[0]
 
     # Look for accidentals
@@ -902,8 +899,7 @@ def from_shorthand(shorthand_string, slash=None):
                     res = [slash] + res
                 else:
                     raise NoteFormatError(
-                        "Unrecognised note '%s' in slash chord'%s'"
-                        % (slash, slash + shorthand_string)
+                        "Unrecognised note '%s' in slash chord'%s'" % (slash, slash + shorthand_string)
                     )
             elif isinstance(slash, list):
                 # Add polychords
@@ -1003,9 +999,7 @@ def determine_triad(triad, shorthand=False, no_inversions=False, placeholder=Non
         elif intval == "57":
             add_result("M7")
         if tries != 3 and not no_inversions:
-            return inversion_exhauster(
-                [triad[-1]] + triad[:-1], shorthand, tries + 1, result
-            )
+            return inversion_exhauster([triad[-1]] + triad[:-1], shorthand, tries + 1, result)
         else:
             res = []
             for r in result:
@@ -1018,9 +1012,7 @@ def determine_triad(triad, shorthand=False, no_inversions=False, placeholder=Non
     return inversion_exhauster(triad, shorthand, 1, [])
 
 
-def determine_seventh(
-    seventh, shorthand=False, no_inversion=False, no_polychords=False
-):
+def determine_seventh(seventh, shorthand=False, no_inversion=False, no_polychords=False):
     """Determine the type of seventh chord; return the results in a list,
     ordered on inversions.
 
@@ -1096,9 +1088,7 @@ def determine_seventh(
                     add_result("7b5")
 
         if tries != 4 and not no_inversion:
-            return inversion_exhauster(
-                [seventh[-1]] + seventh[:-1], shorthand, tries + 1, result, polychords
-            )
+            return inversion_exhauster([seventh[-1]] + seventh[:-1], shorthand, tries + 1, result, polychords)
         else:
             # Return results
             res = []
@@ -1115,9 +1105,7 @@ def determine_seventh(
     return inversion_exhauster(seventh, shorthand, 1, [], [])
 
 
-def determine_extended_chord5(
-    chord, shorthand=False, no_inversions=False, no_polychords=False
-):
+def determine_extended_chord5(chord, shorthand=False, no_inversions=False, no_polychords=False):
     """Determine the names of an extended chord."""
     if len(chord) != 5:
         # warning raise exeption: not an extended chord
@@ -1166,9 +1154,7 @@ def determine_extended_chord5(
                 elif intval4 == "minor seventh":
                     add_result("6/7")
         if tries != 5 and not no_inversions:
-            return inversion_exhauster(
-                [chord[-1]] + chord[:-1], shorthand, tries + 1, result, polychords
-            )
+            return inversion_exhauster([chord[-1]] + chord[:-1], shorthand, tries + 1, result, polychords)
         else:
             res = []
             for r in result:
@@ -1181,9 +1167,7 @@ def determine_extended_chord5(
     return inversion_exhauster(chord, shorthand, 1, [], [])
 
 
-def determine_extended_chord6(
-    chord, shorthand=False, no_inversions=False, no_polychords=False
-):
+def determine_extended_chord6(chord, shorthand=False, no_inversions=False, no_polychords=False):
     """Determine the names of an 6 note chord."""
     if len(chord) != 6:
         # warning raise exeption: not an extended chord
@@ -1227,9 +1211,7 @@ def determine_extended_chord6(
                 elif intval5 == "major sixth":
                     add_result("M13")
         if tries != 6 and not no_inversions:
-            return inversion_exhauster(
-                [chord[-1]] + chord[:-1], shorthand, tries + 1, result, polychords
-            )
+            return inversion_exhauster([chord[-1]] + chord[:-1], shorthand, tries + 1, result, polychords)
         else:
             res = []
             for r in result:
@@ -1242,9 +1224,7 @@ def determine_extended_chord6(
     return inversion_exhauster(chord, shorthand, 1, [], [])
 
 
-def determine_extended_chord7(
-    chord, shorthand=False, no_inversions=False, no_polychords=False
-):
+def determine_extended_chord7(chord, shorthand=False, no_inversions=False, no_polychords=False):
     """Determine the names of an 7 note chord."""
     if len(chord) != 7:
         # warning raise exeption: not an extended chord
@@ -1273,9 +1253,7 @@ def determine_extended_chord7(
                 if intval6 == "major sixth":
                     add_result("M13")
         if tries != 6:
-            return inversion_exhauster(
-                [chord[-1]] + chord[:-1], shorthand, tries + 1, result, polychords
-            )
+            return inversion_exhauster([chord[-1]] + chord[:-1], shorthand, tries + 1, result, polychords)
         else:
             res = []
             for r in result:
@@ -1330,9 +1308,7 @@ def determine_polychords(chord, shorthand=False):
             # f) last notes of the chord. Then try the function_list[f2] on the
             # f2 + 3 first notes of the chord. Thus, trying all possible
             # combinations.
-            for chord1 in function_list[f](
-                chord[len(chord) - (3 + f) :], True, True, True
-            ):
+            for chord1 in function_list[f](chord[len(chord) - (3 + f) :], True, True, True):
                 for chord2 in function_list[f2](chord[: f2 + 3], True, True, True):
                     polychords.append("%s|%s" % (chord1, chord2))
     if shorthand:

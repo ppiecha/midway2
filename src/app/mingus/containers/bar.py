@@ -199,9 +199,7 @@ class Bar(object):
             res.append(
                 [
                     x[0],
-                    progressions.determine(
-                        x[2].get_note_names(), self.key.key, shorthand
-                    ),
+                    progressions.determine(x[2].get_note_names(), self.key.key, shorthand),
                 ]
             )
         return res

@@ -74,21 +74,13 @@ class PianoKeyboard(QGraphicsWidget, MidiKeyboard):
         return self.piano_keys[event.pitch]
 
     def draw_keys(self):
-        for pitch, key in {
-            pitch: key
-            for pitch, key in self.keys.items()
-            if MidiRange.is_white(pitch=pitch)
-        }.items():
+        for pitch, key in {pitch: key for pitch, key in self.keys.items() if MidiRange.is_white(pitch=pitch)}.items():
             self.piano_keys[pitch] = WhitePianoKey(
                 base_key=key,
                 keyboard=self,
                 callback=self.callback,
             )
-        for pitch, key in {
-            pitch: key
-            for pitch, key in self.keys.items()
-            if MidiRange.is_black(pitch=pitch)
-        }.items():
+        for pitch, key in {pitch: key for pitch, key in self.keys.items() if MidiRange.is_black(pitch=pitch)}.items():
             self.piano_keys[pitch] = BlackPianoKey(
                 base_key=key,
                 keyboard=self,
@@ -97,9 +89,7 @@ class PianoKeyboard(QGraphicsWidget, MidiKeyboard):
 
 
 class MetaKeyboard(QGraphicsWidget, MetaMidiKeyboard):
-    def __init__(
-        self, synth: Optional[Synth], channel: Channel, callback: Optional[callable]
-    ):
+    def __init__(self, synth: Optional[Synth], channel: Channel, callback: Optional[callable]):
         QGraphicsWidget.__init__(self)
         MetaMidiKeyboard.__init__(self, channel=channel)
         self.meta_keys: Dict[EventType, MetaKey] = {}

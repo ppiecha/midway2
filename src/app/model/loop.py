@@ -41,28 +41,18 @@ class Loop(BaseModel):
         )
 
     def remove_track(self, track: Track):
-        self.tracks = [
-            track_item for track_item in self.tracks if track_item.loop_track != track
-        ]
+        self.tracks = [track_item for track_item in self.tracks if track_item.loop_track != track]
 
     def get_compiled_sequence(self, include_defaults: bool = False) -> Sequence:
         sequence: Optional[Sequence] = None
         tracks = [track for track in self.tracks if track.loop_track_enabled]
         if len(tracks):
-            sequence = copy.deepcopy(
-                tracks.pop(0)
-                .get_track_version()
-                .get_sequence(include_defaults=include_defaults)
-            )
+            sequence = copy.deepcopy(tracks.pop(0).get_track_version().get_sequence(include_defaults=include_defaults))
             for track in tracks:
-                sequence += track.get_track_version().get_sequence(
-                    include_defaults=include_defaults
-                )
+                sequence += track.get_track_version().get_sequence(include_defaults=include_defaults)
         return sequence
 
-    def set_single_track_version(
-        self, track: Track, track_version: TrackVersion
-    ) -> None:
+    def set_single_track_version(self, track: Track, track_version: TrackVersion) -> None:
         for loop_item in self.tracks:
             if loop_item.loop_track == track:
                 loop_item.loop_track_enabled = True
@@ -126,9 +116,7 @@ class CustomLoops(Loops):
         for loop in self.loops:
             if loop.checked:
                 return loop
-        raise ValueError(
-            f"Cannot find checked loop between {[loop.name for loop in self.loops]}"
-        )
+        raise ValueError(f"Cannot find checked loop between {[loop.name for loop in self.loops]}")
 
     def set_checked_loop(self, loop: Loop):
         loop.checked = True
@@ -159,10 +147,7 @@ class CompositionLoops(Loops):
         try:
             loop_index = int(loop_name)
         except ValueError as e:
-            raise ValueError(
-                f"Cannot get next composition loop. "
-                f"Wrong previous loop name {loop_name} {str(e)}"
-            )
+            raise ValueError(f"Cannot get next composition loop. " f"Wrong previous loop name {loop_name} {str(e)}")
         try:
             next_loop = self.loops[loop_index + 1]
             return next_loop

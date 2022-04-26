@@ -116,17 +116,13 @@ class TrackVersionBox(QWidget):
 
     def reload_versions(self, current_version: str = None):
         self.version.clear()
-        self.version.addItems(
-            [version.version_name for version in self.loop_item.loop_track.versions]
-        )
+        self.version.addItems([version.version_name for version in self.loop_item.loop_track.versions])
         if current_version:
             self.version.setCurrentText(current_version)
 
     def on_enable_changed(self):
         if self.is_loop_selector:
-            self.composition.get_loops(loop_type=LoopType.custom).set_checked_loop(
-                self.loop
-            )
+            self.composition.get_loops(loop_type=LoopType.custom).set_checked_loop(self.loop)
         else:
             self.loop_item.loop_track_enabled = self.enabled.isChecked()
 
@@ -177,11 +173,7 @@ class PresetBox(QComboBox):
                 sf_name = self.synth.sf_name(sfid=sfid)
                 preset = Preset(sf_name=sf_name, bank=bank, patch=patch)
                 preset_map = self.synth.preset_map
-                if (
-                    sfid in preset_map
-                    and bank in preset_map[sfid]
-                    and patch in preset_map[sfid][bank]
-                ):
+                if sfid in preset_map and bank in preset_map[sfid] and patch in preset_map[sfid][bank]:
                     preset_name = preset_map[sfid][bank][patch]
                     self.addItem(f"{bank}:{patch} {preset_name}", preset)
 
@@ -216,13 +208,9 @@ class DeriveTrackVersionBox(QWidget):
         self.track_box.currentIndexChanged.connect(self.on_track_changed)
 
     def get_derived_version(self) -> TrackVersion:
-        composition = self.mf.project.composition_by_name(
-            self.composition_box.currentText()
-        )
+        composition = self.mf.project.composition_by_name(self.composition_box.currentText())
         track = composition.track_by_name(track_name=self.track_box.currentText())
-        track_version = track.track_version_by_name(
-            track_version_name=self.track_version_box.currentText()
-        )
+        track_version = track.track_version_by_name(track_version_name=self.track_version_box.currentText())
         track_version = TrackVersion(**track_version.__dict__)
         if not self.derive_ctrl_events.isChecked():
             pass  # remove ctrl events
@@ -242,9 +230,7 @@ class DeriveTrackVersionBox(QWidget):
         if index >= 0:
             track = [
                 track
-                for track in self.mf.project.composition_by_name(
-                    self.composition_box.currentText()
-                ).tracks
+                for track in self.mf.project.composition_by_name(self.composition_box.currentText()).tracks
                 if track.name == self.track_box.itemText(index)
             ]
             if track:
@@ -254,9 +240,7 @@ class DeriveTrackVersionBox(QWidget):
 
     def load_composition(self, selected_value: str = None):
         self.composition_box.clear()
-        self.composition_box.addItems(
-            [composition.name for composition in self.mf.project.compositions]
-        )
+        self.composition_box.addItems([composition.name for composition in self.mf.project.compositions])
         if selected_value:
             self.composition_box.setCurrentText(selected_value)
 
@@ -268,8 +252,6 @@ class DeriveTrackVersionBox(QWidget):
 
     def load_track_version(self, track: Track, selected_value: str = None):
         self.track_version_box.clear()
-        self.track_version_box.addItems(
-            [version.version_name for version in track.versions]
-        )
+        self.track_version_box.addItems([version.version_name for version in track.versions])
         if selected_value:
             self.track_version_box.setCurrentText(selected_value)

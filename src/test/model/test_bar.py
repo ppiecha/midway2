@@ -196,9 +196,7 @@ def test_play_pitch_bend_parabola(bar0, note4, capsys, program_guitar, bpm):
 
 def test_play_pitch_bend(bar_c_major, capsys, program_guitar):
     bpm = 30
-    pitch_bend_chain1 = PitchBendChain.gen_chain(
-        bend_fun=PitchBendChain.fun_slide_up, bpm=bpm
-    )
+    pitch_bend_chain1 = PitchBendChain.gen_chain(bend_fun=PitchBendChain.fun_slide_up, bpm=bpm)
     pitch_bend_chain2 = PitchBendChain.gen_chain(
         bend_fun=PitchBendChain.fun_parabola_neq,
         bpm=bpm,
@@ -228,9 +226,7 @@ def test_play_pitch_bend(bar_c_major, capsys, program_guitar):
     MidwaySynth.play_bar(bar=bar_c_major, bpm=bpm)
 
 
-def test_remove_events_by_type_notes(
-    bar0, note0, note1, note2, note3, two_notes, program0, control0
-):
+def test_remove_events_by_type_notes(bar0, note0, note1, note2, note3, two_notes, program0, control0):
     b0 = bar0 + [note0, note1, note2, note3, program0, control0]
     assert len(b0) == 6
     b0.remove_events([note2, note3])

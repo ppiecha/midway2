@@ -51,14 +51,10 @@ class PitchBendChain(BaseModel):
             bend_values_norm = [val / bend_value_max for val in bend_values_norm]
         logger.debug(f"bend_values_norm {bend_values_norm}")
         bend_values = [
-            (((val_norm + 1) * PitchBendValues.NORM) - 1 if val_norm == 1 else 0)
-            for val_norm in bend_values_norm
+            (((val_norm + 1) * PitchBendValues.NORM) - 1 if val_norm == 1 else 0) for val_norm in bend_values_norm
         ]
         logger.debug(f"bend_values {bend_values}")
-        chain = [
-            PitchBend(time=time, value=bend)
-            for time, bend in zip(timeline, bend_values)
-        ]
+        chain = [PitchBend(time=time, value=bend) for time, bend in zip(timeline, bend_values)]
         chain = [
             pitch_bend
             if start_tick < pitch_bend.time < stop_tick
@@ -100,11 +96,7 @@ class ControlList(BaseModel):
         self.__root__.append(control)
 
     def remove_control_class(self, classes: Tuple):
-        self.__root__ = [
-            control
-            for control in self.__root__
-            if not isinstance(control.class_, classes)
-        ]
+        self.__root__ = [control for control in self.__root__ if not isinstance(control.class_, classes)]
 
 
 class ModulationWheel(ControlClass):

@@ -85,9 +85,7 @@ def new_track(mf: MainFrame):
     track_list = mf.composition_tab.current_track_list
     composition = track_list.composition
     if composition.get_next_free_channel() is not None:
-        config = GenericConfig(
-            mf=mf, mode=GenericConfigMode.new_track, composition=composition
-        )
+        config = GenericConfig(mf=mf, mode=GenericConfigMode.new_track, composition=composition)
         mf.show_config_dlg(config=config)
     else:
         mf.show_message_box(f"Cannot add new track. All channels are already reserved")
@@ -98,9 +96,7 @@ def edit_track(mf: MainFrame):
     if track_list.currentItem():
         track_list.edit_track(track_list.currentItem())
     else:
-        raise ValueError(
-            f"Cannot determine current track in track list in composition {track_list.composition_box}"
-        )
+        raise ValueError(f"Cannot determine current track in track list in composition {track_list.composition_box}")
 
 
 def delete_track(mf: MainFrame):
@@ -162,15 +158,9 @@ def delete_custom_loop(mf: MainFrame):
 
 def get_actions(mf: MainFrame) -> Dict[str, Action]:
     return {
-        GuiAttr.NEW_PROJECT: Action(
-            mf=mf, caption=GuiAttr.NEW_PROJECT, slot=new_project
-        ),
-        GuiAttr.DELETE_PROJECT: Action(
-            mf=mf, caption=GuiAttr.DELETE_PROJECT, slot=delete_project
-        ),
-        GuiAttr.NEW_COMPOSITION: Action(
-            mf=mf, caption=GuiAttr.NEW_COMPOSITION, slot=None
-        ),
+        GuiAttr.NEW_PROJECT: Action(mf=mf, caption=GuiAttr.NEW_PROJECT, slot=new_project),
+        GuiAttr.DELETE_PROJECT: Action(mf=mf, caption=GuiAttr.DELETE_PROJECT, slot=delete_project),
+        GuiAttr.NEW_COMPOSITION: Action(mf=mf, caption=GuiAttr.NEW_COMPOSITION, slot=None),
         GuiAttr.NEW_TRACK: Action(
             mf=mf,
             caption=GuiAttr.NEW_TRACK,
@@ -213,9 +203,7 @@ class MenuBar(QMenuBar):
 
     @staticmethod
     def post_new_track(composition: Composition, track: Track):
-        pub.sendMessage(
-            topicName=GuiAttr.NEW_TRACK, composition=composition, track=track
-        )
+        pub.sendMessage(topicName=GuiAttr.NEW_TRACK, composition=composition, track=track)
 
     @staticmethod
     def post_refresh_loops(composition: Composition):

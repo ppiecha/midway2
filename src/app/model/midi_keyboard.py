@@ -63,20 +63,14 @@ class BaseKeyboard:
         self.build_keyboard_keys()
 
     def get_key_by_pos(self, position: int) -> MidiKey:
-        keys = [
-            key
-            for key in self.keys.values()
-            if position in range(key.key_top, key.key_bottom)
-        ]
+        keys = [key for key in self.keys.values() if position in range(key.key_top, key.key_bottom)]
         match len(keys):
             case 0:
                 raise ValueError(f"Cannot find key by position {position}")
             case 1:
                 return keys[0]
             case _:
-                raise ValueError(
-                    f"Found more than one key {keys} " f"for position {position}"
-                )
+                raise ValueError(f"Found more than one key {keys} " f"for position {position}")
 
     def get_key_by_event(self, event: Event) -> MidiKey:
         raise NotImplementedError
@@ -128,16 +122,13 @@ class MidiKeyboard(BaseKeyboard):
     @staticmethod
     @lru_cache()
     def white_key_position(pitch: Pitch) -> int:
-        return (
-            len([key for key in MidiRange.WHITE_KEYS if key > pitch]) * KeyAttr.W_HEIGHT
-        )
+        return len([key for key in MidiRange.WHITE_KEYS if key > pitch]) * KeyAttr.W_HEIGHT
 
     @staticmethod
     @lru_cache()
     def black_key_position(pitch: Pitch) -> int:
         return int(
-            len([key for key in MidiRange.WHITE_KEYS if key > pitch]) * KeyAttr.W_HEIGHT
-            - (KeyAttr.B_HEIGHT / 2)
+            len([key for key in MidiRange.WHITE_KEYS if key > pitch]) * KeyAttr.W_HEIGHT - (KeyAttr.B_HEIGHT / 2)
         )
 
     def get_key_by_event(self, event: Event) -> MidiKey:

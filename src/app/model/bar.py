@@ -36,9 +36,7 @@ class Bar(BaseModel):
     def has_event(self, event: Event) -> bool:
         found = [e for e in self.bar if e == event and not e.is_related(other=event)]
         if len(found) > 1:
-            raise ValueError(
-                f"Found more than one event {event.dbg()} in bar {self.dbg()}"
-            )
+            raise ValueError(f"Found more than one event {event.dbg()} in bar {self.dbg()}")
         return len(found) == 1
 
     def has_conflict(self, event: Event) -> bool:
@@ -74,9 +72,7 @@ class Bar(BaseModel):
 
     def add_event(self, event: Event) -> None:
         if not 0 <= invert(event.beat) < self.length():
-            raise BeatOutsideOfBar(
-                f"Item outside of bar 0 <= {invert(event.beat)} <= {self.length()}"
-            )
+            raise BeatOutsideOfBar(f"Item outside of bar 0 <= {invert(event.beat)} <= {self.length()}")
         if self.has_event(event=event):
             raise EventAlreadyExists(f"Event {event.dbg()} exists in bar {self.dbg()}")
         self.bar.append(event)
@@ -96,9 +92,7 @@ class Bar(BaseModel):
         count = len(self.bar)
         self.bar = [e for e in self.bar if e != event]
         if len(self.bar) != count - 1:
-            raise ValueError(
-                f"Event {event.dbg()} was not removed from bar {self.dbg()}"
-            )
+            raise ValueError(f"Event {event.dbg()} was not removed from bar {self.dbg()}")
 
     def remove_events(self, events: Optional[List[Event]]) -> None:
         for event in events:

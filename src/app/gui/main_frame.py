@@ -45,9 +45,7 @@ class MainFrame(QMainWindow):
         else:
             self.project = simple_project()
         self.gen_config_dlg = GenericConfigDlg(mf=self)
-        self.composition_tab = CompositionTab(
-            mf=self, parent=self, project=self.project
-        )
+        self.composition_tab = CompositionTab(mf=self, parent=self, project=self.project)
         self.main_box = Box(direction=QBoxLayout.TopToBottom)
         self.main_box.addWidget(self.composition_tab)
         self.setLayout(self.main_box)

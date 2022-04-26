@@ -137,9 +137,7 @@ class GridSelection:
             y_start = key.key_top
             y_height = key.boundingRect().height()
             self.marker_rect = self.grid.addRect(
-                QRect(
-                    0, y_start, self.grid.bar_width * self.grid.num_of_bars, y_height
-                ),
+                QRect(0, y_start, self.grid.bar_width * self.grid.num_of_bars, y_height),
                 QPen(Color.GRID_MARKER),
                 QBrush(Color.GRID_MARKER),
             )

@@ -55,11 +55,7 @@ class Header(QGraphicsItem):
     def get_rect(self):
         meta_notes_height = 3 * KeyAttr.W_HEIGHT
         width = KeyAttr.W_WIDTH
-        height = (
-            (GuiAttr.RULER_HEIGHT + meta_notes_height)
-            if self.show_meta_notes
-            else GuiAttr.RULER_HEIGHT
-        )
+        height = (GuiAttr.RULER_HEIGHT + meta_notes_height) if self.show_meta_notes else GuiAttr.RULER_HEIGHT
         return QRect(0, 0, width, height)
 
     @property
@@ -151,14 +147,10 @@ class Header(QGraphicsItem):
 
 class RulerScene(BaseGridScene):
     KEYBOARD_CLS = MetaKeyboard
-    GRID_ATTR = (
-        GridAttr.DIRECT_SELECTION | GridAttr.MOVE_HORIZONTAL | GridAttr.FIXED_HEIGHT
-    )
+    GRID_ATTR = GridAttr.DIRECT_SELECTION | GridAttr.MOVE_HORIZONTAL | GridAttr.FIXED_HEIGHT
 
     def __init__(self, channel: Channel, num_of_bars, grid_view: BaseGridView):
-        self.ruler = Ruler(
-            channel=channel, num_of_bars=num_of_bars, grid_view=grid_view
-        )
+        self.ruler = Ruler(channel=channel, num_of_bars=num_of_bars, grid_view=grid_view)
         super().__init__(
             grid_view=grid_view,
             channel=channel,
@@ -197,15 +189,8 @@ class Ruler(QGraphicsItem):
 
     def get_rect(self):
         meta_notes_height = 3 * KeyAttr.W_HEIGHT
-        width = (
-            self.num_of_bars * GuiAttr.GRID_DIV_UNIT * KeyAttr.W_HEIGHT
-            + self.scroll_diff
-        )
-        height = (
-            (GuiAttr.RULER_HEIGHT + meta_notes_height)
-            if self.show_meta_notes
-            else GuiAttr.RULER_HEIGHT
-        )
+        width = self.num_of_bars * GuiAttr.GRID_DIV_UNIT * KeyAttr.W_HEIGHT + self.scroll_diff
+        height = (GuiAttr.RULER_HEIGHT + meta_notes_height) if self.show_meta_notes else GuiAttr.RULER_HEIGHT
         return QRect(0, 0, width, height)
 
     @property
@@ -306,10 +291,7 @@ class Ruler(QGraphicsItem):
                 pen.setWidth(1)
                 painter.setPen(pen)
                 painter.drawLine(x, GuiAttr.RULER_HEIGHT - 5, x, GuiAttr.RULER_HEIGHT)
-            if (
-                tick % GuiAttr.GRID_DIV_UNIT == 0
-                and tick != self.num_of_bars * GuiAttr.GRID_DIV_UNIT - 1
-            ):
+            if tick % GuiAttr.GRID_DIV_UNIT == 0 and tick != self.num_of_bars * GuiAttr.GRID_DIV_UNIT - 1:
                 x -= KeyAttr.W_HEIGHT
                 bar = int((tick + 1) / GuiAttr.GRID_DIV_UNIT)
                 painter.setPen(Color.RULER_TEXT)
@@ -323,9 +305,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setStyle("Fusion")  # Style needed for palette to work
     app.setPalette(get_app_palette())
-    ruler_view = BaseGridView(
-        cls=RulerScene, num_of_bars=1, channel=0, synth=MidwaySynth()
-    )
+    ruler_view = BaseGridView(cls=RulerScene, num_of_bars=1, channel=0, synth=MidwaySynth())
     keyboard = ruler_view.keyboard_view.keyboard
     header_view = HeaderView(keyboard=keyboard)
     ruler_view.num_of_bars = 1

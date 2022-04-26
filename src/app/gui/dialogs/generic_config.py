@@ -77,9 +77,7 @@ class GenericConfigDlg(QDialog):
             GuiAttr.GENERAL: self.tab_box.addTab(self.general, GuiAttr.GENERAL),
             GuiAttr.PRESET: self.tab_box.addTab(self.preset, GuiAttr.PRESET),
         }
-        self.buttons = QDialogButtonBox(
-            QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal
-        )
+        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal)
         self.main_box = Box(direction=QBoxLayout.TopToBottom)
         self.main_box.setContentsMargins(10, 10, 10, 10)
         self.main_box.setSpacing(10)
@@ -102,9 +100,7 @@ class GenericConfigDlg(QDialog):
             self.mf.project.composition_by_name(
                 composition_name=self.config.composition.name, raise_not_found=True
             ).new_track(track=self.general.track, enable=True)
-            self.config.mf.menu.post_new_track(
-                composition=self.config.composition, track=self.general.track
-            )
+            self.config.mf.menu.post_new_track(composition=self.config.composition, track=self.general.track)
 
     def load_config(self, config: GenericConfig):
         self.config = GenericConfig(
@@ -116,9 +112,7 @@ class GenericConfigDlg(QDialog):
             track_version=config.track_version,
             node=config.node,
         )
-        self.setWindowTitle(
-            f"Node settings" if self.config.node else f"General settings"
-        )
+        self.setWindowTitle(f"Node settings" if self.config.node else f"General settings")
         self.load_window_geometry(config=self.config)
         if self.config.node:
             self.tab_box.setTabEnabled(self.tab_map[GuiAttr.GENERAL], False)
@@ -150,9 +144,7 @@ class PresetTab(QWidget):
         self.bank_list = QListWidget()
         self.bank_list.resize(50, self.bank_list.height())
         self.prog_list = QListWidget()
-        self.keyboard = KeyboardView(
-            cls=PianoKeyboard, synth=None, channel=self.channel, callback=None
-        )
+        self.keyboard = KeyboardView(cls=PianoKeyboard, synth=None, channel=self.channel, callback=None)
         self.splitter_right = QSplitter(Qt.Horizontal)
         self.splitter_right.addWidget(self.bank_list)
         self.splitter_right.addWidget(self.prog_list)
@@ -218,11 +210,7 @@ class PresetTab(QWidget):
 
     def on_sf_change(self):
         if self.sf_list.currentItem():
-            last_bank = (
-                self.bank_list.currentItem().text()
-                if self.bank_list.currentItem()
-                else None
-            )
+            last_bank = self.bank_list.currentItem().text() if self.bank_list.currentItem() else None
             sf_name = self.sf_list.currentItem().data(Qt.UserRole)
             sfid = self.config.mf.synth.sfid(sf_name)
             # print('on_sf_change', sf_name, sfid)
@@ -293,9 +281,7 @@ class PresetTab(QWidget):
                 item = QListWidgetItem(f"{str(patch)}: {preset}")
                 item.setIcon(QIcon(":/icons/preset.png"))
                 sf_name = self.config.mf.synth.sf_name(sfid=sfid)
-                item.setData(
-                    Qt.UserRole, Preset(sf_name=sf_name, bank=bank, patch=patch)
-                )
+                item.setData(Qt.UserRole, Preset(sf_name=sf_name, bank=bank, patch=patch))
                 self.prog_list.addItem(item)
         self.prog_list.currentItemChanged.connect(self.on_prog_selected)
 
@@ -351,47 +337,30 @@ class GeneralTab(QWidget):
         self.project_name_box.setText(config.mf.project.name)
         self.composition_name_box.setText(config.composition.name)
         self.track_name_box.setText(config.track.name if config.track else "")
-        self.show_track_color(
-            color=QColor.fromRgba(config.track.default_color)
-            if config.track
-            else Color.NODE_START
-        )
+        self.show_track_color(color=QColor.fromRgba(config.track.default_color) if config.track else Color.NODE_START)
         self.version_name_box.setText(
-            config.track_version.version_name
-            if config.track_version
-            else GuiAttr.DEFAULT_VERSION_NAME
+            config.track_version.version_name if config.track_version else GuiAttr.DEFAULT_VERSION_NAME
         )
         self.version_channel_box.setCurrentIndex(
-            config.track_version.channel
-            if config.track_version
-            else self.default_channel
+            config.track_version.channel if config.track_version else self.default_channel
         )
         self.version_channel_box.setEnabled(False)
         self.version_bars_box.setValue(
-            config.track_version.num_of_bars()
-            if config.track_version
-            else self.default_num_of_bars
+            config.track_version.num_of_bars() if config.track_version else self.default_num_of_bars
         )
         self.enable_inheritance_box.setChecked(False)
         self.enable_inheritance_box.setEnabled(
-            config.mode
-            == (GenericConfigMode.new_track or GenericConfigMode.new_track_version)
+            config.mode == (GenericConfigMode.new_track or GenericConfigMode.new_track_version)
         )
-        self.derive_form_box.load_composition(
-            selected_value=self.config.composition.name
-        )
+        self.derive_form_box.load_composition(selected_value=self.config.composition.name)
         self.enable_in_loops_box.setChecked(
-            True
-            if not config.track and config.mode == GenericConfigMode.new_track
-            else False
+            True if not config.track and config.mode == GenericConfigMode.new_track else False
         )
         self.enable_in_loops_box.setEnabled(config.mode == GenericConfigMode.new_track)
 
     def get_track_color(self):
         color = QColorDialog.getColor(
-            self.track_color_box.default
-            if hasattr(self.track_color_box, GuiAttr.DEFAULT)
-            else Color.NODE_START
+            self.track_color_box.default if hasattr(self.track_color_box, GuiAttr.DEFAULT) else Color.NODE_START
         )
         if color:
             self.track_color_box.default = color.rgba()
@@ -413,9 +382,7 @@ class GeneralTab(QWidget):
                 track_name=self.track_name, current_track=self.config.track
             )
         if not valid:
-            self.config.mf.show_message_box(
-                f"Track name {self.track_name} exists in composition"
-            )
+            self.config.mf.show_message_box(f"Track name {self.track_name} exists in composition")
         return valid
 
     def validate_version_name(self) -> bool:
@@ -429,9 +396,7 @@ class GeneralTab(QWidget):
                 current_version=self.config.track_version,
             )
         if not valid:
-            self.config.mf.show_message_box(
-                f"Track name {self.track_name} exists in composition"
-            )
+            self.config.mf.show_message_box(f"Track name {self.track_name} exists in composition")
         return valid
 
     def is_valid(self) -> bool:

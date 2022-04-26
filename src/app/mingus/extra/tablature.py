@@ -148,9 +148,7 @@ def from_Note(note, width=80, tuning=None):
                 d = (w - d // 2) - len(fret)
                 result[i] += "-" * d + "|"
     else:
-        raise RangeError(
-            "No fret found that could play note '%s'. " "Note out of range." % note
-        )
+        raise RangeError("No fret found that could play note '%s'. " "Note out of range." % note)
     result.reverse()
     return os.linesep.join(result)
 
@@ -308,10 +306,7 @@ def from_Bar(bar, width=40, tuning=None, collapse=True):
 
     # Mark quarter notes
     pad = " " * int(((1.0 / bar.meter[1]) * qsize) * 4 - 1)
-    r = (
-        " " * (result[0].find("||") + 2 + max(2, qsize // 2))
-        + ("*" + pad) * bar.meter[0]
-    )
+    r = " " * (result[0].find("||") + 2 + max(2, qsize // 2)) + ("*" + pad) * bar.meter[0]
     r += " " * (len(result[0]) - len(r))
     if not collapse:
         return [r] + result
@@ -425,11 +420,7 @@ def from_Suite(suite, maxwidth=80):
     This function makes use of the Suite's title, subtitle, author, email
     and description attributes.
     """
-    subtitle = (
-        str(len(suite.compositions)) + " Compositions"
-        if suite.subtitle == ""
-        else suite.subtitle
-    )
+    subtitle = str(len(suite.compositions)) + " Compositions" if suite.subtitle == "" else suite.subtitle
     result = os.linesep.join(
         add_headers(
             maxwidth,

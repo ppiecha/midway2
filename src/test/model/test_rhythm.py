@@ -48,9 +48,7 @@ def test_melody_pattern(capsys):
 
 def test_play_rhythm_pattern(capsys):
     bass_drum_bar = Pattern.from_str("2:35:,4:35:2").bar()
-    Sequence.set_events_attr(
-        events=bass_drum_bar.events(), attr_val_map={"channel": MidiAttr.DRUM_CHANNEL}
-    )
+    Sequence.set_events_attr(events=bass_drum_bar.events(), attr_val_map={"channel": MidiAttr.DRUM_CHANNEL})
     print(bass_drum_bar)
     MidwaySynth.play_bar(
         bar=bass_drum_bar,

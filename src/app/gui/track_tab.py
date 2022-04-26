@@ -68,9 +68,7 @@ class MelodyTrackVersion(QWidget):
         self.populate_font_combo()
         self._preset = PresetBox(synth=self.synth)
         self.config_dlg_btn = QToolButton()
-        self.config_dlg_btn.setDefaultAction(
-            self.mf.menu.actions[GuiAttr.EDIT_TRACK_VERSION]
-        )
+        self.config_dlg_btn.setDefaultAction(self.mf.menu.actions[GuiAttr.EDIT_TRACK_VERSION])
         self.w_play = QPushButton("Play")
         self.w_stop = QPushButton("Stop")
         self.w_metronome = QCheckBox("Metronome")
@@ -119,10 +117,7 @@ class MelodyTrackVersion(QWidget):
         self._preset.setEditable(False)
         self._preset.setDuplicatesEnabled(False)
         sfid = self.synth.sfid(self.sf_name)
-        if (
-            self._preset.itemData(0)
-            and self.sf_name == self._preset.itemData(0).sf_name
-        ):
+        if self._preset.itemData(0) and self.sf_name == self._preset.itemData(0).sf_name:
             return
         else:
             self._preset.populate_preset_combo(sfid=sfid)
@@ -205,9 +200,7 @@ class MelodyTrackVersion(QWidget):
         self.preset = Preset(sf_name=self.sf_name, bank=bank, patch=patch)
         index = self.find_preset(cmb=self._preset, preset=self.preset)
         self._preset.setCurrentIndex(index)
-        self.mf.show_message(
-            message=f"Soundfont {Path(self.sf_name).name} bank {bank} patch {patch_name}"
-        )
+        self.mf.show_message(message=f"Soundfont {Path(self.sf_name).name} bank {bank} patch {patch_name}")
 
     @property
     def sequence(self) -> Sequence:
@@ -370,14 +363,10 @@ class TrackVersionTab(QWidget):
             self._new_track_version(track_version=track_version)
 
     def _delete_track_version(self, track_version: TrackVersion):
-        self.track.get_version(
-            version_name=track_version.version_name, raise_not_found=True
-        )
+        self.track.get_version(version_name=track_version.version_name, raise_not_found=True)
         track_tab = self.map.pop(track_version.version_name)
         if (index := self.tab_box.indexOf(track_tab)) < 0:
-            raise ValueError(
-                f"Cannot find {track_tab.track_version.version_name} tab when deleting"
-            )
+            raise ValueError(f"Cannot find {track_tab.track_version.version_name} tab when deleting")
         else:
             self.tab_box.removeTab(index)
         self.track.delete_track_version(track_version=track_version)
@@ -427,9 +416,7 @@ class TrackVersionTab(QWidget):
     def current_track_version(self) -> TrackVersion:
         track_tab: TrackTab = self.tab_box.currentWidget()
         if not track_tab:
-            raise ValueError(
-                f"Cannot determine tab with current track version. Track {self.track.name}"
-            )
+            raise ValueError(f"Cannot determine tab with current track version. Track {self.track.name}")
         return track_tab.track_version
 
     @current_track_version.setter

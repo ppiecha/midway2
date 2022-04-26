@@ -9,9 +9,7 @@ from src.app.utils.properties import GuiAttr
 
 
 def test_scale_loop(track_c_major):
-    tli = TrackLoopItem(
-        loop_track=track_c_major, loop_track_version="c", loop_track_enabled=True
-    )
+    tli = TrackLoopItem(loop_track=track_c_major, loop_track_version="c", loop_track_enabled=True)
     # print(tli.dict())
     loop = Loop(name="test scale", tracks=[tli])
     assert len(list(loop.get_compiled_sequence().events())) == 16
@@ -32,14 +30,9 @@ def test_play_custom_loop(track_c_major, capsys):
 
 def test_play_loop_composition(track_c_major, capsys):
     composition = Composition.from_tracks(name="test_scale", tracks=[track_c_major])
-    composition_loops = CompositionLoops.from_list(
-        loop_lst=[composition.default_loop, composition.default_loop]
-    )
+    composition_loops = CompositionLoops.from_list(loop_lst=[composition.default_loop, composition.default_loop])
     assert composition_loops.get_first_loop_name() == "0"
-    assert (
-        composition_loops.get_next_loop(loop_name=GuiAttr.FIRST_COMPOSITION_LOOP).name
-        == "1"
-    )
+    assert composition_loops.get_next_loop(loop_name=GuiAttr.FIRST_COMPOSITION_LOOP).name == "1"
     composition.loops[LoopType.composition] = composition_loops
     ms = MidwaySynth()
     ms.play_loop(
@@ -53,12 +46,8 @@ def test_play_loop_composition(track_c_major, capsys):
 
 
 def test_play_compiled_loop(track_c_major, capsys):
-    up_bar = (
-        track_c_major.get_default_version().get_sequence(include_defaults=True).bars[0]
-    )
-    down_bar = (
-        track_c_major.get_default_version().get_sequence(include_defaults=True).bars[1]
-    )
+    up_bar = track_c_major.get_default_version().get_sequence(include_defaults=True).bars[0]
+    down_bar = track_c_major.get_default_version().get_sequence(include_defaults=True).bars[1]
     up_bar0 = up_bar.copy(deep=True)
     up_bar0.bar_num = 0
     up_bar1 = up_bar.copy(deep=True)

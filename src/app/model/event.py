@@ -60,11 +60,9 @@ class Event(BaseModel):
         if self.type == other.type == EventType.NOTE and self.pitch != other.pitch:
             return False
         if self.unit is not None and other.unit is not None:
-            return invert(self.beat) < invert(other.beat) < invert(self.beat) + (
-                invert(self.unit)
-            ) or invert(other.beat) < invert(self.beat) < invert(other.beat) + (
-                invert(other.unit)
-            )
+            return invert(self.beat) < invert(other.beat) < invert(self.beat) + (invert(self.unit)) or invert(
+                other.beat
+            ) < invert(self.beat) < invert(other.beat) + (invert(other.unit))
         else:
             raise ValueError(f"Cannot compare units {self.unit} {other.unit}")
 
@@ -81,10 +79,7 @@ class Event(BaseModel):
             self.type == other.type
             and self.channel == other.channel
             and self.beat == other.beat
-            and (
-                self.type != EventType.NOTE
-                or (self.type == EventType.NOTE and self.pitch == other.pitch)
-            )
+            and (self.type != EventType.NOTE or (self.type == EventType.NOTE and self.pitch == other.pitch))
             and self.unit == other.unit
         )
 
@@ -103,9 +98,7 @@ class Event(BaseModel):
         return note
 
     @classmethod
-    def from_note(
-        cls, note: Note, channel: Channel, beat: Beat, unit: Unit, velocity: MidiValue
-    ) -> Event:
+    def from_note(cls, note: Note, channel: Channel, beat: Beat, unit: Unit, velocity: MidiValue) -> Event:
         return Event(
             type=EventType.NOTE,
             channel=channel,
