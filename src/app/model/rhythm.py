@@ -6,7 +6,7 @@ from typing import Optional, List
 from pydantic import NonNegativeInt, BaseModel, PositiveInt, NonNegativeFloat
 
 from src.app.model.bar import Bar
-from src.app.model.meter import Meter
+from src.app.model.meter import Meter, invert
 from src.app.model.event import Event, EventType
 from src.app.model.types import NoteUnit, MidiValue
 from src.app.utils.logger import get_console_logger
@@ -131,7 +131,7 @@ class Rhythm:
         timeline = np.arange(0.0, self.meter.length(), beat_step)
         logger.debug(f"timeline {timeline}")
         note_duration = note_duration or note_unit
-        notes = [Event(type=EventType.NOTE, beat=beat, unit=note_duration) for beat in timeline]
+        notes = [Event(type=EventType.NOTE, beat=invert(beat), unit=note_duration) for beat in timeline]
         logger.debug(f"notes {notes}")
         bar = Bar(meter=self.meter, bar_num=bar_num)
         bar.add_events(events=notes)

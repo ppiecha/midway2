@@ -2,6 +2,7 @@ from pydantic import BaseModel, PositiveInt, NonNegativeFloat, PositiveFloat
 
 from src.app.mingus.core.value import add, subtract
 from src.app.model.types import Unit
+from src.app.utils.exceptions import fail
 from src.app.utils.properties import GuiAttr
 
 
@@ -18,12 +19,14 @@ class Meter(BaseModel):
         return self.numerator * invert(value=self.denominator)
 
     def significant_value(self, unit: Unit) -> NonNegativeFloat:
+        assert unit is not None
         return abs(invert(unit)) >= abs(invert(self.min_unit))
 
     def exceeds_length(self, unit: Unit):
         return invert(unit) >= self.length()
 
     def add(self, value: float, value_diff: float) -> NonNegativeFloat:
+        assert value is not None
         if value_diff == -value:
             return 0
         if value == 0:

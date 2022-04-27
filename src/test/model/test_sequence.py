@@ -1,7 +1,10 @@
 import pytest
 
-from src.app.model.event import EventType, Event
+from src.app.mingus.core.value import add
+from src.app.model.event import EventType, Event, Diff
+from src.app.model.meter import invert
 from src.app.model.sequence import Sequence
+from src.app.model.types import NoteUnit
 
 
 @pytest.fixture()
@@ -9,12 +12,12 @@ def seq_empty_bars() -> Sequence:
     return {
         "bars": {
             0: {
-                "meter": {"numerator": 4, "denominator": 4},
+                "meter": {"numerator": 4, "denominator": 4, "min_unit": 32},
                 "bar_num": 0,
                 "bar": [],
             },
             1: {
-                "meter": {"numerator": 4, "denominator": 4},
+                "meter": {"numerator": 4, "denominator": 4, "min_unit": 32},
                 "bar_num": 1,
                 "bar": [],
             },
@@ -22,13 +25,13 @@ def seq_empty_bars() -> Sequence:
     }
 
 
-def test_constructor(capsys):
+def test_sequence_constructor(capsys):
     seq = Sequence.from_num_of_bars(num_of_bars=1)
     print(seq.dict())
     assert seq.dict() == {
         "bars": {
             0: {
-                "meter": {"numerator": 4, "denominator": 4},
+                "meter": {"numerator": 4, "denominator": 4, "min_unit": 32},
                 "bar_num": 0,
                 "bar": [],
             }
@@ -124,15 +127,40 @@ def test_remove_events_by_type(bar0, bar1, note0, note1, note2, note3, program0,
     assert list(sequence.events()) == []
 
 
-def test_move_event(bar0, bar1, capsys):
+def test_changed_event_beat_pitch(bar0, bar1, capsys):
     sequence = Sequence.from_bars([bar0, bar1])
-    event = Event(type=EventType.NOTE, pitch=50, beat=0.5)
+    event = Event(type=EventType.NOTE, pitch=50, beat=NoteUnit.HALF.value, unit=NoteUnit.QUARTER.value, bar_num=0)
     sequence.add_event(bar_num=0, event=event)
-    moved_event = sequence.change_event(BarNumEvent(bar_num=0, event=event), beat_diff=0.25, pitch_diff=1)
+    moved_event = sequence.get_changed_event(old_event=event, diff=Diff(beat_diff=NoteUnit.QUARTER.value, pitch_diff=1))
     assert moved_event.bar_num == 0
-    assert moved_event.event.pitch == 51
-    assert moved_event.event.beat == 0.75
-    moved_event = sequence.change_event(BarNumEvent(bar_num=0, event=moved_event.event), beat_diff=0.25, pitch_diff=1)
+    assert moved_event.pitch == 51
+    assert invert(moved_event.beat) == 0.75
+    moved_event = sequence.get_changed_event(
+        old_event=moved_event, diff=Diff(beat_diff=NoteUnit.QUARTER.value, pitch_diff=1)
+    )
     assert moved_event.bar_num == 1
-    assert moved_event.event.pitch == 52
-    assert moved_event.event.beat == 0.0
+    assert moved_event.pitch == 52
+    assert moved_event.beat == 0.0
+    moved_event = sequence.get_changed_event(
+        old_event=moved_event, diff=Diff(beat_diff=-NoteUnit.QUARTER.value, pitch_diff=-1)
+    )
+    assert moved_event.bar_num == 0
+    assert moved_event.pitch == 51
+    assert invert(moved_event.beat) == 0.75
+    moved_event = sequence.get_changed_event(
+        old_event=moved_event, diff=Diff(beat_diff=-add(NoteUnit.QUARTER.value, NoteUnit.HALF.value), pitch_diff=-1)
+    )
+    assert moved_event.bar_num == 0
+    assert moved_event.pitch == 50
+    assert invert(moved_event.beat) == 0
+
+
+def test_changed_event_unit(bar0, bar1, capsys):
+    sequence = Sequence.from_bars([bar0, bar1])
+    event = Event(type=EventType.NOTE, pitch=50, beat=NoteUnit.HALF.value, unit=NoteUnit.QUARTER.value, bar_num=0)
+    sequence.add_event(bar_num=0, event=event)
+    moved_event = sequence.get_changed_event(old_event=event, diff=Diff(unit_diff=NoteUnit.HALF.value))
+    assert moved_event.bar_num == 0
+    assert moved_event.pitch == 50
+    assert moved_event.beat == NoteUnit.HALF.value
+    assert moved_event.unit == add(NoteUnit.QUARTER.value, NoteUnit.HALF.value)

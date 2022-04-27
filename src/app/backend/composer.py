@@ -2,10 +2,12 @@ from typing import List, Callable
 
 from src.app.mingus.containers.note import Note
 from src.app.model.event import Event
+from src.app.model.meter import invert
+from src.app.model.rhythm import Rhythm
 from src.app.model.types import Unit, Beat, NoteUnit, MidiValue
 from src.app.utils.properties import MidiAttr
 
-STEP = 0.125
+STEP = invert(NoteUnit.EIGHTH.value)
 
 
 class Composer:
@@ -16,7 +18,7 @@ class Composer:
         self,
         cls: Callable,
         start_beat: Beat = 0,
-        step: float = STEP,
+        note_duration: Unit = NoteUnit.EIGHTH,
         unit: Unit = NoteUnit.EIGHTH,
         velocity: MidiValue = MidiAttr.DEFAULT_VELOCITY,
         channel=0,
@@ -29,7 +31,10 @@ class Composer:
             note.change_octave(index // 7)
         if descending:
             scale = scale[::-1]
-        beats = [start_beat + ind * step for ind, _ in enumerate(scale)]
+        # beats = [start_beat + ind * step for ind, _ in enumerate(scale)]
+        beats = map(
+            lambda e: e.beat, Rhythm().bar_of_notes(note_unit=unit, note_duration=note_duration, bar_num=0).events()
+        )
         return [
             Event.from_note(note=note, channel=channel, beat=beat, unit=unit, velocity=velocity)
             for beat, note in zip(beats, scale)
@@ -39,7 +44,7 @@ class Composer:
         self,
         cls: Callable,
         start_beat: Beat = 0,
-        step: float = STEP,
+        step: Unit = NoteUnit.EIGHTH,
         unit: Unit = NoteUnit.EIGHTH,
         velocity: MidiValue = MidiAttr.DEFAULT_VELOCITY,
         channel=0,

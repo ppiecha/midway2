@@ -1,4 +1,4 @@
-from src.app.model.meter import Meter
+from src.app.model.meter import Meter, invert
 from src.app.mingus.core import value
 
 
@@ -38,5 +38,5 @@ def test_meter_bar_remainder(capsys):
     print(val)
     assert val == -4.0
     val = meter.bar_remainder(val)
-    print(val)
-    assert 1 == 0
+    print(invert(val))
+    assert invert(val) == 0.75

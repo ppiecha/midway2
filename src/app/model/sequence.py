@@ -28,6 +28,7 @@ class Sequence(BaseModel):
         return True
 
     def has_event(self, event: Event) -> bool:
+        assert event.bar_num is not None
         return self.bars[event.bar_num].has_event(event=event)
 
     @staticmethod

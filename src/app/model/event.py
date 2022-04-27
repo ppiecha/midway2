@@ -42,7 +42,7 @@ class Event(BaseModel):
         extra = "allow"
 
     def dbg(self) -> str:
-        return f"b:{round(self.beat, 2)} p:{self.pitch} u:{self.unit} bar:{int(self.bar_num)}"
+        return f"b:{round(self.beat, 2)} p:{self.pitch} u:{self.unit} bar:{self.bar_num}"
 
     def is_related(self, other) -> bool:
         if hasattr(self, "parent_id") and self.parent_id == id(other):

@@ -76,7 +76,7 @@ class Bar(BaseModel):
         if self.has_event(event=event):
             raise EventAlreadyExists(f"Event {event.dbg()} exists in bar {self.dbg()}")
         self.bar.append(event)
-        self.bar.sort(key=lambda e: (e.beat, e.type))
+        self.bar.sort(key=lambda e: (invert(e.beat), e.type))
 
     def add_events(self, events: List[Event]):
         for event in events:

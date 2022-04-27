@@ -42,22 +42,22 @@ def bar3() -> Bar:
 
 @pytest.fixture
 def note0() -> Event:
-    return Event(type=EventType.NOTE, channel=0, beat=0, pitch=79, unit=NoteUnit.EIGHTH)
+    return Event(type=EventType.NOTE, channel=0, beat=0, pitch=79, unit=NoteUnit.EIGHTH.value)
 
 
 @pytest.fixture
 def note1() -> Event:
-    return Event(type=EventType.NOTE, channel=0, beat=0.125, pitch=80, unit=NoteUnit.EIGHTH)
+    return Event(type=EventType.NOTE, channel=0, beat=NoteUnit.EIGHTH.value, pitch=80, unit=NoteUnit.EIGHTH.value)
 
 
 @pytest.fixture
 def note2() -> Event:
-    return Event(type=EventType.NOTE, channel=0, beat=0.250, pitch=81, unit=NoteUnit.QUARTER)
+    return Event(type=EventType.NOTE, channel=0, beat=NoteUnit.QUARTER.value, pitch=81, unit=NoteUnit.QUARTER.value)
 
 
 @pytest.fixture
 def note3() -> Event:
-    return Event(type=EventType.NOTE, channel=0, beat=0.5, pitch=81, unit=NoteUnit.HALF)
+    return Event(type=EventType.NOTE, channel=0, beat=NoteUnit.HALF.value, pitch=81, unit=NoteUnit.HALF.value)
 
 
 @pytest.fixture
@@ -74,7 +74,7 @@ def note4() -> Event:
 
 @pytest.fixture
 def note5() -> Event:
-    return Event(type=EventType.NOTE, channel=0, beat=0.250, pitch=81, unit=NoteUnit.HALF)
+    return Event(type=EventType.NOTE, channel=0, beat=NoteUnit.HALF.value, pitch=81, unit=NoteUnit.HALF.value)
 
 
 @pytest.fixture
@@ -84,7 +84,7 @@ def note6() -> Event:
         channel=0,
         beat=0,
         pitch=50,
-        unit=NoteUnit.WHOLE,
+        unit=NoteUnit.WHOLE.value,
         velocity=127,
     )
 
@@ -144,7 +144,7 @@ def control1() -> Event:
     return Event(
         type=EventType.CONTROLS,
         channel=0,
-        beat=0.25,
+        beat=NoteUnit.QUARTER.value,
         controls=[Control(class_=Expression(), value=100)],
     )
 

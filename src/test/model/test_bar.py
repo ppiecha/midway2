@@ -20,7 +20,7 @@ def two_notes() -> List:
                 "channel": 0,
                 "beat": 0.0,
                 "pitch": 79,
-                "unit": 8.0,
+                "unit": NoteUnit.EIGHTH.value,
                 "velocity": None,
                 "preset": None,
                 "controls": None,
@@ -32,9 +32,9 @@ def two_notes() -> List:
             **{
                 "type": "3-note",
                 "channel": 0,
-                "beat": 0.125,
+                "beat": NoteUnit.EIGHTH.value,
                 "pitch": 80,
-                "unit": 8.0,
+                "unit": NoteUnit.EIGHTH.value,
                 "velocity": None,
                 "preset": None,
                 "controls": None,
@@ -49,7 +49,7 @@ def two_notes() -> List:
 def bar_result(two_notes) -> Bar:
     return Bar(
         **{
-            "meter": {"denominator": 4, "numerator": 4},
+            "meter": {"denominator": 4, "numerator": 4, "min_unit": 32},
             "bar_num": 0,
             "bar": two_notes,
         }
@@ -63,7 +63,7 @@ def test_note(note0, capsys):
         "channel": 0,
         "beat": 0.0,
         "pitch": 79,
-        "unit": 8.0,
+        "unit": NoteUnit.EIGHTH.value,
         "velocity": None,
         "preset": None,
         "controls": None,
@@ -73,7 +73,7 @@ def test_note(note0, capsys):
     }
 
 
-def test_constructor(bar1):
+def test_bar_constructor(bar1):
     assert len(bar1) == 0
 
 
@@ -90,7 +90,8 @@ def test_add_note(bar0, note0, capsys):
 
 def test_add_two_notes(bar0, note0, note1, bar_result):
     b0 = bar0 + note0 + note1
-    assert b0 == bar_result
+    print(bar_result)
+    assert b0.dict() == bar_result.dict()
 
 
 def test_add_bars(bar0, bar1, note0, note1, bar_result):
@@ -285,7 +286,9 @@ def test_has_event_note_positive(bar0, bar1, note3, note0, note1, note2, capsys)
 
 
 def test_have_same_beat(capsys, bar0, note2, note3, note4):
-    result = bar0.have_same_beat(e1=note2, e2=note3)
+    bar0 += note2
+    result = bar0.has_conflict(note3)
     assert result is False
-    result = bar0.have_same_beat(e1=note4, e2=note2)
+    bar0 += note4
+    result = bar0.has_conflict(note2)
     assert result is True
