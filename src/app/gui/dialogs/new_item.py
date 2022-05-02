@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from enum import Enum, auto
+from typing import TYPE_CHECKING
 
-from PySide6.QtCore import Qt, QRect, QSize
+from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import (
     QDialog,
@@ -15,18 +16,16 @@ from PySide6.QtWidgets import (
     QToolButton,
     QColorDialog,
 )
-from typing import TYPE_CHECKING
 
-from constants import CLR_NODE_START, DEFAULT
-from backend.synth_config import DEFAULT_SF2, DEFAULT_VERSION_NAME
-from model.sequence import Sequence
+from src.app.model.sequence import Sequence
+from src.app.utils.properties import MidiAttr, GuiAttr, Color
 
 if TYPE_CHECKING:
-    from gui.main_frame import MainFrame
-from gui.widgets import Box, ChannelBox
-from model.composition import Composition
-from model.project import Project
-from model.track import Track, TrackVersion
+    from src.app.gui.main_frame import MainFrame
+from src.app.gui.widgets import Box, ChannelBox
+from src.app.model.composition import Composition
+from src.app.model.project import Project
+from src.app.model.track import Track, TrackVersion
 
 
 class NewItemDlg(QDialog):
@@ -130,10 +129,14 @@ class NewTrackForm(NewNameForm):
     def init_ui(self):
         self.name.setText(self.track.name if self.mode == TrackEditMode.edit_track else "")
         self.name.setEnabled(self.mode in (TrackEditMode.new_track, TrackEditMode.edit_track))
-        self.show_track_color(color=QColor.fromRgba(self.track.default_color) if self.track else CLR_NODE_START)
+        self.show_track_color(color=QColor.fromRgba(self.track.default_color) if self.track else Color.NODE_START)
         self.track_color.setEnabled(self.mode in (TrackEditMode.new_track, TrackEditMode.edit_track))
         self.version_name.setText(
-            self.track_version.version_name if self.track_version else DEFAULT_VERSION_NAME if not self.track else ""
+            self.track_version.version_name
+            if self.track_version
+            else GuiAttr.DEFAULT_VERSION_NAME
+            if not self.track
+            else ""
         )
         self.version_name.setEnabled(self.mode in (TrackEditMode.new_track_version, TrackEditMode.edit_track_version))
         self.version_channel.setCurrentIndex(
@@ -149,7 +152,7 @@ class NewTrackForm(NewNameForm):
 
     def get_track_color(self):
         color = QColorDialog.getColor(
-            self.track_color.default if hasattr(self.track_color, DEFAULT) else CLR_NODE_START
+            self.track_color.default if hasattr(self.track_color, GuiAttr.DEFAULT) else Color.NODE_START
         )
         if color:
             self.track_color.default = color.rgba()
@@ -228,7 +231,7 @@ class NewTrackDlg(NewItemDlg):
         track_version = TrackVersion(
             channel=ml.version_channel.get_channel(),
             version_name=ml.get_version_name(),
-            sf_name=DEFAULT_SF2,
+            sf_name=MidiAttr.DEFAULT_SF2,
             sequence=Sequence.from_num_of_bars(num_of_bars=ml.get_default_num_of_bars()),
         )
         return Track(

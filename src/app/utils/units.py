@@ -1,9 +1,9 @@
-from math import floor, ceil
 from typing import NamedTuple, Any
 
 from pydantic import NonNegativeInt
 
 from src.app.mingus.containers import Bar
+from src.app.model.meter import invert
 from src.app.model.types import Bpm, Unit, Beat
 from src.app.utils.properties import MidiAttr
 
@@ -100,7 +100,7 @@ def bar_length2sec(bar: Bar, bpm: Bpm) -> float:
 
 def beat2tick(beat: Beat, bpm: Bpm) -> int:
     qn_length = 60.0 / bpm
-    second = 4 * qn_length * beat
+    second = 4 * qn_length * invert(beat)
     tick = round(
         second2tick(
             second=second,

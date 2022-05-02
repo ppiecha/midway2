@@ -4,7 +4,7 @@ from PySide6.QtCore import QPointF, QRect
 from PySide6.QtGui import QPen, QBrush
 from PySide6.QtWidgets import QGraphicsRectItem, QGraphicsItemGroup
 
-from src.app.utils.properties import GridAttr, Color, KeyAttr
+from src.app.utils.properties import GridAttr, Color
 
 
 class NodeSelection:

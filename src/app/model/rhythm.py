@@ -1,18 +1,17 @@
 from __future__ import annotations
+
 from enum import Enum
 from logging import INFO
 from typing import Optional, List
 
+import numpy as np
 from pydantic import NonNegativeInt, BaseModel, PositiveInt, NonNegativeFloat
 
 from src.app.model.bar import Bar
-from src.app.model.meter import Meter, invert
 from src.app.model.event import Event, EventType
+from src.app.model.meter import Meter, invert
 from src.app.model.types import NoteUnit, MidiValue
 from src.app.utils.logger import get_console_logger
-
-import numpy as np
-
 from src.app.utils.properties import MidiAttr
 
 logger = get_console_logger(name=__name__, log_level=INFO)

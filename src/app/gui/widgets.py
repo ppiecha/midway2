@@ -1,8 +1,10 @@
 from __future__ import annotations
+
 import logging
 import threading
 from pathlib import Path
-from typing import Optional, Callable
+from typing import Optional
+from typing import TYPE_CHECKING
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPainter
@@ -16,8 +18,6 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QSpinBox,
 )
-
-from typing import TYPE_CHECKING
 
 from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import MidiAttr

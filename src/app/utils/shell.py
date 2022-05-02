@@ -1,19 +1,19 @@
-import wx
-import os
-from pathlib import Path
-from win32com.shell import shell, shellcon
-import win32file
-import win32api
-import win32con
-import pythoncom
-import winshell
-import win32gui
-import threading
 import fnmatch
 import logging
-import sys
+import os
+import threading
+from pathlib import Path
 
-from lib4py.logger import get_console_logger
+import pythoncom
+import win32api
+import win32con
+import win32file
+import win32gui
+import winshell
+import wx
+from win32com.shell import shell, shellcon
+
+from logger import get_console_logger
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 

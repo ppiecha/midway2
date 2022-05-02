@@ -4,7 +4,9 @@ It controls adding and deleting tracks in composition
 """
 
 from __future__ import annotations
-from typing import Optional, Dict
+
+from typing import Dict
+from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QSize
 from PySide6.QtGui import QPixmap, Qt
@@ -25,8 +27,6 @@ from src.app.gui.track_tab import TrackVersionTab
 from src.app.gui.widgets import Box
 from src.app.model.composition import Composition
 from src.app.model.track import Track, TrackVersion
-from typing import TYPE_CHECKING
-
 from src.app.utils.properties import GuiAttr
 
 if TYPE_CHECKING:
@@ -154,16 +154,15 @@ class TrackList(QListWidget):
     def _delete_track(self, track: Track):
         if not self.composition.track_name_exists(track_name=track.name):
             raise ValueError(f"Track with name {track.name} does not exist in composition {self.composition.name}")
-        else:
-            track_list_item: TrackListItem = self.map.pop(track.name)
-            self.list.removeItemWidget(track_list_item.list_item)
-            self.stack.removeWidget(track_list_item)
-            for track_version_name in list(track_list_item.version_tab.map.keys()):
-                track_list_item.version_tab._delete_track_version(
-                    track_version=track_list_item.track.get_version(version_name=track_version_name)
-                )
-            self.composition.delete_track(track=track)
-            track_list_item.deleteLater()
+        track_list_item: TrackListItem = self.map.pop(track.name)
+        self.list.removeItemWidget(track_list_item.list_item)
+        self.stack.removeWidget(track_list_item)
+        for track_version_name in list(track_list_item.version_tab.map.keys()):
+            track_list_item.version_tab._delete_track_version(
+                track_version=track_list_item.track.get_version(version_name=track_version_name)
+            )
+        self.composition.delete_track(track=track)
+        track_list_item.deleteLater()
 
     def register_listeners(self):
         if not pub.subscribe(self.new_track, GuiAttr.NEW_TRACK):
@@ -198,8 +197,7 @@ class TrackList(QListWidget):
         track_list_item = self.map[track_name]
         if track_list_item is None:
             raise IndexError
-        else:
-            return track_list_item
+        return track_list_item
 
     def __len__(self):
         return len(self.map)

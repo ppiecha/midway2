@@ -1,14 +1,15 @@
 from __future__ import annotations
+
 import copy
+import logging
 from typing import List, Union, Optional, Iterator
 
 from pydantic import BaseModel, NonNegativeInt, NonNegativeFloat
 
-from src.app.model.meter import Meter, invert
-from src.app.utils.exceptions import BeatOutsideOfBar, EventAlreadyExists
-from src.app.utils.logger import get_console_logger
 from src.app.model.event import Event, EventType
-import logging
+from src.app.model.meter import Meter, invert
+from src.app.utils.exceptions import BeatOutsideOfBar
+from src.app.utils.logger import get_console_logger
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
@@ -74,7 +75,12 @@ class Bar(BaseModel):
         if not 0 <= invert(event.beat) < self.length():
             raise BeatOutsideOfBar(f"Item outside of bar 0 <= {invert(event.beat)} <= {self.length()}")
         if self.has_event(event=event):
-            raise EventAlreadyExists(f"Event {event.dbg()} exists in bar {self.dbg()}")
+            pass
+            # if event.type == EventType.NOTE:
+            #     raise EventAlreadyExists(f"Event {event.dbg()} exists in bar {self.dbg()}")
+            # else:
+            #     logger.warning(f"Event {event.dbg()} already exists in bar {self.dbg()} skipping")
+            #     return
         self.bar.append(event)
         self.bar.sort(key=lambda e: (invert(e.beat), e.type))
 

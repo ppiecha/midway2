@@ -2,7 +2,6 @@ from pydantic import BaseModel, PositiveInt, NonNegativeFloat, PositiveFloat
 
 from src.app.mingus.core.value import add, subtract
 from src.app.model.types import Unit
-from src.app.utils.exceptions import fail
 from src.app.utils.properties import GuiAttr
 
 

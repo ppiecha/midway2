@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import Dict
+
+from typing import Dict, TYPE_CHECKING
 
 from PySide6.QtCore import QSize
 from PySide6.QtGui import Qt, QIcon
@@ -11,8 +12,6 @@ from src.app.gui.track_list import TrackList
 from src.app.gui.widgets import Box
 from src.app.model.composition import Composition
 from src.app.model.project import Project
-from typing import TYPE_CHECKING
-
 from src.app.utils.properties import GuiAttr
 
 if TYPE_CHECKING:
@@ -77,7 +76,7 @@ class CompositionTab(QWidget):
         tracks_splitter: QSplitter = vert_splitter.widget(0)
         track_list: TrackList = tracks_splitter.widget(0)
         if not track_list:
-            raise ValueError(f"Cannot determine track list in current composition")
+            raise ValueError("Cannot determine track list in current composition")
         return track_list
 
     def init_fonts(self):
@@ -107,8 +106,7 @@ class CompositionTab(QWidget):
         track_list = self.map.get(composition)
         if track_list is None:
             raise IndexError
-        else:
-            return track_list
+        return track_list
 
     def __len__(self):
         return len(self.map)

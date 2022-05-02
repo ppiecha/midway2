@@ -1,5 +1,7 @@
 [MASTER]
 
+ignore=mingus
+
 disable=
     missing-module-docstring,
     missing-class-docstring,
@@ -16,9 +18,10 @@ disable=
     no-name-in-module,
     unused-argument,
     invalid-name,
-    no-self-use
+    no-self-use,
+    wrong-import-order,
 
-good-names=i,j,k,ex,Run,_,e,db,f
+good-names=i,j,k,ex,Run,_,e,db,f,bar
 
 max-line-length=120
 

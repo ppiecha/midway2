@@ -1,12 +1,13 @@
 from __future__ import annotations
+
 from typing import List, Optional, Dict
 
 from pydantic import BaseModel, PositiveInt
 
 from src.app.model.bar import Bar
+from src.app.model.loop import Loops, TrackLoopItem, Loop, CustomLoops, LoopType
 from src.app.model.sequence import Sequence
 from src.app.model.track import Track, TrackVersion
-from src.app.model.loop import Loops, TrackLoopItem, Loop, CustomLoops, LoopType
 from src.app.model.types import Channel
 from src.app.utils.properties import GuiAttr, MidiAttr
 

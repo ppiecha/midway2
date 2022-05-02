@@ -2,12 +2,13 @@ import pytest
 from pydantic import PositiveInt
 
 from src.app.backend.composer import Composer
+from src.app.backend.midway_synth import MidwaySynth
 from src.app.mingus.containers.note import Note
 from src.app.mingus.core.scales import Major
 from src.app.model.bar import Bar
 from src.app.model.composition import Composition
-from src.app.model.event import Event, EventType, Preset
 from src.app.model.control import Volume, Control, Expression
+from src.app.model.event import Event, EventType, Preset
 from src.app.model.rhythm import Rhythm
 from src.app.model.sequence import Sequence
 from src.app.model.track import Track, TrackVersion, RhythmTrackVersion
@@ -225,3 +226,8 @@ def drums_composition(drums_sequence, bass_sequence, capsys) -> Composition:
     track_version = RhythmTrackVersion(sf_name=MidiAttr.DEFAULT_SF2, sequence=drums_sequence)
     track = Track(name="Drums", versions=[track_version])
     return Composition.from_tracks(tracks=[track], name="drums_composition")
+
+
+@pytest.fixture(scope="session")
+def synth() -> MidwaySynth():
+    return MidwaySynth()

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from functools import lru_cache
-from typing import List, Dict, NamedTuple, Optional
+from typing import Dict, Optional
 
 from src.app.model.event import EventType, Event
 from src.app.model.types import Channel, Pitch, Midi

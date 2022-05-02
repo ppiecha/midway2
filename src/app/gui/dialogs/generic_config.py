@@ -3,12 +3,11 @@ from __future__ import annotations
 from enum import auto, Enum
 from pathlib import Path
 from typing import Any, NamedTuple
+from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QSize
 
 from src.app.gui.editor.keyboard import KeyboardView, PianoKeyboard
-from typing import TYPE_CHECKING
-
 from src.app.model.sequence import Sequence
 from src.app.utils.properties import Color, GuiAttr, IniAttr, MidiAttr
 

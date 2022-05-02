@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import logging
 import sys
 from typing import Optional, Dict, Callable
@@ -11,6 +12,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.app.backend.midway_synth import MidwaySynth
+from src.app.backend.synth import Synth
 from src.app.gui.editor.key import WhitePianoKey, BlackPianoKey, PianoKey, MetaKey
 from src.app.gui.widgets import GraphicsView
 from src.app.model.event import EventType, Event
@@ -18,13 +20,10 @@ from src.app.model.midi_keyboard import (
     MidiKeyboard,
     MidiRange,
     MetaMidiKeyboard,
-    BaseKeyboard,
-    MidiKey,
 )
 from src.app.model.types import Channel, Pitch, Midi
-from src.app.utils.properties import KeyAttr, get_app_palette
 from src.app.utils.logger import get_console_logger
-from src.app.backend.synth import Synth
+from src.app.utils.properties import KeyAttr, get_app_palette
 
 logger = get_console_logger(name=__name__, log_level=logging.INFO)
 

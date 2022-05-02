@@ -1,7 +1,5 @@
 from typing import Dict
 
-# TODO read all soundfonts from folder
-
 CONTROL_CODE: Dict[str, int] = {
     "Modulation Wheel": 1,
     "Volume": 7,

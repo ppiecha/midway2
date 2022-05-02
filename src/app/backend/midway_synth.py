@@ -5,7 +5,7 @@ import threading
 import weakref
 from logging import DEBUG
 from time import sleep
-from typing import List, Optional, Dict, Callable, NamedTuple
+from typing import List, Optional, Callable, NamedTuple
 
 from PySide6.QtCore import QThread
 
@@ -22,8 +22,6 @@ from src.app.utils.units import (
     unit2tick,
     bpm2time_scale,
     beat2tick,
-    tick2second,
-    bpm2tempo,
     bar_length2sec,
 )
 
@@ -72,7 +70,7 @@ class MidwaySynth(Synth):
                 self.mf.show_message(f"Loading soundfont {file_name}")
             self.load_sf(file_name=file_name)
         if self.mf:
-            self.mf.show_message(message=f"Fonts loaded")
+            self.mf.show_message(message="Fonts loaded")
             while not hasattr(self.mf, "composition_tab"):
                 sleep(0.01)
             self.mf.composition_tab.init_fonts()
@@ -245,14 +243,13 @@ class EventProvider:
     def events(self) -> List[TimedEvent]:
         if self.sequence is None:
             return []
-        else:
-            return [
-                TimedEvent(
-                    time=self.tick + beat2tick(beat=event.beat, bpm=self.bpm),
-                    event=event,
-                )
-                for event in self.sequence.bars[self.bar_num].events()
-            ]
+        return [
+            TimedEvent(
+                time=self.tick + beat2tick(beat=event.beat, bpm=self.bpm),
+                event=event,
+            )
+            for event in self.sequence.bars[self.bar_num].events()
+        ]
 
     def move_to_next_bar(self):
         if not self.sequence or self.bar_num + 1 not in self.sequence.bars.keys():
@@ -330,7 +327,7 @@ class LoopPlayer:
             )
 
             if should_stop():
-                logger.debug(f"stop detected. Stopping...")
+                logger.debug("stop detected. Stopping...")
                 self.stop()
             elif not skip_next_bar():
                 self.schedule_next_bar()

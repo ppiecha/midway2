@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import logging
 from math import modf, copysign
 from typing import Optional, List, Type
@@ -15,7 +16,6 @@ from src.app.gui.editor.keyboard import KeyboardView
 from src.app.gui.editor.node import NoteNode, MetaNode, Node
 from src.app.gui.editor.selection import GridSelection
 from src.app.gui.widgets import GraphicsView, Box
-from src.app.model.bar import Bar
 from src.app.model.event import Event, EventType, Diff, EventDiff
 from src.app.model.meter import invert
 from src.app.model.midi_keyboard import BaseKeyboard

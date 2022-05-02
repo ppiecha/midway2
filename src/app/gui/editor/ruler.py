@@ -15,15 +15,15 @@ from src.app.backend.midway_synth import MidwaySynth
 from src.app.gui.editor.base_grid import BaseGridScene, BaseGridView
 from src.app.gui.editor.keyboard import MetaKeyboard
 from src.app.gui.widgets import GraphicsView, Box
+from src.app.model.event import EventType
 from src.app.model.midi_keyboard import (
     MetaKeyPos,
     MetaMidiKeyboard,
 )
-from src.app.utils.properties import KeyAttr, Color, GuiAttr, get_app_palette, GridAttr
-from src.app.utils.logger import get_console_logger
-from src.app.model.event import EventType
-from src.app.model.types import Channel
 from src.app.model.sequence import Sequence
+from src.app.model.types import Channel
+from src.app.utils.logger import get_console_logger
+from src.app.utils.properties import KeyAttr, Color, GuiAttr, get_app_palette, GridAttr
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 

@@ -1,13 +1,15 @@
 from __future__ import annotations
+
 from pathlib import Path
-from typing import List, Dict, Tuple, Optional
-from PySide6.QtCore import Qt, QSize
+from typing import List, Dict, Tuple
+from typing import TYPE_CHECKING
+
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QWidget,
     QBoxLayout,
     QCheckBox,
-    QSpinBox,
     QComboBox,
     QLabel,
     QPushButton,
@@ -19,8 +21,6 @@ from PySide6.QtWidgets import (
 )
 
 from src.app.gui.editor.piano_roll import PianoRoll
-from typing import TYPE_CHECKING
-
 from src.app.utils.properties import GuiAttr
 
 if TYPE_CHECKING:
@@ -119,8 +119,7 @@ class MelodyTrackVersion(QWidget):
         sfid = self.synth.sfid(self.sf_name)
         if self._preset.itemData(0) and self.sf_name == self._preset.itemData(0).sf_name:
             return
-        else:
-            self._preset.populate_preset_combo(sfid=sfid)
+        self._preset.populate_preset_combo(sfid=sfid)
 
     @property
     def synth(self) -> MidwaySynth:

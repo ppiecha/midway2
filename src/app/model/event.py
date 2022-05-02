@@ -10,6 +10,7 @@ from src.app.mingus.containers.note import Note
 from src.app.model.control import Control, PitchBendChain
 from src.app.model.meter import invert
 from src.app.model.types import Unit, Channel, Beat, Pitch, MidiValue, MidiBankValue
+from src.app.utils.properties import MidiAttr
 
 
 class Preset(BaseModel):
@@ -31,7 +32,7 @@ class Event(BaseModel):
     beat: Optional[Beat]
     pitch: Optional[Pitch]
     unit: Optional[NonNegativeFloat]
-    velocity: Optional[MidiValue]
+    velocity: Optional[MidiValue] = MidiAttr.DEFAULT_VELOCITY
     preset: Optional[Preset]
     controls: Optional[List[Control]]
     pitch_bend_chain: Optional[PitchBendChain]
@@ -42,7 +43,8 @@ class Event(BaseModel):
         extra = "allow"
 
     def dbg(self) -> str:
-        return f"b:{round(self.beat, 2)} p:{self.pitch} u:{self.unit} bar:{self.bar_num}"
+        patch = self.preset.patch if self.preset else None
+        return f"b:{invert(self.beat)} p:{self.pitch} u:{self.unit} bar:{self.bar_num} patch:{patch}"
 
     def is_related(self, other) -> bool:
         if hasattr(self, "parent_id") and self.parent_id == id(other):
@@ -65,6 +67,11 @@ class Event(BaseModel):
             ) < invert(self.beat) < invert(other.beat) + (invert(other.unit))
         else:
             raise ValueError(f"Cannot compare units {self.unit} {other.unit}")
+
+    def is_the_same_note(self, other) -> bool:
+        if self.type != EventType.NOTE or self.type != other.type:
+            raise ValueError(f"Incorrect type of events {self} {other}")
+        return self.pitch == other.pitch
 
     def __eq__(self, other):
         params = list(filter(lambda x: x is None, [self, other]))

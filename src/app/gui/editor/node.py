@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import logging
 from typing import Optional, TYPE_CHECKING
 
@@ -13,13 +14,12 @@ from PySide6.QtWidgets import (
 from pubsub import pub
 
 from src.app.gui.editor.selection import NodeSelection
-from src.app.model.bar import Bar
 from src.app.utils.properties import Color, KeyAttr, GridAttr, Notification
 
 if TYPE_CHECKING:
     from src.app.gui.editor.base_grid import BaseGridScene
 from src.app.utils.logger import get_console_logger
-from src.app.model.event import Event, Diff
+from src.app.model.event import Event
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 

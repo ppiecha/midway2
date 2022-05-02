@@ -1,0 +1,1 @@
+black -l 120 src --target-version py310

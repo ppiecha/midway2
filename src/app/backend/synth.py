@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines, import-outside-toplevel, redefined-builtin)
 """
 ================================================================================
 
@@ -809,7 +810,7 @@ class RouterRule:
             fluid_midi_router_rule_set_param2(self.rule, min, max, mul, add)
 
 
-class BasePlayer(object):
+class BasePlayer:
     """Interface for the FluidSynth internal MIDI player."""
 
     def __init__(self, synth):

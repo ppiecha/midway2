@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, Union, Optional, List, Any, Tuple
+from typing import Dict, Union, Optional, List, Any
 
 from pubsub import pub
 from pydantic import PositiveInt, BaseModel, NonNegativeInt
 
 from src.app.model.bar import Bar
-from src.app.model.meter import Meter, invert
 from src.app.model.event import Event, EventType, Diff, PairOfEvents
+from src.app.model.meter import Meter, invert
 from src.app.model.midi_keyboard import MidiRange
 from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import Notification

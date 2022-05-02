@@ -1,5 +1,5 @@
-from src.app.model.meter import Meter, invert
 from src.app.mingus.core import value
+from src.app.model.meter import Meter, invert
 
 
 def test_meter_exceeds_beat_limit():

@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import List
 
 import pytest
 
@@ -7,7 +7,6 @@ from src.app.model.bar import Bar
 from src.app.model.control import PitchBendChain
 from src.app.model.event import Event, EventType, Preset
 from src.app.model.types import NoteUnit
-from src.app.utils.exceptions import EventAlreadyExists
 from src.app.utils.properties import MidiAttr
 
 
@@ -21,7 +20,7 @@ def two_notes() -> List:
                 "beat": 0.0,
                 "pitch": 79,
                 "unit": NoteUnit.EIGHTH.value,
-                "velocity": None,
+                "velocity": MidiAttr.DEFAULT_VELOCITY,
                 "preset": None,
                 "controls": None,
                 "pitch_bend_chain": None,
@@ -35,7 +34,7 @@ def two_notes() -> List:
                 "beat": NoteUnit.EIGHTH.value,
                 "pitch": 80,
                 "unit": NoteUnit.EIGHTH.value,
-                "velocity": None,
+                "velocity": MidiAttr.DEFAULT_VELOCITY,
                 "preset": None,
                 "controls": None,
                 "pitch_bend_chain": None,
@@ -64,7 +63,7 @@ def test_note(note0, capsys):
         "beat": 0.0,
         "pitch": 79,
         "unit": NoteUnit.EIGHTH.value,
-        "velocity": None,
+        "velocity": MidiAttr.DEFAULT_VELOCITY,
         "preset": None,
         "controls": None,
         "pitch_bend_chain": None,
@@ -138,6 +137,17 @@ def test_remove_events(bar0, note0, note1, note2, note3, two_notes):
     assert list(b0.events()) == two_notes
 
 
+def test_play_bar_4_notes(bar0, note0, note1, note2, note3, synth):
+    b0 = bar0 + [note0, note1, note2, note3]
+    print(b0.dbg())
+    synth.play_bar(bar=b0, bpm=120)
+
+
+def test_play_bar_c_major(bar_c_major, synth):
+    print(bar_c_major.dbg())
+    synth.play_bar(bar_c_major, bpm=120)
+
+
 def test_program(program0):
     print(program0.dict())
     assert program0.dict() == {
@@ -146,7 +156,7 @@ def test_program(program0):
         "beat": 0.0,
         "pitch": None,
         "unit": None,
-        "velocity": None,
+        "velocity": MidiAttr.DEFAULT_VELOCITY,
         "preset": {"sf_name": "test", "bank": 0, "patch": 0},
         "controls": None,
         "pitch_bend_chain": None,
@@ -163,7 +173,7 @@ def test_controls(control0, capsys):
         "beat": 0.0,
         "pitch": None,
         "unit": None,
-        "velocity": None,
+        "velocity": MidiAttr.DEFAULT_VELOCITY,
         "preset": None,
         "controls": [{"class_": {"name": "Volume", "code": 7}, "value": 100}],
         "pitch_bend_chain": None,
@@ -207,19 +217,19 @@ def test_play_pitch_bend(bar_c_major, capsys, program_guitar):
     event0 = Event(
         type=EventType.PITCH_BEND,
         channel=0,
-        beat=0.125,
+        beat=NoteUnit.EIGHTH.value,
         pitch_bend_chain=pitch_bend_chain2,
     )
     event1 = Event(
         type=EventType.PITCH_BEND,
         channel=0,
-        beat=0.25,
+        beat=NoteUnit.QUARTER.value,
         pitch_bend_chain=pitch_bend_chain1,
     )
     event2 = Event(
         type=EventType.PITCH_BEND,
         channel=0,
-        beat=0.5,
+        beat=NoteUnit.HALF.value,
         pitch_bend_chain=pitch_bend_chain2,
     )
     print("pitch bend event", event1)
@@ -265,20 +275,17 @@ def test_play_bar_changing_programs(bar_c_major, capsys):
 
 def test_has_event_meta(bar0, program0):
     bar0.add_event(program0)
-    with pytest.raises(EventAlreadyExists):
-        bar0.add_event(program0)
+    assert bar0.has_event(program0)
 
 
-def test_has_event_note_negative(bar0, note3, note5):
+def test_has_event_note_negative0(bar0, note3, note5):
     bar0.add_event(note3)
-    with pytest.raises(EventAlreadyExists):
-        bar0.add_event(note5)
+    assert bar0.has_event(note5)
 
 
-def test_has_event_note_negative2(bar1, note4, note6):
+def test_has_event_note_negative1(bar1, note4, note6):
     bar1.add_event(note4)
-    with pytest.raises(EventAlreadyExists):
-        bar1.add_event(note6)
+    assert bar1.has_event(note6)
 
 
 def test_has_event_note_positive(bar0, bar1, note3, note0, note1, note2, capsys):

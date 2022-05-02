@@ -14,13 +14,13 @@ from PySide6.QtWidgets import (
     QMessageBox,
 )
 
+from src.app.backend.midway_synth import MidwaySynth
 from src.app.gui.composition_tab import CompositionTab
 from src.app.gui.dialogs.generic_config import GenericConfigDlg, GenericConfig
 from src.app.gui.menu import MenuBar
 from src.app.gui.toolbar import ToolBar
 from src.app.gui.widgets import Box
-from src.app.backend.midway_synth import MidwaySynth
-from src.app.model.project import Project, empty_project, simple_project
+from src.app.model.project import Project, simple_project
 from src.app.utils.properties import IniAttr, AppAttr
 
 
@@ -39,11 +39,7 @@ class MainFrame(QMainWindow):
             os.path.join(AppAttr.PATH_SRC, IniAttr.PROJECT_TEMPLATE),
         )
         self.project: Optional[Project] = None
-        if self.project_file and Path(self.project_file).exists():
-            with open(self.project_file) as json_file:
-                self.project = Project(**json.load(json_file))
-        else:
-            self.project = simple_project()
+        self.read_settings()
         self.gen_config_dlg = GenericConfigDlg(mf=self)
         self.composition_tab = CompositionTab(mf=self, parent=self, project=self.project)
         self.main_box = Box(direction=QBoxLayout.TopToBottom)
@@ -63,6 +59,22 @@ class MainFrame(QMainWindow):
         )
         self.set_brand()
 
+    def read_settings(self):
+        if self.project_file and Path(self.project_file).exists():
+            with open(self.project_file, "r", encoding="utf-8") as json_file:
+                self.project = Project(**json.load(json_file))
+        else:
+            self.project = simple_project()
+
+    def write_settings(self):
+        with open(self.project_file, "w", encoding="utf-8") as f:
+            json.dump(
+                self.project.dict(exclude=AppAttr.EXCLUDED_JSON_FIELDS),
+                f,
+                ensure_ascii=False,
+                indent=2,
+            )
+
     def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)
         self.composition_tab.set_keyboard_position()
@@ -72,13 +84,7 @@ class MainFrame(QMainWindow):
         self.config.setValue(IniAttr.MAIN_WIN_SIZE, self.size())
         self.config.setValue(IniAttr.MAIN_WIN_POS, self.pos())
         self.config.setValue(IniAttr.PROJECT_FILE, self.project_file)
-        with open(self.project_file, "w", encoding="utf-8") as f:
-            json.dump(
-                self.project.dict(exclude=AppAttr.EXCLUDED_JSON_FIELDS),
-                f,
-                ensure_ascii=False,
-                indent=2,
-            )
+        self.write_settings()
 
     def show_message(self, message: str, timeout: int = 5000):
         self.status_bar.showMessage(message, timeout)

@@ -3,17 +3,16 @@ from typing import Iterable, Optional
 
 from PySide6.QtCore import Qt, QLineF, QPointF
 from PySide6.QtGui import QPen
-
 from pydantic import NonNegativeInt
 
 from src.app.gui.editor.base_grid import BaseGridScene, BaseGridView
-from src.app.gui.editor.node import NoteNode
 from src.app.gui.editor.keyboard import KeyboardView, PianoKeyboard
+from src.app.gui.editor.node import NoteNode
 from src.app.model.event import EventType
 from src.app.model.midi_keyboard import MidiRange
-from src.app.utils.properties import KeyAttr, Color, GuiAttr, GridAttr
-from src.app.utils.logger import get_console_logger
 from src.app.model.types import Channel
+from src.app.utils.logger import get_console_logger
+from src.app.utils.properties import KeyAttr, Color, GuiAttr, GridAttr
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 

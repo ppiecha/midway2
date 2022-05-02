@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import logging
 from dataclasses import asdict
 from typing import Union, Optional
@@ -11,11 +12,11 @@ from PySide6.QtWidgets import (
     QGraphicsSceneMouseEvent,
 )
 
+from src.app.mingus.containers.note import Note
 from src.app.model.event import Event, EventType
 from src.app.model.midi_keyboard import MidiKey
-from src.app.utils.properties import Color, MidiAttr, KeyAttr
 from src.app.utils.logger import get_console_logger
-from src.app.mingus.containers.note import Note
+from src.app.utils.properties import Color, MidiAttr, KeyAttr
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 

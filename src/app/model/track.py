@@ -1,13 +1,13 @@
 from __future__ import annotations
+
 from typing import List, Optional
 
 from pydantic import BaseModel, PositiveInt
 
 from src.app.model.bar import Bar
-
 from src.app.model.event import Event, EventType, Preset
-from src.app.model.types import Channel, MidiValue, MidiBankValue
 from src.app.model.sequence import Sequence
+from src.app.model.types import Channel, MidiValue, MidiBankValue
 from src.app.utils.properties import Color, MidiAttr
 
 
@@ -49,7 +49,8 @@ class TrackVersion(BaseModel):
                     beat=0,
                     preset=Preset(sf_name=self.sf_name, bank=self.bank, patch=self.patch),
                 )
-                first_bar.add_event(event=event)
+                if not first_bar.has_event(event=event):
+                    first_bar.add_event(event=event)
                 return Sequence.from_bars(bars=bars)
             else:
                 raise ValueError(f"No bars in sequence {self.sequence}")

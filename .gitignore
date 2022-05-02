@@ -138,6 +138,7 @@ dmypy.json
 *.docx
 *.json
 *.ini
+# *.bat
 
 # Icons
 icons/

@@ -1,32 +1,25 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 from typing import Tuple
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeySequence
 from PySide6.QtWidgets import QWidget, QBoxLayout
 
+from src.app.backend.midway_synth import MidwaySynth
 from src.app.gui.editor.base_grid import BaseGridView, KeyboardGridBox
 from src.app.gui.editor.grid import GridScene
-from src.app.gui.menu import Action
-from src.app.gui.editor.keyboard import (
-    KeyboardView,
-    PianoKeyboard,
-    MetaMidiKeyboard,
-)
 from src.app.gui.editor.ruler import HeaderView, RulerScene
+from src.app.gui.menu import Action
 from src.app.gui.widgets import Box
-from src.app.utils.logger import get_console_logger
-from src.app.backend.midway_synth import MidwaySynth
-from src.app.model.types import Bpm
-from src.app.model.loop import LoopType
 from src.app.model.composition import Composition
+from src.app.model.loop import LoopType
 from src.app.model.sequence import Sequence
 from src.app.model.track import TrackVersion, Track
-
-from typing import TYPE_CHECKING
-
+from src.app.model.types import Bpm
+from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import GuiAttr
 
 if TYPE_CHECKING:

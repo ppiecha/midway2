@@ -1,17 +1,15 @@
 from __future__ import annotations
+import src.app.resources
+
 from functools import partial
+from typing import TYPE_CHECKING, Dict
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import QMenuBar, QMenu
-
-from typing import TYPE_CHECKING, Dict
-
-from src.app.gui.dialogs.generic_config import GenericConfig, GenericConfigMode
-
 from pubsub import pub
 
-import src.app.resources
+from src.app.gui.dialogs.generic_config import GenericConfig, GenericConfigMode
 from src.app.model.composition import Composition
 from src.app.model.track import Track
 from src.app.utils.properties import GuiAttr
@@ -88,7 +86,7 @@ def new_track(mf: MainFrame):
         config = GenericConfig(mf=mf, mode=GenericConfigMode.new_track, composition=composition)
         mf.show_config_dlg(config=config)
     else:
-        mf.show_message_box(f"Cannot add new track. All channels are already reserved")
+        mf.show_message_box("Cannot add new track. All channels are already reserved")
 
 
 def edit_track(mf: MainFrame):
@@ -119,7 +117,7 @@ def new_track_version(mf: MainFrame):
         )
         mf.show_config_dlg(config=config)
     else:
-        mf.show_message_box(f"Cannot add new track. All channels are already reserved")
+        mf.show_message_box("Cannot add new track. All channels are already reserved")
 
 
 def edit_track_version(mf: MainFrame):

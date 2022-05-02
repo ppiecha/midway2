@@ -45,7 +45,7 @@ def test_play_loop_composition(track_c_major, capsys):
         sleep(0.1)
 
 
-def test_play_compiled_loop(track_c_major, capsys):
+def test_play_compiled_loop(track_c_major):
     up_bar = track_c_major.get_default_version().get_sequence(include_defaults=True).bars[0]
     down_bar = track_c_major.get_default_version().get_sequence(include_defaults=True).bars[1]
     up_bar0 = up_bar.copy(deep=True)
