@@ -68,7 +68,7 @@ class PianoKeyboard(QGraphicsWidget, MidiKeyboard):
         return key if key and int(key.note) >= Midi.MIN_C1 else None
 
     def get_key_by_event(self, event: Event) -> PianoKey:
-        if event.pitch not in self.piano_keys.keys():
+        if event.pitch not in self.piano_keys:
             raise ValueError(f"Pitch outside of range {event.pitch}")
         return self.piano_keys[event.pitch]
 
@@ -102,7 +102,7 @@ class MetaKeyboard(QGraphicsWidget, MetaMidiKeyboard):
 
     def get_key_by_pos(self, position: int) -> MetaKey:
         key: MetaKey = self.scene().itemAt(KeyAttr.B_WIDTH / 2, position, QTransform())
-        return key if key and type(key) is MetaKey else None
+        return key if key and isinstance(key, MetaKey) else None
 
     def draw_keys(self):
         for event_type, key in self.keys.items():
