@@ -72,12 +72,10 @@ class Loops(BaseModel):
     loops: List[Loop]
 
     def get_next_loop(self, loop_name: str = "") -> Optional[Loop]:
-        self.raise_not_implemented()
-        return None
+        raise NotImplementedError
 
     def get_next_sequence(self, loop_name: str = "") -> Optional[Sequence]:
-        self.raise_not_implemented()
-        return None
+        raise NotImplementedError
 
     def get_loop_by_name(self, loop_name: str) -> Loop:
         for loop in self.loops:
@@ -89,18 +87,13 @@ class Loops(BaseModel):
         return self.get_loop_by_name(loop_name=loop_name).get_compiled_sequence()
 
     def get_first_loop_name(self) -> Optional[str]:
-        self.raise_not_implemented()
-        return None
+        raise NotImplementedError
 
     def set_checked_loop(self, loop: Loop):
-        self.raise_not_implemented()
-
-    def raise_not_implemented(self):
-        raise NotImplementedError("Method not implemented")
+        raise NotImplementedError
 
     def get_total_num_of_bars(self) -> Optional[int]:
-        self.raise_not_implemented()
-        return None
+        raise NotImplementedError
 
     def new_track(self, track: Track, enable: bool):
         for loop in self.loops:
@@ -147,7 +140,9 @@ class CompositionLoops(Loops):
         try:
             loop_index = int(loop_name)
         except ValueError as e:
-            raise ValueError(f"Cannot get next composition loop. " f"Wrong previous loop name {loop_name} {str(e)}")
+            raise ValueError(
+                f"Cannot get next composition loop. " f"Wrong previous loop name {loop_name} {str(e)}"
+            ) from e
         try:
             next_loop = self.loops[loop_index + 1]
             return next_loop
@@ -158,14 +153,12 @@ class CompositionLoops(Loops):
         next_loop = self.get_next_loop(loop_name=loop_name)
         if next_loop is None:
             return None
-        else:
-            return next_loop.get_compiled_sequence()
+        return next_loop.get_compiled_sequence()
 
     def get_first_loop_name(self) -> Optional[str]:
         if self.loops and len(self.loops) > 0:
             return self.loops[0].name
-        else:
-            raise ValueError(f"No loops in composition")
+        raise ValueError("No loops in composition")
 
     def get_total_num_of_bars(self) -> Optional[int]:
         bars_total = 0

@@ -35,7 +35,7 @@ class FontLoader(QThread):
         self.synth = synth
 
     def run(self):
-        self.synth.load_sound_fonts(mf=self.mf)
+        self.synth.load_sound_fonts()
 
 
 class MidwaySynth(Synth):
@@ -49,7 +49,7 @@ class MidwaySynth(Synth):
             # self.thread.finished.connect(self.finished)
             self.thread.start()
         else:
-            self.load_sound_fonts(mf=mf)
+            self.load_sound_fonts()
 
     def sfid(self, sf_name: str) -> int:
         return self.sf_map[sf_name]
@@ -64,7 +64,7 @@ class MidwaySynth(Synth):
             and self.loop_player.event_provider().sequencer() is not None
         )
 
-    def load_sound_fonts(self, mf):
+    def load_sound_fonts(self):
         for file_name in self.get_sf_files(path=self.sf2_path):
             if self.mf:
                 self.mf.show_message(f"Loading soundfont {file_name}")
@@ -88,21 +88,14 @@ class MidwaySynth(Synth):
         sfid = self.sfid(sf_name=preset.sf_name)
         self.program_select(chan=channel, sfid=sfid, bank=preset.bank, preset=preset.patch)
 
-    def note_on(self, channel: int, pitch: int, velocity: int, preset: Preset = None):
-        # current_preset = self.get_current_preset(channel=channel)
-        # if preset:
-        #     self.preset_change(channel=channel, preset=preset)
-        # logger.debug(f'channel {channel} key {pitch} velocity {velocity}')
+    def note_on(self, channel: int, pitch: int, velocity: int):
         self.noteon(chan=channel, key=pitch, vel=velocity)
-        # if preset:
-        #     self.preset_change(channel=channel, preset=current_preset)
 
     def play_note(self, channel, pitch, secs: float):
         self.note_on(
             channel=channel,
             pitch=pitch,
             velocity=MidiAttr.DEFAULT_VELOCITY,
-            preset=None,
         )
         sleep(secs)
         self.noteoff(chan=channel, key=pitch)

@@ -4,7 +4,7 @@ from src.app.mingus.containers.note import Note
 from src.app.model.event import Event
 from src.app.model.meter import invert
 from src.app.model.rhythm import Rhythm
-from src.app.model.types import Unit, Beat, NoteUnit, MidiValue
+from src.app.model.types import Unit, NoteUnit, MidiValue
 from src.app.utils.properties import MidiAttr
 
 STEP = invert(NoteUnit.EIGHTH.value)
@@ -17,7 +17,7 @@ class Composer:
     def scale(
         self,
         cls: Callable,
-        start_beat: Beat = 0,
+        # start_beat: Beat = 0,
         note_duration: Unit = NoteUnit.EIGHTH,
         unit: Unit = NoteUnit.EIGHTH,
         velocity: MidiValue = MidiAttr.DEFAULT_VELOCITY,
@@ -43,10 +43,11 @@ class Composer:
     def chord(
         self,
         cls: Callable,
-        start_beat: Beat = 0,
-        step: Unit = NoteUnit.EIGHTH,
-        unit: Unit = NoteUnit.EIGHTH,
-        velocity: MidiValue = MidiAttr.DEFAULT_VELOCITY,
-        channel=0,
+        # start_beat: Beat = 0,
+        # step: Unit = NoteUnit.EIGHTH,
+        # unit: Unit = NoteUnit.EIGHTH,
+        # velocity: MidiValue = MidiAttr.DEFAULT_VELOCITY,
+        # channel=0,
     ) -> List[Event]:
         events = cls()
+        return events

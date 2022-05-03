@@ -1,5 +1,4 @@
 from __future__ import annotations
-import src.app.resources
 
 from functools import partial
 from typing import TYPE_CHECKING, Dict
@@ -13,6 +12,7 @@ from src.app.gui.dialogs.generic_config import GenericConfig, GenericConfigMode
 from src.app.model.composition import Composition
 from src.app.model.track import Track
 from src.app.utils.properties import GuiAttr
+import src.app.resources  # pylint: disable=unused-import
 
 if TYPE_CHECKING:
     from src.app.gui.main_frame import MainFrame
@@ -45,15 +45,15 @@ class Action(QAction):
 # Project
 
 
-def new_project(mf: MainFrame):
+def new_project(_: MainFrame):
     pass
 
 
-def save_project(mf: MainFrame):
+def save_project(_: MainFrame):
     pass
 
 
-def save_project_as(mf: MainFrame):
+def save_project_as(_: MainFrame):
     pass
 
 
@@ -64,15 +64,15 @@ def delete_project(mf: MainFrame):
 # Composition
 
 
-def add_composition(mf: MainFrame):
+def add_composition(_: MainFrame):
     pass
 
 
-def rename_composition(mf: MainFrame):
+def rename_composition(_: MainFrame):
     pass
 
 
-def delete_composition(mf: MainFrame):
+def delete_composition(_: MainFrame):
     pass
 
 
@@ -97,7 +97,7 @@ def edit_track(mf: MainFrame):
         raise ValueError(f"Cannot determine current track in track list in composition {track_list.composition_box}")
 
 
-def delete_track(mf: MainFrame):
+def delete_track(_: MainFrame):
     pass
 
 
@@ -135,22 +135,22 @@ def edit_track_version(mf: MainFrame):
     mf.show_config_dlg(config=config)
 
 
-def delete_track_version(mf: MainFrame):
+def delete_track_version(_: MainFrame):
     pass
 
 
 # Custom loop
 
 
-def add_custom_loop(mf: MainFrame):
+def add_custom_loop(_: MainFrame):
     pass
 
 
-def edit_custom_loop(mf: MainFrame):
+def edit_custom_loop(_: MainFrame):
     pass
 
 
-def delete_custom_loop(mf: MainFrame):
+def delete_custom_loop(_: MainFrame):
     pass
 
 

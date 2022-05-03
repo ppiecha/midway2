@@ -8,17 +8,16 @@ disable=
     missing-function-docstring,
     logging-fstring-interpolation,
     too-few-public-methods,
+    too-many-public-methods,
     too-many-locals,
     too-many-arguments,
     too-many-instance-attributes,
-    import-error,
     too-many-statements,
     protected-access,
-    no-name-in-module,
-    invalid-name,
     no-self-use,
     fixme,
-    too-many-public-methods
+    invalid-name,
+    no-name-in-module
 
 good-names=i,j,k,ex,Run,_,e,db,f,bar
 
