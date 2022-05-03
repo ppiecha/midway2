@@ -1,29 +1,9 @@
 from __future__ import annotations
-
 from enum import auto, Enum
 from pathlib import Path
-from typing import Any, NamedTuple
-from typing import TYPE_CHECKING
+from typing import Any, NamedTuple, TYPE_CHECKING, Optional
 
 from PySide6.QtCore import QSize
-
-from src.app.gui.editor.keyboard import KeyboardView, PianoKeyboard
-from src.app.model.sequence import Sequence
-from src.app.utils.properties import Color, GuiAttr, IniAttr, MidiAttr
-
-if TYPE_CHECKING:
-    from src.app.gui.editor.node import Node
-
-from src.app.model.composition import Composition
-from src.app.model.event import Preset
-from src.app.model.types import Channel
-from src.app.model.project import Project
-from src.app.model.track import TrackVersion, Track
-
-if TYPE_CHECKING:
-    from src.app.gui.main_frame import MainFrame
-from typing import Optional
-
 from PySide6.QtGui import Qt, QIcon, QColor, QPalette
 from PySide6.QtWidgets import (
     QWidget,
@@ -43,7 +23,19 @@ from PySide6.QtWidgets import (
 )
 
 from src.app.gui.widgets import Box, ChannelBox, DeriveTrackVersionBox, BarBox
+from src.app.gui.editor.keyboard import KeyboardView, PianoKeyboard
+from src.app.model.sequence import Sequence
+from src.app.utils.properties import Color, GuiAttr, IniAttr, MidiAttr
+from src.app.model.composition import Composition
+from src.app.model.event import Preset
+from src.app.model.types import Channel
+from src.app.model.project import Project
+from src.app.model.track import TrackVersion, Track
 import src.app.resources
+
+if TYPE_CHECKING:
+    from src.app.gui.main_frame import MainFrame
+    from src.app.gui.editor.node import Node
 
 
 class GenericConfigMode(int, Enum):
@@ -111,7 +103,7 @@ class GenericConfigDlg(QDialog):
             track_version=config.track_version,
             node=config.node,
         )
-        self.setWindowTitle(f"Node settings" if self.config.node else f"General settings")
+        self.setWindowTitle("Node settings" if self.config.node else "General settings")
         self.load_window_geometry(config=self.config)
         if self.config.node:
             self.tab_box.setTabEnabled(self.tab_map[GuiAttr.GENERAL], False)
@@ -129,7 +121,7 @@ class GenericConfigDlg(QDialog):
             else:
                 self.resize(size)
 
-    def closeEvent(self, e):
+    def closeEvent(self, _):
         self.config.mf.config.setValue(IniAttr.EVENT_WIN_SIZE, self.size())
         self.config.mf.config.setValue(IniAttr.EVENT_WIN_POS, self.pos())
 
@@ -218,7 +210,7 @@ class PresetTab(QWidget):
                 self.bank_list.setCurrentRow(0)
                 if last_bank is not None:
                     if items := self.bank_list.findItems(last_bank, Qt.MatchExactly):
-                        item, *rest = items
+                        item, *_ = items
                         self.bank_list.setCurrentItem(item)
             self.bank_list.scrollToItem(self.bank_list.currentItem())
 
@@ -234,10 +226,11 @@ class PresetTab(QWidget):
                 self.prog_list.scrollToItem(self.prog_list.currentItem())
 
     def on_prog_activated(self, item: QListWidgetItem):
-        preset = item.data(Qt.UserRole)
+        pass
+        # preset = item.data(Qt.UserRole)
         # self.config.track_version
 
-    def on_prog_selected(self, current: QListWidgetItem, previous: QListWidgetItem):
+    def on_prog_selected(self, current: QListWidgetItem, _: QListWidgetItem):
         if current:
             preset = current.data(Qt.UserRole)
             self.config.mf.synth.preset_change(channel=self.channel, preset=preset)
@@ -352,9 +345,7 @@ class GeneralTab(QWidget):
             config.mode == (GenericConfigMode.new_track or GenericConfigMode.new_track_version)
         )
         self.derive_form_box.load_composition(selected_value=self.config.composition.name)
-        self.enable_in_loops_box.setChecked(
-            True if not config.track and config.mode == GenericConfigMode.new_track else False
-        )
+        self.enable_in_loops_box.setChecked(not config.track and config.mode == GenericConfigMode.new_track)
         self.enable_in_loops_box.setEnabled(config.mode == GenericConfigMode.new_track)
 
     def get_track_color(self):

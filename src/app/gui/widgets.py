@@ -1,11 +1,8 @@
 from __future__ import annotations
-
 import logging
 import threading
 from pathlib import Path
-from typing import Optional
-from typing import TYPE_CHECKING
-
+from typing import Optional, TYPE_CHECKING
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPainter
 from PySide6.QtWidgets import (
@@ -18,17 +15,16 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QSpinBox,
 )
-
 from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import MidiAttr
-
-if TYPE_CHECKING:
-    from src.app.gui.main_frame import MainFrame
 from src.app.backend.midway_synth import MidwaySynth
 from src.app.model.composition import Composition
 from src.app.model.event import Preset
 from src.app.model.track import Track, TrackVersion
 from src.app.model.loop import Loop, TrackLoopItem, LoopType
+
+if TYPE_CHECKING:
+    from src.app.gui.main_frame import MainFrame
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
@@ -47,11 +43,12 @@ class SafeThread(threading.Thread):
 
     def _wrap_run(self):
         try:
-            logger.debug(f"Thread started")
+            logger.debug("Thread started")
             self._real_run()
-            logger.debug(f"Thread stopped")
+            logger.debug("Thread stopped")
         except Exception as e:
             logger.error(str(e))
+            raise e
 
 
 class Box(QBoxLayout):
@@ -236,7 +233,7 @@ class DeriveTrackVersionBox(QWidget):
             if track:
                 self.load_track_version(track=track[0])
             else:
-                raise ValueError(f"Track not found")
+                raise ValueError("Track not found")
 
     def load_composition(self, selected_value: str = None):
         self.composition_box.clear()

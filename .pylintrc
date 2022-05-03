@@ -7,7 +7,6 @@ disable=
     missing-class-docstring,
     missing-function-docstring,
     logging-fstring-interpolation,
-    broad-except,
     too-few-public-methods,
     too-many-locals,
     too-many-arguments,
@@ -16,10 +15,9 @@ disable=
     too-many-statements,
     protected-access,
     no-name-in-module,
-    unused-argument,
     invalid-name,
     no-self-use,
-    wrong-import-order,
+    fixme,
 
 good-names=i,j,k,ex,Run,_,e,db,f,bar
 

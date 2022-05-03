@@ -152,6 +152,7 @@ class IniAttr(str, Enum):
     MAIN_WIN_POS = "main_win_pos"
     EVENT_WIN_SIZE = "event_win_size"
     EVENT_WIN_POS = "event_win_pos"
+    GEOMETRY = "main_window/geometry"
 
 
 class DrumPatch(int, Enum):

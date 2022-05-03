@@ -1,9 +1,6 @@
 from __future__ import annotations
-
 from pathlib import Path
-from typing import List, Dict, Tuple
-from typing import TYPE_CHECKING
-
+from typing import List, Dict, Tuple, TYPE_CHECKING
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
@@ -19,19 +16,18 @@ from PySide6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
 )
-
 from src.app.gui.editor.piano_roll import PianoRoll
 from src.app.utils.properties import GuiAttr
-
-if TYPE_CHECKING:
-    from src.app.gui.track_list import TrackListItem
-    from src.app.gui.main_frame import MainFrame
 from src.app.gui.widgets import Box, FontBox, PresetBox, ChannelBox
 from src.app.backend.midway_synth import MidwaySynth
 from src.app.model.composition import Composition
 from src.app.model.event import Preset
 from src.app.model.sequence import Sequence
 from src.app.model.track import Track, TrackVersion
+
+if TYPE_CHECKING:
+    from src.app.gui.track_list import TrackListItem
+    from src.app.gui.main_frame import MainFrame
 
 
 class MelodyTrackVersion(QWidget):
@@ -183,9 +179,14 @@ class MelodyTrackVersion(QWidget):
 
     @staticmethod
     def find_preset(cmb: QComboBox, preset: Preset) -> int:
+        found = -1
         for index in range(cmb.count()):
             if list(cmb.itemData(index)) == list(preset):
-                return index
+                found = index
+                break
+        if found == -1:
+            raise ValueError(f"Cannot find preset {preset} in combo box")
+        return found
 
     @property
     def bank_patch(self):
@@ -227,7 +228,7 @@ class DrumsTrackVersion(QWidget):
         mf: MainFrame,
         parent,
         track_version: TrackVersion,
-        synth: MidwaySynth,
+        # synth: MidwaySynth,
         composition: Composition,
         track: Track,
     ):
@@ -248,7 +249,7 @@ class TrackVersionMidiEvents(QWidget):
         mf: MainFrame,
         parent,
         track_version: TrackVersion,
-        synth: MidwaySynth,
+        # synth: MidwaySynth,
         composition: Composition,
         track: Track,
     ):
@@ -301,7 +302,7 @@ class TrackTab(QWidget):
             mf=mf,
             parent=self,
             track_version=track_version,
-            synth=synth,
+            # synth=synth,
             composition=composition,
             track=self.track,
         )
@@ -366,12 +367,11 @@ class TrackVersionTab(QWidget):
         track_tab = self.map.pop(track_version.version_name)
         if (index := self.tab_box.indexOf(track_tab)) < 0:
             raise ValueError(f"Cannot find {track_tab.track_version.version_name} tab when deleting")
-        else:
-            self.tab_box.removeTab(index)
+        self.tab_box.removeTab(index)
         self.track.delete_track_version(track_version=track_version)
         track_tab.deleteLater()
 
-    def on_double_click(self, index):
+    def on_double_click(self, _):
         self.mf.menu.actions[GuiAttr.EDIT_TRACK_VERSION].trigger()
 
     @property
@@ -385,8 +385,7 @@ class TrackVersionTab(QWidget):
         track_version = self.map.get(version)
         if track_version is None:
             raise IndexError
-        else:
-            return track_version
+        return track_version
 
     def __len__(self):
         return len(self.map)

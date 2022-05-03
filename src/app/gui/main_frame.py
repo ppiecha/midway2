@@ -48,15 +48,26 @@ class MainFrame(QMainWindow):
         self.central_widget = QWidget()  # define central widget
         self.setCentralWidget(self.central_widget)
         self.central_widget.setLayout(self.main_box)
-        self.main_win_size = self.config.value(IniAttr.MAIN_WIN_SIZE, QSize(1000, 600))
-        self.setGeometry(
-            QStyle.alignedRect(
-                Qt.LeftToRight,
-                Qt.AlignCenter,
-                self.size(),
-                self.screen().availableGeometry(),
+        if self.config.value(IniAttr.GEOMETRY, None) is not None:
+            self.restoreGeometry(self.config.value(IniAttr.GEOMETRY))
+        else:
+            self.setGeometry(
+                QStyle.alignedRect(
+                    Qt.LeftToRight,
+                    Qt.AlignCenter,
+                    self.size(),
+                    self.screen().availableGeometry(),
+                )
             )
-        )
+        # self.main_win_size = self.config.value(IniAttr.MAIN_WIN_SIZE, QSize(1000, 600))
+        # self.setGeometry(
+        #     QStyle.alignedRect(
+        #         Qt.LeftToRight,
+        #         Qt.AlignCenter,
+        #         self.size(),
+        #         self.screen().availableGeometry(),
+        #     )
+        # )
         self.set_brand()
 
     def read_settings(self):
@@ -80,9 +91,10 @@ class MainFrame(QMainWindow):
         self.composition_tab.set_keyboard_position()
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        self.config.beginGroup(IniAttr.MAIN_WINDOW)
-        self.config.setValue(IniAttr.MAIN_WIN_SIZE, self.size())
-        self.config.setValue(IniAttr.MAIN_WIN_POS, self.pos())
+        # self.config.beginGroup(IniAttr.MAIN_WINDOW)
+        # self.config.setValue(IniAttr.MAIN_WIN_SIZE, self.size())
+        # self.config.setValue(IniAttr.MAIN_WIN_POS, self.pos())
+        self.config.setValue(IniAttr.GEOMETRY, self.saveGeometry())
         self.config.setValue(IniAttr.PROJECT_FILE, self.project_file)
         self.write_settings()
 
