@@ -29,21 +29,21 @@ logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
 
 class HeaderView(GraphicsView):
-    def __init__(self, keyboard: MetaMidiKeyboard):
+    def __init__(self, keyboard_: MetaMidiKeyboard):
         super().__init__(show_scrollbars=False)
-        self.header_scene = HeaderScene(keyboard=keyboard)
+        self.header_scene = HeaderScene(keyboard_=keyboard_)
         self.setScene(self.header_scene)
         self.setFixedHeight(self.sceneRect().height())
         self.setFixedWidth(self.sceneRect().width())
 
 
 class HeaderScene(QGraphicsScene):
-    def __init__(self, keyboard: MetaMidiKeyboard):
+    def __init__(self, keyboard_: MetaMidiKeyboard):
         super().__init__()
         self.header = Header()
         self.setSceneRect(self.header.rect)
         self.addItem(self.header)
-        self.addItem(keyboard)
+        self.addItem(keyboard_)
 
 
 class Header(QGraphicsItem):
@@ -67,8 +67,7 @@ class Header(QGraphicsItem):
         self._show_meta_notes = value
         self.rect = self.get_rect()
 
-    def paint(self, painter: QPainter, option, widget=None):
-        # ruler_brush = painter.brush()
+    def paint(self, painter: QPainter, _, __=None):
         pen_grid = QPen()
         pen_grid.setStyle(Qt.DotLine)
         pen_grid.setColor(Color.GRID_DEFAULT)
@@ -83,63 +82,13 @@ class Header(QGraphicsItem):
         pen_oct.setWidth(0)
         pen = QPen(Color.RULER)
         pen.setWidth(1)
-        meta_notes_brush = QBrush(Color.RULER_META_NOTES_BACK)
         painter.setPen(pen)
-        # painter.drawLine(
-        #     0, GuiAttr.RULER_HEIGHT, self.rect.width(), GuiAttr.RULER_HEIGHT
-        # )
         painter.setPen(Color.RULER_TEXT)
         painter.drawText(
             QRect(0, 0, KeyAttr.W_WIDTH, GuiAttr.RULER_HEIGHT),
             Qt.AlignHCenter | Qt.AlignVCenter | Qt.TextSingleLine,
             "Bar",
         )
-        # painter.setPen(pen)
-        # if self.show_meta_notes:
-        #     pen.setWidth(1)
-        #     painter.setBrush(meta_notes_brush)
-        #     painter.drawRect(
-        #         0, MetaKeyPos.PROGRAM, KeyAttr.W_WIDTH, 3 * KeyAttr.W_HEIGHT
-        #     )
-        #     painter.drawLine(
-        #         0,
-        #         MetaKeyPos.CONTROLS,
-        #         self.rect.width(),
-        #         MetaKeyPos.CONTROLS,
-        #     )
-        #     painter.drawLine(
-        #         0,
-        #         MetaKeyPos.PITCH_BEND,
-        #         self.rect.width(),
-        #         MetaKeyPos.PITCH_BEND,
-        #     )
-        #     painter.setPen(Color.RULER_TEXT)
-        #     painter.drawText(
-        #         QRect(0, MetaKeyPos.PROGRAM, KeyAttr.W_WIDTH, KeyAttr.W_HEIGHT),
-        #         Qt.AlignHCenter | Qt.AlignVCenter | Qt.TextSingleLine,
-        #         "Program",
-        #     )
-        #     painter.drawText(
-        #         QRect(
-        #             0,
-        #             MetaKeyPos.CONTROLS,
-        #             KeyAttr.W_WIDTH,
-        #             KeyAttr.W_HEIGHT,
-        #         ),
-        #         Qt.AlignHCenter | Qt.AlignVCenter | Qt.TextSingleLine,
-        #         "Control",
-        #     )
-        #     painter.drawText(
-        #         QRect(
-        #             0,
-        #             MetaKeyPos.PITCH_BEND,
-        #             KeyAttr.W_WIDTH,
-        #             KeyAttr.W_HEIGHT,
-        #         ),
-        #         Qt.AlignHCenter | Qt.AlignVCenter | Qt.TextSingleLine,
-        #         "Pitch bend",
-        #     )
-        #     painter.setPen(pen)
 
     def boundingRect(self):
         return self.get_rect()
@@ -224,7 +173,7 @@ class Ruler(QGraphicsItem):
         self.rect = self.get_rect()
         self.update(self.rect)
 
-    def paint(self, painter: QPainter, option, widget=None):
+    def paint(self, painter: QPainter, _, __=None):
         # ruler_brush = painter.brush()
         pen_grid = QPen()
         pen_grid.setStyle(Qt.DotLine)
@@ -307,7 +256,7 @@ if __name__ == "__main__":
     app.setPalette(get_app_palette())
     ruler_view = BaseGridView(cls=RulerScene, num_of_bars=1, channel=0, synth=MidwaySynth())
     keyboard = ruler_view.keyboard_view.keyboard
-    header_view = HeaderView(keyboard=keyboard)
+    header_view = HeaderView(keyboard_=keyboard)
     ruler_view.num_of_bars = 1
     box_ruler = Box(direction=QBoxLayout.LeftToRight)
     widget = QWidget()

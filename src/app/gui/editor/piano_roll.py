@@ -61,7 +61,7 @@ class PianoRoll(QWidget):
             channel=track_version.channel,
             synth=synth,
         )
-        self.header_view = HeaderView(keyboard=self.ruler_view.keyboard_view.keyboard)
+        self.header_view = HeaderView(keyboard_=self.ruler_view.keyboard_view.keyboard)
         self.box_main = Box(direction=QBoxLayout.TopToBottom)
         self.box_main.addLayout(KeyboardGridBox([self.header_view, self.ruler_view]))
         self.box_main.addLayout(KeyboardGridBox([self.grid_view.keyboard_view, self.grid_view]))
