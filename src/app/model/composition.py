@@ -19,10 +19,9 @@ class Composition(BaseModel):
 
     def num_of_bars(self) -> PositiveInt:
         track_version = self.get_first_track_version()
-        if track_version:
-            return track_version.num_of_bars()
-        else:
-            raise ValueError(f"Firs track version is not defined. Tracks {self.tracks}")
+        if not track_version:
+            raise ValueError(f"First track version is not defined. Tracks {self.tracks}")
+        return track_version.num_of_bars()
 
     def insert_composition_loop(self, loop: Loop, loop_no: int):
         pass
@@ -37,21 +36,18 @@ class Composition(BaseModel):
         if not (loops := self.get_loops(LoopType.custom)):
             if raise_not_found:
                 raise ValueError(f"No custom loops in composition {self.name}")
-            else:
-                return None
+            return None
         default = [loop for loop in loops.loops if loop.name == loop_name]
         if len(default) == 1:
             return default[0]
-        elif len(default) > 1:
+        if len(default) > 1:
             raise ValueError(f"Found more than one custom loop with name " f"{loop_name} in composition {self.name}")
-        else:
-            if raise_not_found:
-                raise ValueError(f"No default loop in custom loops in composition {self.name}")
-            else:
-                return None
+        if raise_not_found:
+            raise ValueError(f"No default loop in custom loops in composition {self.name}")
+        return None
 
     @property
-    def default_loop(self, raise_not_found: bool = True) -> Loop:
+    def default_loop(self) -> Loop:
         if self.get_custom_loop_by_name(loop_name=GuiAttr.DEFAULT, raise_not_found=False) is None:
             self._update_default_loop()
         return self.get_custom_loop_by_name(loop_name=GuiAttr.DEFAULT, raise_not_found=True)
@@ -100,8 +96,7 @@ class Composition(BaseModel):
                 return track
         if raise_not_found:
             raise ValueError(f"Cannot find name {track_name} in tracks {self.tracks}")
-        else:
-            return None
+        return None
 
     def track_name_exists(self, track_name: str, current_track: Track, raise_not_found: bool = False) -> bool:
         track = self.track_by_name(track_name=track_name, raise_not_found=raise_not_found)
@@ -111,14 +106,12 @@ class Composition(BaseModel):
         if self.tracks:
             track = self.tracks[0]
             return track.get_default_version()
-        else:
-            return None
+        return None
 
     def get_first_track(self) -> Optional[Track]:
         if self.tracks:
             return self.tracks[0]
-        else:
-            return None
+        return None
 
     @classmethod
     def from_tracks(cls, tracks: List[Track], name: str = "") -> Composition:
