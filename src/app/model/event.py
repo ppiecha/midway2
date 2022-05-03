@@ -49,10 +49,9 @@ class Event(BaseModel):
     def is_related(self, other) -> bool:
         if hasattr(self, "parent_id") and self.parent_id == id(other):
             return True
-        elif hasattr(other, "parent_id") and other.parent_id == id(self):
+        if hasattr(other, "parent_id") and other.parent_id == id(self):
             return True
-        else:
-            return False
+        return False
 
     def has_conflict(self, other) -> bool:
         if self.is_related(other):
@@ -65,8 +64,7 @@ class Event(BaseModel):
             return invert(self.beat) < invert(other.beat) < invert(self.beat) + (invert(self.unit)) or invert(
                 other.beat
             ) < invert(self.beat) < invert(other.beat) + (invert(other.unit))
-        else:
-            raise ValueError(f"Cannot compare units {self.unit} {other.unit}")
+        raise ValueError(f"Cannot compare units {self.unit} {other.unit}")
 
     def is_the_same_note(self, other) -> bool:
         if self.type != EventType.NOTE or self.type != other.type:
@@ -93,8 +91,7 @@ class Event(BaseModel):
     def __int__(self) -> int:
         if not hasattr(self, "pitch"):
             raise AttributeError(f"Pitch attribute is not defined {str(self)}")
-        else:
-            return self.pitch
+        return self.pitch
 
     def note(self) -> Note:
         if self.type != EventType.NOTE:

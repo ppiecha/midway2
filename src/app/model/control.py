@@ -40,7 +40,7 @@ class PitchBendChain(BaseModel):
         start_tick = unit2tick(unit=nvn(start_time, 0), bpm=bpm)
         stop_tick = unit2tick(unit=duration - nvn(stop_time, 0), bpm=bpm)
         logger.debug(f"max_tick {max_tick}")
-        timeline = [tick for tick in range(max_tick)]
+        timeline = list(range(max_tick))
         logger.debug(f"timeline {timeline}")
         timeline_norm = [tick / max_tick for tick in timeline]
         logger.debug(f"timeline_norm {timeline_norm}")
@@ -68,8 +68,7 @@ class PitchBendChain(BaseModel):
     def fun_slide_up(x: float) -> float:
         if x == 0:
             return 0
-        else:
-            return -(1 / x)
+        return -(1 / x)
 
     @staticmethod
     def fun_parabola_neq(x: float) -> float:
