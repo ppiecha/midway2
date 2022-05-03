@@ -54,7 +54,7 @@ class Key(QGraphicsItem, MidiKey):
             velocity=MidiAttr.DEFAULT_VELOCITY,
         )
 
-    def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
+    def mousePressEvent(self, _: QGraphicsSceneMouseEvent):
         self.color = self.COLOR_PRESSED
         self.update(self.rect())
 
@@ -62,7 +62,7 @@ class Key(QGraphicsItem, MidiKey):
         if self.callback is not None:
             self.callback(True, self.pos().y() + event.pos().y())
 
-    def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent):
+    def mouseReleaseEvent(self, _: QGraphicsSceneMouseEvent):
         if self.isUnderMouse():
             self.set_active()
         else:
@@ -88,7 +88,7 @@ class Key(QGraphicsItem, MidiKey):
             self.color = self.COLOR_OFF
             self.update(self.rect())
 
-    def paint(self, painter: QPainter, option, widget=None):
+    def paint(self, painter: QPainter, _, __=None):
         painter.setPen(QColor(64, 64, 64))
         painter.drawRect(self.rect())
         painter.fillRect(self.rect(), self.color)
@@ -110,7 +110,7 @@ class MetaKey(Key):
     WIDTH = KeyAttr.W_WIDTH
     HEIGHT = KeyAttr.W_HEIGHT
 
-    def __str__(self):
+    def __str__(self) -> str:
         match self.event_type:
             case EventType.PROGRAM:
                 return "Program "
@@ -118,6 +118,7 @@ class MetaKey(Key):
                 return "Controls "
             case EventType.PITCH_BEND:
                 return "Pitch Bend "
+        return "Not supported key event type"
 
 
 class PianoKey(Key):
@@ -142,11 +143,11 @@ class PianoKey(Key):
         self.keyboard.synth.noteoff(chan=self.note.channel, key=int(self.note))
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
-        super().mousePressEvent(event=event)
+        super().mousePressEvent(event)
         self.play_note()
 
     def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent):
-        super().mouseReleaseEvent(event=event)
+        super().mouseReleaseEvent(event)
         self.stop_note()
 
 
@@ -167,7 +168,7 @@ class BlackPianoKey(PianoKey):
     WIDTH = KeyAttr.B_WIDTH
     HEIGHT = KeyAttr.B_HEIGHT
 
-    def paint(self, painter: QPainter, option, widget=None):
+    def paint(self, painter: QPainter, _, __=None):
         painter.setPen(QColor(48, 48, 48))
         painter.drawRect(self.rect())
         painter.fillRect(self.rect(), self.color)

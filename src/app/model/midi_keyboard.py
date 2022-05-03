@@ -40,10 +40,10 @@ class MidiRange:
 
 @dataclass
 class MidiKey:
+    event_type: EventType
     channel: Optional[Channel]
     key_top: Optional[int]
     key_bottom: Optional[int]
-    event_type: EventType
     pitch: Optional[Pitch] = None
 
     def event(self):

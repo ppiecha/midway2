@@ -1,5 +1,5 @@
 import logging
-from typing import Iterable, Optional
+from typing import Optional
 
 from PySide6.QtCore import Qt, QLineF, QPointF
 from PySide6.QtGui import QPen
@@ -7,7 +7,6 @@ from pydantic import NonNegativeInt
 
 from src.app.gui.editor.base_grid import BaseGridScene, BaseGridView
 from src.app.gui.editor.keyboard import KeyboardView, PianoKeyboard
-from src.app.gui.editor.node import NoteNode
 from src.app.model.event import EventType
 from src.app.model.midi_keyboard import MidiRange
 from src.app.model.types import Channel
@@ -66,22 +65,22 @@ class GridScene(BaseGridScene):
     #     logger.debug(f"copied notes {self.copied_grp.childItems()}")
     #     return self.copied_grp
 
-    def move_notes(self, notes: Iterable[NoteNode], unit_diff: float, key_diff: int):
-        for note in notes:
-            note.event_changed(unit_diff=unit_diff, key_diff=key_diff)
-
-    def resize_notes(self, notes: Iterable[NoteNode], diff: float):
-        for note in notes:
-            note.resize(diff=diff)
+    # def move_notes(self, notes: Iterable[NoteNode], unit_diff: float, key_diff: int):
+    #     for note in notes:
+    #         note.event_changed(unit_diff=unit_diff, key_diff=key_diff)
+    #
+    # def resize_notes(self, notes: Iterable[NoteNode], diff: float):
+    #     for note in notes:
+    #         note.resize(diff=diff)
 
     def copy_selection(self):
-        if not self._is_copying:
-            self.is_copying = True
+        if not self.selection._is_copying:
+            self.selection.is_copying = True
 
     def escape(self):
         logger.debug("Escape")
-        if self.is_copying:
-            self.is_copying = False
+        if self.selection.is_copying:
+            self.selection.is_copying = False
 
     def draw_grid_lines(self):
         pen_grid = QPen()
