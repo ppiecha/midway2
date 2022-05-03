@@ -19,13 +19,13 @@ from PySide6.QtWidgets import (
 
 from src.app.model.sequence import Sequence
 from src.app.utils.properties import MidiAttr, GuiAttr, Color
-
-if TYPE_CHECKING:
-    from src.app.gui.main_frame import MainFrame
 from src.app.gui.widgets import Box, ChannelBox
 from src.app.model.composition import Composition
 from src.app.model.project import Project
 from src.app.model.track import Track, TrackVersion
+
+if TYPE_CHECKING:
+    from src.app.gui.main_frame import MainFrame
 
 
 class NewItemDlg(QDialog):
@@ -66,7 +66,7 @@ class NewItemDlg(QDialog):
             self.reject()
 
     def get_main_layout(self, composition: Composition, track: Track):
-        return None
+        raise NotImplementedError
 
     def set_title(self):
         pass

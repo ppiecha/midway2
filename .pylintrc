@@ -18,6 +18,7 @@ disable=
     invalid-name,
     no-self-use,
     fixme,
+    too-many-public-methods
 
 good-names=i,j,k,ex,Run,_,e,db,f,bar
 

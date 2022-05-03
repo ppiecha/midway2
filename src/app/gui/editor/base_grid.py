@@ -155,11 +155,10 @@ class BaseGridScene(QGraphicsScene):
     def set_event_pitch(self, node: Node, y: int) -> Event:
         if node:
             if node.event.type != EventType.NOTE:
-                raise ValueError(f"Cannot set pitch for event which is not note")
+                raise ValueError("Cannot set pitch for event which is not note")
             return node.event
-        else:
-            key = self.keyboard.get_key_by_pos(position=y)
-            return key.event() if key else None
+        key = self.keyboard.get_key_by_pos(position=y)
+        return key.event() if key else None
 
     def point_to_event_diff(
         self,
@@ -185,7 +184,7 @@ class BaseGridScene(QGraphicsScene):
                 diff.pitch_diff = int(key.event()) - int(event) if key else None
             elif resizing:
                 if not node:
-                    raise ValueError(f"Cannot resize when node is undefined")
+                    raise ValueError("Cannot resize when node is undefined")
                 node_right = node.mapToScene(node.rect.topRight())
                 min_unit_width = self.get_unit_width(unit=GuiAttr.GRID_MIN_UNIT)
                 unit_diff = x - node_right.x()
@@ -244,7 +243,7 @@ class BaseGridScene(QGraphicsScene):
         x = self.round_to_cell(x)
         key = self.keyboard.get_key_by_event(event=event)
         y = key.key_top
-        if type(key) is BlackPianoKey:
+        if isinstance(key, BlackPianoKey):
             y = key.key_top - 4
         return QPointF(x, y)
 
@@ -256,8 +255,7 @@ class BaseGridScene(QGraphicsScene):
             found = [node for node in self.nodes() if node.event == event]
             if len(found) == 0:
                 raise ValueError(f"Event {event} not found in bar {event.bar_num}")
-            else:
-                self.delete_nodes(meta_notes=found, hard_delete=True)
+            self.delete_nodes(meta_notes=found, hard_delete=True)
 
     def remove_event(self, event: Event):
         self.sequence.remove_event(bar_num=event.bar_num, event=event)
@@ -289,7 +287,7 @@ class BaseGridScene(QGraphicsScene):
         if not sequence:
             return
         self.delete_nodes(meta_notes=self.nodes(), hard_delete=True)
-        for bar_num, bar in sequence.bars.items():
+        for _, bar in sequence.bars.items():
             filtered_bar = [e for e in bar if e.type in self.supported_event_types]
             self._add_nodes(events=filtered_bar)
 
@@ -305,10 +303,9 @@ class BaseGridScene(QGraphicsScene):
     def nodes(self, rect: QRectF = None, pos: QPointF = None) -> List[Node]:
         if rect:
             return list(filter(lambda item: issubclass(type(item), Node), self.items(rect)))
-        elif pos:
+        if pos:
             return list(filter(lambda item: issubclass(type(item), Node), self.items(pos)))
-        else:
-            return list(filter(lambda item: issubclass(type(item), Node), self.items()))
+        return list(filter(lambda item: issubclass(type(item), Node), self.items()))
 
     def selected_nodes(self, rect: QRectF = None, pos: QPointF = None) -> List[Node]:
         if rect:
@@ -339,9 +336,9 @@ class BaseGridScene(QGraphicsScene):
     def get_unit_width(self, unit: float) -> float:
         return invert(unit) * self.bar_width
 
-    def set_grid_width_props(self):
-        self.width_bar = self.grid_divider * KeyAttr.W_HEIGHT
-        self.width_beat = (self.width_bar / self.numerator) * (self.grid_divider / self.denominator)
+    # def set_grid_width_props(self):
+    #     self.width_bar = self.grid_divider * KeyAttr.W_HEIGHT
+    #     self.width_beat = (self.width_bar / self.numerator) * (self.grid_divider / self.denominator)
 
     @property
     def numerator(self) -> int:
@@ -350,7 +347,7 @@ class BaseGridScene(QGraphicsScene):
     @numerator.setter
     def numerator(self, value: int) -> None:
         self._numerator = value
-        self.set_grid_width_props()
+        # self.set_grid_width_props()
 
     @property
     def denominator(self) -> int:
@@ -359,7 +356,7 @@ class BaseGridScene(QGraphicsScene):
     @denominator.setter
     def denominator(self, value: int) -> None:
         self._denominator = value
-        self.set_grid_width_props()
+        # self.set_grid_width_props()
 
     @property
     def num_of_bars(self) -> int:
@@ -380,7 +377,7 @@ class BaseGridScene(QGraphicsScene):
     @grid_divider.setter
     def grid_divider(self, value: int) -> None:
         self._grid_divider = value
-        self.set_grid_width_props()
+        # self.set_grid_width_props()
 
     @property
     def bar_width(self) -> int:
@@ -409,7 +406,7 @@ class BaseGridScene(QGraphicsScene):
         super().mousePressEvent(e)
         if not e.isAccepted():
             pos = e.scenePos()
-            x, y = e.scenePos().x(), e.scenePos().y()
+            _, y = e.scenePos().x(), e.scenePos().y()
             match e.button():
                 case Qt.LeftButton:
                     match e.modifiers():
