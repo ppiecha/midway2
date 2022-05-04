@@ -55,10 +55,9 @@ class Sequence(BaseModel):
         return not self == other
 
     def meter(self) -> Meter:
-        if self.num_of_bars():
-            return self.bars[0].meter
-        else:
+        if not self.num_of_bars():
             raise ValueError(f"No bar in the sequence {self!r}")
+        return self.bars[0].meter
 
     def num_of_bars(self) -> PositiveInt:
         return len(self.bars.keys())
@@ -94,10 +93,9 @@ class Sequence(BaseModel):
         return self.num_of_bars()
 
     def event_index(self, bar_num: NonNegativeInt, event: Event) -> int:
-        if bar_num in self.bars.keys():
-            return self.bars[bar_num].event_index(event=event)
-        else:
+        if bar_num not in self.bars.keys():
             raise ValueError(f"Bar number outside of range {bar_num} -> {self.num_of_bars()}")
+        return self.bars[bar_num].event_index(event=event)
 
     def add_event(self, bar_num: NonNegativeInt, event: Event, callback: bool = True) -> None:
         if bar_num in self.bars.keys():
@@ -141,17 +139,15 @@ class Sequence(BaseModel):
                 raise ValueError(
                     f"Sequence has different number of bars {this.num_of_bars()} -> " f"{other.num_of_bars()}"
                 )
-            else:
-                for bar_num in this.bars.keys():
-                    this.bars[bar_num] += other.bars[bar_num]
+            for bar_num in this.bars.keys():
+                this.bars[bar_num] += other.bars[bar_num]
         elif isinstance(other, Bar):
             if other.bar_num is None:
                 raise ValueError(f"Bar number not defined {vars(other)}")
+            if other.bar_num in this.bars.keys():
+                this.bars[other.bar_num] += other
             else:
-                if other.bar_num in this.bars.keys():
-                    this.bars[other.bar_num] += other
-                else:
-                    this.bars[other.bar_num] = other
+                this.bars[other.bar_num] = other
         else:
             raise ValueError(f"Unsupported type {type(other)}")
         return this
@@ -194,6 +190,8 @@ class Sequence(BaseModel):
                     setattr(event, attr, value)
 
     def get_changed_event(self, old_event: Event, diff: Diff) -> Optional[Event]:
+        # TODO split to small testable functions
+        # pylint: disable=too-many-return-statements, too-many-branches)
         meter = self.meter()
         event = old_event.copy(deep=True)
         event.parent_id = id(old_event)

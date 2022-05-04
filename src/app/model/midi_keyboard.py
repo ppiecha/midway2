@@ -132,10 +132,9 @@ class MidiKeyboard(BaseKeyboard):
         )
 
     def get_key_by_event(self, event: Event) -> MidiKey:
-        if event.type == EventType.NOTE:
-            return self.keys[event.pitch]
-        else:
+        if event.type != EventType.NOTE:
             raise NotImplementedError
+        return self.keys[event.pitch]
 
     def build_keyboard_keys(self) -> None:
         for pitch in MidiRange.WHITE_KEYS_RANGE:

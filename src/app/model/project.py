@@ -15,10 +15,9 @@ class Project(BaseModel):
     compositions: List[Composition]
 
     def num_of_bars(self) -> PositiveInt:
-        if self.compositions:
-            return self.compositions[0].num_of_bars()
-        else:
+        if not self.compositions:
             raise ValueError(f"List of compositions is empty {self.compositions}")
+        return self.compositions[0].num_of_bars()
 
     def composition_by_name(self, composition_name: str, raise_not_found: bool = True) -> Optional[Composition]:
         for composition in self.compositions:
@@ -26,8 +25,7 @@ class Project(BaseModel):
                 return composition
         if raise_not_found:
             raise ValueError(f"Cannot find name {composition_name} in compositions {self.compositions}")
-        else:
-            return None
+        return None
 
     def delete_composition(self, composition: Composition):
         self.compositions.remove(composition)

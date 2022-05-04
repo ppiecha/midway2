@@ -32,10 +32,9 @@ class Meter(BaseModel):
             return value_diff
         if value_diff > 0:
             return add(value1=value, value2=value_diff)
-        elif value_diff < 0:
+        if value_diff < 0:
             return subtract(value1=value, value2=-value_diff)
-        else:
-            return value
+        return value
 
     def bar_remainder(self, unit: Unit) -> NonNegativeFloat:
         if unit < 0:
@@ -43,7 +42,7 @@ class Meter(BaseModel):
         elif self.exceeds_length(unit=unit):
             new_unit = invert(unit) - self.length()
         else:
-            raise ValueError(f"Remainder shouldn't be calculated in this case")
+            raise ValueError("Remainder shouldn't be calculated in this case")
         if not 0 <= new_unit <= self.length():
             raise ValueError(f"Unit outside of bar range 0 <= {new_unit} <= {self.length()}")
         return invert(new_unit)

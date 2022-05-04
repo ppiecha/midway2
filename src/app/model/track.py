@@ -40,9 +40,9 @@ class TrackVersion(BaseModel):
 
     def get_sequence(self, include_defaults: bool = False) -> Sequence:
         if include_defaults:
-            bars: List[Bar] = [bar for bar in self.sequence.bars.values()]
+            bars: List[Bar] = list(self.sequence.bars.values())
             if bars:
-                first_bar, *rest = bars
+                first_bar, *_ = bars
                 event = Event(
                     type=EventType.PROGRAM,
                     channel=self.channel,
@@ -52,10 +52,8 @@ class TrackVersion(BaseModel):
                 if not first_bar.has_event(event=event):
                     first_bar.add_event(event=event)
                 return Sequence.from_bars(bars=bars)
-            else:
-                raise ValueError(f"No bars in sequence {self.sequence}")
-        else:
-            return self.sequence
+            raise ValueError(f"No bars in sequence {self.sequence}")
+        return self.sequence
 
 
 class RhythmTrackVersion(TrackVersion):
@@ -88,8 +86,7 @@ class Track(BaseModel):
                 return version
         if raise_not_found:
             raise ValueError(f"Cannot find version {track_version_name} " f"in versions {self.versions}")
-        else:
-            return None
+        return None
 
     def track_version_exists(self, version_name: str, current_version: TrackVersion) -> bool:
         version = self.track_version_by_name(track_version_name=version_name, raise_not_found=False)
@@ -100,22 +97,18 @@ class Track(BaseModel):
         if version:
             if len(version) > 1:
                 raise ValueError(f"Found more than one version with name " f"{version_name} in track {self.name}")
-            else:
-                version, *rest = version
-                return version
-        else:
-            if raise_not_found:
-                raise ValueError(f"Cannot find version {version_name} in track {self}")
-            return None
+            version, *_ = version
+            return version
+        if raise_not_found:
+            raise ValueError(f"Cannot find version {version_name} in track {self}")
+        return None
 
     def get_default_version(self, raise_not_found: bool = True) -> Optional[TrackVersion]:
         if self.versions:
             return self.versions[0]
-        else:
-            if raise_not_found:
-                raise ValueError(f"Cannot get default track version. No version defined")
-            else:
-                return None
+        if raise_not_found:
+            raise ValueError("Cannot get default track version. No version defined")
+        return None
 
 
 class RhythmDrumTrack(Track):

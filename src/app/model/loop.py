@@ -136,6 +136,9 @@ class CompositionLoops(Loops):
 
     # TODO sort loops by name after insertion
 
+    def set_checked_loop(self, loop: Loop):
+        pass
+
     def get_next_loop(self, loop_name: str = "") -> Optional[Loop]:
         try:
             loop_index = int(loop_name)

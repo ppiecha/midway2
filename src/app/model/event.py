@@ -47,7 +47,7 @@ class Event(BaseModel):
         return f"b:{invert(self.beat)} p:{self.pitch} u:{self.unit} bar:{self.bar_num} patch:{patch}"
 
     def is_related(self, other) -> bool:
-        if hasattr(self, "parent_id") and self.parent_id == id(other):
+        if hasattr(self, "parent_id") and self.parent_id == id(other):  # pylint: disable=no-member
             return True
         if hasattr(other, "parent_id") and other.parent_id == id(self):
             return True
