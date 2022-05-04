@@ -28,11 +28,10 @@ from src.app.gui.widgets import Box
 from src.app.model.composition import Composition
 from src.app.model.track import Track, TrackVersion
 from src.app.utils.properties import GuiAttr
+import src.app.resources  # pylint: disable=unused-import
 
 if TYPE_CHECKING:
     from src.app.gui.main_frame import MainFrame
-
-import src.app.resources
 
 
 class TrackListItem(QWidget):

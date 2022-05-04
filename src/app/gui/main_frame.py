@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from PySide6.QtCore import QSettings, QSize, Qt
+from PySide6.QtCore import QSettings, Qt
 from PySide6.QtGui import QIcon, QShowEvent, QCloseEvent
 from PySide6.QtWidgets import (
     QMainWindow,
@@ -90,10 +90,7 @@ class MainFrame(QMainWindow):
         super().showEvent(event)
         self.composition_tab.set_keyboard_position()
 
-    def closeEvent(self, event: QCloseEvent) -> None:
-        # self.config.beginGroup(IniAttr.MAIN_WINDOW)
-        # self.config.setValue(IniAttr.MAIN_WIN_SIZE, self.size())
-        # self.config.setValue(IniAttr.MAIN_WIN_POS, self.pos())
+    def closeEvent(self, _: QCloseEvent) -> None:
         self.config.setValue(IniAttr.GEOMETRY, self.saveGeometry())
         self.config.setValue(IniAttr.PROJECT_FILE, self.project_file)
         self.write_settings()

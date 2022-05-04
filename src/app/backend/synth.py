@@ -53,7 +53,6 @@ from typing import List, Optional, Dict, Any
 
 from six import binary_type, iteritems, text_type
 
-from src.app.model.types import Channel
 from src.app.utils.logger import get_console_logger
 from src.app.model.bar import Bar
 from src.app.model.event import Event, Preset, EventType
@@ -302,6 +301,8 @@ fluid_synth_get_reverb_damp = cfunc("fluid_synth_get_reverb_damp", c_double, ("s
 fluid_synth_get_reverb_level = cfunc("fluid_synth_get_reverb_level", c_double, ("synth", c_void_p, 1))
 fluid_synth_get_reverb_width = cfunc("fluid_synth_get_reverb_width", c_double, ("synth", c_void_p, 1))
 
+fluid_synth_set_reverb = None
+fluid_synth_set_reverb_full = None
 try:
     fluid_synth_set_reverb = cfunc(
         "fluid_synth_set_reverb",
@@ -323,7 +324,6 @@ except AttributeError:
         ("width", c_double, 1),
         ("level", c_double, 1),
     )
-    fluid_synth_set_reverb = None
 
 # Handle fluidsynth >= 2.0 API changes
 try:
@@ -362,6 +362,8 @@ fluid_synth_get_chorus_nr = cfunc("fluid_synth_get_chorus_nr", c_int, ("synth", 
 fluid_synth_get_chorus_level = cfunc("fluid_synth_get_chorus_level", c_double, ("synth", c_void_p, 1))
 fluid_synth_get_chorus_type = cfunc("fluid_synth_get_chorus_type", c_int, ("synth", c_void_p, 1))
 
+fluid_synth_set_chorus = None
+fluid_synth_set_chorus_full = None
 try:
     fluid_synth_set_chorus = cfunc(
         "fluid_synth_set_chorus",
@@ -385,7 +387,6 @@ except AttributeError:
         ("depth_ms", c_double, 1),
         ("type", c_int, 1),
     )
-    fluid_synth_set_chorus = None
 
 # Handle fluidsynth >= 2.0 API changes
 try:
@@ -952,9 +953,9 @@ class Player(BasePlayer):
 
         """
         if offset != self.current_tick:
-            self.seek(offset)
+            self.seek(offset)  # pylint: disable=no-member
 
-        return super(Player, self).play()
+        return super().play()
 
     def render(self, filename, filetype=None, quality=0.5, progress_callback=None):
         """Render MIDI file to audio file.
@@ -1020,7 +1021,7 @@ class Player(BasePlayer):
 
         """
         if filetype is not None and filetype not in AUDIO_FILE_TYPES:
-            raise OSError("Unnown file type '%s'." % filetype)
+            raise OSError(f"Unknown file type {filetype}")
 
         self.synth.setting("audio.file.name", filename)
         self.synth.setting("player.timing-source", "sample")
@@ -1053,7 +1054,7 @@ class Player(BasePlayer):
         Also triggers release phase of all currently sounding notes.
 
         """
-        result = super(Player, self).stop()
+        result = super().stop()
         # Stop notes on all (-1) channels
         self.synth.all_notes_off(-1)
         return result
@@ -1108,7 +1109,8 @@ class Synth:
         self.sf_map: Dict[str, int] = {}
         self.preset_map: Dict = {}
 
-    def setting(self, opt, val=None):
+    def setting(self, opt, val=None):  # pylint: disable=inconsistent-return-statements
+        # pylint: disable=too-many-return-statements
         """Get/Set an arbitrary synth setting, type-smart."""
         opt = _e(opt)
 
@@ -1119,27 +1121,27 @@ class Synth:
                 val = c_double()
                 response = fluid_settings_getnum(self.settings, opt, byref(val))
                 return val.value if response == FLUID_OK else None
-            elif stype == FLUID_INT_TYPE:
+            if stype == FLUID_INT_TYPE:
                 val = c_int()
                 response = fluid_settings_getint(self.settings, opt, byref(val))
                 return val.value if response == FLUID_OK else None
-            elif stype == FLUID_STR_TYPE:
+            if stype == FLUID_STR_TYPE:
                 data = create_string_buffer(256)
                 response = fluid_settings_copystr(self.settings, opt, data, 256)
                 return _d(data.value) if response == FLUID_OK else None
-            elif stype == FLUID_SET_TYPE:
+            if stype == FLUID_SET_TYPE:
                 raise NotImplementedError("Setting of type FLUID_SET_TYPE not implemented.")
-            elif stype == FLUID_NO_TYPE:
-                raise KeyError("Setting '%s' does not exist." % _d(opt))
-        elif isinstance(val, text_type):
+            if stype == FLUID_NO_TYPE:
+                raise KeyError(f"Setting {_d(opt)} does not exist")
+        if isinstance(val, text_type):
             return fluid_settings_setstr(self.settings, opt, _e(val))
-        elif isinstance(val, binary_type):
+        if isinstance(val, binary_type):
             return fluid_settings_setstr(self.settings, opt, val)
-        elif isinstance(val, bool):
+        if isinstance(val, bool):
             return fluid_settings_setint(self.settings, opt, 1 if val else 0)
-        elif isinstance(val, int):
+        if isinstance(val, int):
             return fluid_settings_setint(self.settings, opt, val)
-        elif isinstance(val, float):
+        if isinstance(val, float):
             return fluid_settings_setnum(self.settings, opt, val)
 
     def start(self, driver=None, device=None, midi_driver=None, cmd_handler=False):
@@ -1181,17 +1183,17 @@ class Synth:
         """
         if driver is not None:
             if driver not in AUDIO_DRIVER_NAMES:
-                raise ValueError("Unknown audio driver '%'." % driver)
+                raise ValueError(f"Unknown audio driver{driver}")
             self.setting("audio.driver", driver)
 
             if device is not None:
-                self.setting("audio.%s.device" % driver, device)
+                self.setting("audio.{driver}.device", device)
 
             self.audio_driver = new_fluid_audio_driver(self.settings, self.synth)
 
         if midi_driver is not None:
             if midi_driver not in MIDI_DRIVER_NAMES:
-                raise ValueError("Unknown MIDI driver '%'." % midi_driver)
+                raise ValueError(f"Unknown MIDI driver {midi_driver}")
             self.setting("backend.driver", midi_driver)
             self.router = new_fluid_midi_router(self.settings, fluid_synth_handle_midi_event, self.synth)
 
@@ -1312,10 +1314,10 @@ class Synth:
 
     def router_add_rule(self, rule):
         if self.router is None:
-            return
+            raise ValueError("Router isn't defined")
 
         if rule.rule is None:
-            raise ValueError("Can't add deleted RouterRule instance.")
+            raise ValueError("Can't add deleted RouterRule instance")
 
         return fluid_midi_router_add_rule(self.router, rule.rule, rule.type)
 
@@ -1642,11 +1644,9 @@ class Sequencer:
         if self.sequencer:
             del self.sequencer
 
-    """
-    -----------------------------------------------------------------------------------------------
-    Added by me
-    -----------------------------------------------------------------------------------------------
-    """
+    # -----------------------------------------------------------------------------------------------
+    # Added by me
+    # -----------------------------------------------------------------------------------------------
 
     def send_event(self, time: int, event: Event, bpm: float, synth_seq_id):
         if event.active:

@@ -31,7 +31,7 @@ from src.app.model.event import Preset
 from src.app.model.types import Channel
 from src.app.model.project import Project
 from src.app.model.track import TrackVersion, Track
-import src.app.resources
+import src.app.resources  # pylint: disable=unused-import
 
 if TYPE_CHECKING:
     from src.app.gui.main_frame import MainFrame

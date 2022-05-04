@@ -102,24 +102,24 @@ class PianoRoll(QWidget):
         self.sequence = self.track_version.sequence
         assert self.sequence is not None
 
-    def play(self, mf: MainFrame):
+    def play(self, _: MainFrame):
         loop = self.composition.loops[LoopType.custom].get_loop_by_name(loop_name=GuiAttr.SINGLE_TRACK)
         loop.set_single_track_version(track=self.track, track_version=self.track_version)
         self.synth.play_composition(self.composition, loop_type=LoopType.custom, loop_name=GuiAttr.SINGLE_TRACK)
 
-    def select_all(self, mf: MainFrame):
+    def select_all(self, _: MainFrame):
         self.grid_view.grid_scene.select_all()
 
-    def delete_selected(self, mf: MainFrame):
+    def delete_selected(self, _: MainFrame):
         self.grid_view.grid_scene.delete_nodes(meta_notes=self.grid_view.grid_scene.selected_nodes(), hard_delete=True)
 
-    def invert_selection(self, mf: MainFrame):
+    def invert_selection(self, _: MainFrame):
         self.grid_view.grid_scene.invert_selection()
 
-    def copy_selection(self, mf: MainFrame):
+    def copy_selection(self, _: MainFrame):
         self.grid_view.grid_scene.copy_selection()
 
-    def escape(self, mf: MainFrame):
+    def escape(self, _: MainFrame):
         self.grid_view.grid_scene.escape()
 
     def undo(self, mf: MainFrame):
