@@ -52,7 +52,7 @@ class MidiAttr:
     DEFAULT_PATCH = 0
     DEFAULT_VELOCITY = 100
     DEFAULT_ACCENT_VELOCITY = 127
-    CHANNELS = [channel for channel in range(MAX_CHANNEL)]
+    CHANNELS = list(range(MAX_CHANNEL))
     DRIVER = "dsound"
     KEY_PLAY_TIME = 0.3
 
@@ -257,7 +257,7 @@ DRUM_KIT = [
     "Open Triangle",
 ]
 
-DRUM_NAME_TO_PATCH = {name: patch for name, patch in zip(DRUM_KIT, [0] + list(range(35, 82)))}
+DRUM_NAME_TO_PATCH = dict(zip(DRUM_KIT, [0] + list(range(35, 82))))
 
 DRUM_PATCH_TO_NAME = {patch: name for name, patch in DRUM_NAME_TO_PATCH.items()}
 

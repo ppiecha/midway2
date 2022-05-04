@@ -1,15 +1,17 @@
-import fnmatch
+# pylint: disable=import-error, consider-using-f-string, bare-except, broad-except
+# import fnmatch
 import logging
 import os
 import threading
 from pathlib import Path
 
-import pythoncom
+# import pythoncom
 import win32api
 import win32con
 import win32file
 import win32gui
-import winshell
+
+# import winshell
 import wx
 from win32com.shell import shell, shellcon
 
@@ -186,26 +188,27 @@ def new_file(file_name: str) -> None:
 
 
 def get_new_name(full_name: str) -> str:
-    path = Path(full_name)
-    if not path.exists():
-        return full_name
-    else:
-        if fnmatch.fnmatch(path.stem, "*(*)"):
-            start = path.stem.rfind("(")
-            stop = path.stem.rfind(")")
-            # print(path.stem[start:stop+1])
-            try:
-                num = int(path.stem[start + 1 : stop])
-            except:
-                return str(path.parent.joinpath(path.stem)) + "(1)" + path.suffix
-            else:
-                return str(path.parent.joinpath(path.stem[:start])) + str(num + 1) + ")" + path.suffix
-        else:
-            _name = str(path.parent.joinpath(path.stem)) + "(1)" + path.suffix
-            if Path(_name).exists():
-                get_new_name(_name)
-            else:
-                return str(path.parent.joinpath(path.stem)) + "(1)" + path.suffix
+    raise NotImplementedError
+
+
+#     path = Path(full_name)
+#     if not path.exists():
+#         return full_name
+#     if fnmatch.fnmatch(path.stem, "*(*)"):
+#         start = path.stem.rfind("(")
+#         stop = path.stem.rfind(")")
+#         try:
+#             num = int(path.stem[start + 1: stop])
+#         except:
+#             return str(path.parent.joinpath(path.stem)) + "(1)" + path.suffix
+#         else:
+#             return str(path.parent.joinpath(path.stem[:start])) + str(num + 1) + ")" + path.suffix
+#     else:
+#         _name = str(path.parent.joinpath(path.stem)) + "(1)" + path.suffix
+#         if Path(_name).exists():
+#             get_new_name(_name)
+#         else:
+#             return str(path.parent.joinpath(path.stem)) + "(1)" + path.suffix
 
 
 def copy_file(src: str, tgt: str, _rename: bool) -> None:
@@ -285,42 +288,41 @@ def new_folder(folder_name):
 
 
 def get_file_name(path: str) -> str:
-    dir, name = os.path.split(path)
+    _, name = os.path.split(path)
     if not name:
         raise ValueError("Invalid file name")
-    else:
-        return name
+    return name
 
 
-class Shortcut:
-    def __init__(self):
-        self._base = pythoncom.CoCreateInstance(
-            shell.CLSID_ShellLink,
-            None,
-            pythoncom.CLSCTX_INPROC_SERVER,
-            shell.IID_IShellLink,
-        )
-
-    def load(self, filename):
-        self._base.QueryInterface(pythoncom.IID_IPersistFile).Load(filename)
-        return self._base.GetPath(shell.SLGP_RAWPATH)[0]
-
-    def save(self, filename):
-        self._base.QueryInterface(pythoncom.IID_IPersistFile).Save(filename, 0)
-
-    def __getattr__(self, name):
-        if name != "_base":
-            return getattr(self._base, name)
-
-    @staticmethod
-    def new_shortcut(path, lnk_name, target, args=None, desc=None, start_in=None):
-        winshell.CreateShortcut(
-            Path=str(os.path.join(path, lnk_name) if lnk_name else path),
-            Target=str(target),
-            Arguments=str(args),
-            Description="Shortcut to " + str(target),
-            StartIn=str(start_in),
-        )
+# class Shortcut:
+#     def __init__(self):
+#         self._base = pythoncom.CoCreateInstance(
+#             shell.CLSID_ShellLink,
+#             None,
+#             pythoncom.CLSCTX_INPROC_SERVER,
+#             shell.IID_IShellLink,
+#         )
+#
+#     def load(self, filename):
+#         self._base.QueryInterface(pythoncom.IID_IPersistFile).Load(filename)
+#         return self._base.GetPath(shell.SLGP_RAWPATH)[0]
+#
+#     def save(self, filename):
+#         self._base.QueryInterface(pythoncom.IID_IPersistFile).Save(filename, 0)
+#
+#     def __getattr__(self, name):
+#         if name != "_base":
+#             return getattr(self._base, name)
+#
+#     @staticmethod
+#     def new_shortcut(path, lnk_name, target, args=None, desc=None, start_in=None):
+#         winshell.CreateShortcut(
+#             Path=str(os.path.join(path, lnk_name) if lnk_name else path),
+#             Target=str(target),
+#             Arguments=str(args),
+#             Description="Shortcut to " + str(target),
+#             StartIn=str(start_in),
+#         )
 
 
 def get_drives():
@@ -339,7 +341,7 @@ def get_drives():
     for drive in drives:
         try:
             info = win32api.GetVolumeInformation(drive)
-        except:
+        except Exception:
             info = [""]
         # print(drive, "=>", drive_types[win32file.GetDriveType(drive)])
         drive_dict[drive] = [
@@ -364,7 +366,7 @@ def extension_to_bitmap(extension):
     # non-zero on success
     assert retval
 
-    hicon, iicon, attr, display_name, type_name = info
+    hicon, _, _, _, _ = info
 
     # Get the bitmap
     icon = wx.Icon()
@@ -398,11 +400,10 @@ def get_context_menu(path, file_names):
     if context_menu:
         try:
             cm_plus = context_menu.QueryInterface(shell.IID_IContextMenu3, None)
-        except Exception as e:
-            pass
+        except Exception:
             try:
                 cm_plus = context_menu.QueryInterface(shell.IID_IContextMenu2, None)
-            except Exception as e:
+            except Exception:
                 pass
     else:
         raise Exception("Unable to get context menu interface")
