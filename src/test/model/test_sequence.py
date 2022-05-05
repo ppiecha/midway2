@@ -1,5 +1,3 @@
-import pytest
-
 from src.app.mingus.core.value import add
 from src.app.model.event import EventType, Event, Diff
 from src.app.model.meter import invert
@@ -7,25 +5,7 @@ from src.app.model.sequence import Sequence
 from src.app.model.types import NoteUnit
 
 
-@pytest.fixture()
-def seq_empty_bars() -> Sequence:
-    return {
-        "bars": {
-            0: {
-                "meter": {"numerator": 4, "denominator": 4, "min_unit": 32},
-                "bar_num": 0,
-                "bar": [],
-            },
-            1: {
-                "meter": {"numerator": 4, "denominator": 4, "min_unit": 32},
-                "bar_num": 1,
-                "bar": [],
-            },
-        },
-    }
-
-
-def test_sequence_constructor(capsys):
+def test_sequence_constructor():
     seq = Sequence.from_num_of_bars(num_of_bars=1)
     print(seq.dict())
     assert seq.dict() == {
@@ -39,7 +19,7 @@ def test_sequence_constructor(capsys):
     }
 
 
-def test_from_bars(bar0, bar1, capsys, seq_empty_bars):
+def test_from_bars(bar0, bar1, seq_empty_bars):
     sequence = Sequence.from_bars([bar0, bar1])
     print(sequence.dict())
     assert sequence.dict() == seq_empty_bars
@@ -59,7 +39,7 @@ def test_add_events(bar0, bar1, note0, note1, note2, note3):
     assert list(sequence[1].events()) == [note2, note3]
 
 
-def test_clear_bar(bar0, bar1, note0, note1, note2, note3, seq_empty_bars):
+def test_clear_bar(bar0, bar1, note0, note1, seq_empty_bars):
     sequence = Sequence.from_bars([bar0, bar1])
     sequence.add_events(bar_num=0, events=[note0, note1])
     sequence.clear_bar(bar_num=0)
@@ -89,7 +69,7 @@ def test_total_length(bar0, bar1):
     assert sequence.num_of_bars() == 2
 
 
-def test_num_of_bars(bar0, bar1, note0, note1, note2, note3, program0, control0, capsys):
+def test_num_of_bars(bar0, bar1, note0, note1, note2, note3, program0, control0):
     sequence = Sequence.from_bars([bar0, bar1])
     sequence.add_events(bar_num=0, events=[note0, note1])
     sequence.add_events(bar_num=1, events=[note2, note3, program0, control0])
@@ -99,7 +79,7 @@ def test_num_of_bars(bar0, bar1, note0, note1, note2, note3, program0, control0,
     assert list(sequence.events()) == [note0, note1]
 
 
-def test_remove_event(bar0, bar1, note0, note1, note2, note3, program0, control0, capsys):
+def test_remove_event(bar0, note0, note1):
     sequence = Sequence.from_bars([bar0])
     sequence.add_events(bar_num=0, events=[note0, note1])
     assert list(sequence.events()) == [note0, note1]
@@ -107,15 +87,15 @@ def test_remove_event(bar0, bar1, note0, note1, note2, note3, program0, control0
     assert list(sequence.events()) == [note0]
 
 
-def test_remove_events(bar0, bar1, note0, note1, note2, note3, program0, control0, capsys):
+def test_remove_events(bar0, note0, note1):
     sequence = Sequence.from_bars([bar0])
     sequence.add_events(bar_num=0, events=[note0, note1])
     assert list(sequence.events()) == [note0, note1]
     sequence.remove_events(bar_num=0, events=[note0, note1])
-    assert list(sequence.events()) == []
+    assert not list(sequence.events())
 
 
-def test_remove_events_by_type(bar0, bar1, note0, note1, note2, note3, program0, control0, capsys):
+def test_remove_events_by_type(bar0, bar1, note0, note1, program0, control0):
     sequence = Sequence.from_bars([bar0, bar1])
     sequence.add_events(bar_num=0, events=[note0, program0])
     sequence.add_events(bar_num=1, events=[note1, control0])
@@ -124,10 +104,10 @@ def test_remove_events_by_type(bar0, bar1, note0, note1, note2, note3, program0,
     sequence.remove_events_by_type(event_type=EventType.PROGRAM)
     assert list(sequence.events()) == [note0, note1]
     sequence.remove_events_by_type(event_type=EventType.NOTE)
-    assert list(sequence.events()) == []
+    assert not list(sequence.events())
 
 
-def test_changed_event_beat_pitch(bar0, bar1, capsys):
+def test_changed_event_beat_pitch(bar0, bar1):
     sequence = Sequence.from_bars([bar0, bar1])
     event = Event(type=EventType.NOTE, pitch=50, beat=NoteUnit.HALF.value, unit=NoteUnit.QUARTER.value, bar_num=0)
     sequence.add_event(bar_num=0, event=event)
@@ -155,7 +135,7 @@ def test_changed_event_beat_pitch(bar0, bar1, capsys):
     assert invert(moved_event.beat) == 0
 
 
-def test_changed_event_unit(bar0, bar1, capsys):
+def test_changed_event_unit(bar0, bar1):
     sequence = Sequence.from_bars([bar0, bar1])
     event = Event(type=EventType.NOTE, pitch=50, beat=NoteUnit.HALF.value, unit=NoteUnit.QUARTER.value, bar_num=0)
     sequence.add_event(bar_num=0, event=event)

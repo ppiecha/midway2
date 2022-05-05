@@ -1,3 +1,5 @@
+from typing import List
+
 import pytest
 from pydantic import PositiveInt
 
@@ -21,13 +23,13 @@ def bpm() -> Bpm:
     return 60
 
 
-@pytest.fixture
-def bar0() -> Bar:
+@pytest.fixture(name="bar0")
+def fixture_bar0() -> Bar:
     return Bar(bar_num=0)
 
 
-@pytest.fixture
-def bar1() -> Bar:
+@pytest.fixture(name="bar1")
+def fixture_bar1() -> Bar:
     return Bar(bar_num=1)
 
 
@@ -41,13 +43,13 @@ def bar3() -> Bar:
     return Bar(bar_num=3)
 
 
-@pytest.fixture
-def note0() -> Event:
+@pytest.fixture(name="note0")
+def fixture_note0() -> Event:
     return Event(type=EventType.NOTE, channel=0, beat=0, pitch=79, unit=NoteUnit.EIGHTH.value)
 
 
-@pytest.fixture
-def note1() -> Event:
+@pytest.fixture(name="note1")
+def fixture_note1() -> Event:
     return Event(type=EventType.NOTE, channel=0, beat=NoteUnit.EIGHTH.value, pitch=80, unit=NoteUnit.EIGHTH.value)
 
 
@@ -90,8 +92,8 @@ def note6() -> Event:
     )
 
 
-@pytest.fixture
-def program0() -> Event:
+@pytest.fixture(name="program0")
+def fixture_program0() -> Event:
     return Event(
         type=EventType.PROGRAM,
         channel=0,
@@ -130,8 +132,8 @@ def program_organ() -> Event:
     )
 
 
-@pytest.fixture
-def control0() -> Event:
+@pytest.fixture(name="control0")
+def fixture_control0() -> Event:
     return Event(
         type=EventType.CONTROLS,
         channel=0,
@@ -150,8 +152,8 @@ def control1() -> Event:
     )
 
 
-@pytest.fixture()
-def sequence(bar0, bar1, note0, note1, program0, control0) -> Sequence:
+@pytest.fixture(name="sequence")
+def fixture_sequence(bar0, bar1, note0, note1, program0, control0) -> Sequence:
     sequence = Sequence.from_bars([bar0, bar1])
     sequence.add_events(bar_num=0, events=[note0, program0])
     sequence.add_events(bar_num=1, events=[note1, control0])
@@ -180,18 +182,18 @@ def track_c_major(bar0, bar1) -> Track:
     )
 
 
-@pytest.fixture()
-def num_of_bars() -> PositiveInt:
+@pytest.fixture(name="num_of_bars")
+def fixture_num_of_bars() -> PositiveInt:
     return 4
 
 
-@pytest.fixture()
-def rhythm() -> Rhythm:
+@pytest.fixture(name="rhythm")
+def fixture_rhythm() -> Rhythm:
     return Rhythm()
 
 
-@pytest.fixture()
-def drums_sequence(rhythm, num_of_bars) -> Sequence:
+@pytest.fixture(name="drums_sequence")
+def fixture_drums_sequence(rhythm, num_of_bars) -> Sequence:
     bars = [rhythm.bar_of_notes(note_unit=NoteUnit.QUARTER, bar_num=bar_num) for bar_num in range(num_of_bars)]
     sequence = Sequence.from_bars(bars=bars)
     down = [event for index, event in enumerate(sequence.events()) if index % 2 == 0]
@@ -215,14 +217,14 @@ def drums_sequence(rhythm, num_of_bars) -> Sequence:
     return sequence
 
 
-@pytest.fixture()
-def bass_sequence(rhythm, num_of_bars) -> Sequence:
+@pytest.fixture(name="bass_sequence")
+def fixture_bass_sequence(rhythm, num_of_bars) -> Sequence:
     bars = [rhythm.bar_of_notes(note_unit=NoteUnit.EIGHTH, bar_num=bar_num) for bar_num in range(num_of_bars)]
     return Sequence.from_bars(bars=bars)
 
 
 @pytest.fixture()
-def drums_composition(drums_sequence, bass_sequence, capsys) -> Composition:
+def drums_composition(drums_sequence) -> Composition:
     track_version = RhythmTrackVersion(sf_name=MidiAttr.DEFAULT_SF2, sequence=drums_sequence)
     track = Track(name="Drums", versions=[track_version])
     return Composition.from_tracks(tracks=[track], name="drums_composition")
@@ -231,3 +233,66 @@ def drums_composition(drums_sequence, bass_sequence, capsys) -> Composition:
 @pytest.fixture(scope="session")
 def synth() -> MidwaySynth():
     return MidwaySynth()
+
+
+@pytest.fixture(name="two_notes")
+def fixture_two_notes() -> List:
+    return [
+        Event(
+            **{
+                "type": "3-note",
+                "channel": 0,
+                "beat": 0.0,
+                "pitch": 79,
+                "unit": NoteUnit.EIGHTH.value,
+                "velocity": MidiAttr.DEFAULT_VELOCITY,
+                "preset": None,
+                "controls": None,
+                "pitch_bend_chain": None,
+                "active": True,
+            }
+        ),
+        Event(
+            **{
+                "type": "3-note",
+                "channel": 0,
+                "beat": NoteUnit.EIGHTH.value,
+                "pitch": 80,
+                "unit": NoteUnit.EIGHTH.value,
+                "velocity": MidiAttr.DEFAULT_VELOCITY,
+                "preset": None,
+                "controls": None,
+                "pitch_bend_chain": None,
+                "active": True,
+            }
+        ),
+    ]
+
+
+@pytest.fixture(name="bar_result")
+def fixture_bar_result(two_notes) -> Bar:
+    return Bar(
+        **{
+            "meter": {"denominator": 4, "numerator": 4, "min_unit": 32},
+            "bar_num": 0,
+            "bar": two_notes,
+        }
+    )
+
+
+@pytest.fixture()
+def seq_empty_bars() -> Sequence:
+    return {
+        "bars": {
+            0: {
+                "meter": {"numerator": 4, "denominator": 4, "min_unit": 32},
+                "bar_num": 0,
+                "bar": [],
+            },
+            1: {
+                "meter": {"numerator": 4, "denominator": 4, "min_unit": 32},
+                "bar_num": 1,
+                "bar": [],
+            },
+        },
+    }

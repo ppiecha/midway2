@@ -1,3 +1,4 @@
+# pylint: skip-file
 from backend.synth import Sequencer, Synth
 from time import sleep
 

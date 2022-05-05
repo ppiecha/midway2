@@ -83,6 +83,7 @@ class GridScene(BaseGridScene):
             self.selection.is_copying = False
 
     def draw_grid_lines(self):
+        # pylint: disable=duplicate-code
         pen_grid = QPen()
         pen_grid.setStyle(Qt.DotLine)
         pen_grid.setColor(Color.GRID_DEFAULT)

@@ -8,14 +8,14 @@ def test_meter_exceeds_beat_limit():
     assert meter.significant_value(unit=value.eighth) is True
 
 
-def test_meter_unit_from_ratio(capsys):
+def test_meter_unit_from_ratio():
     meter = Meter(numerator=3)
     unit = meter.unit_from_ratio(ratio=1 / 3)
     print(unit)
     assert unit == 4.0
 
 
-def test_meter_add(capsys):
+def test_meter_add():
     meter = Meter()
     val = meter.add(value=value.eighth, value_diff=-value.quarter)
     assert val == -value.eighth
@@ -25,7 +25,7 @@ def test_meter_add(capsys):
     assert val == value.quarter
 
 
-def test_meter_bar_remainder(capsys):
+def test_meter_bar_remainder():
     meter = Meter()
     val = meter.add(value=value.half, value_diff=value.quarter)
     print(val)

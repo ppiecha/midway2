@@ -68,6 +68,7 @@ class Header(QGraphicsItem):
         self.rect = self.get_rect()
 
     def paint(self, painter: QPainter, _, __=None):
+        # pylint: disable=duplicate-code
         pen_grid = QPen()
         pen_grid.setStyle(Qt.DotLine)
         pen_grid.setColor(Color.GRID_DEFAULT)

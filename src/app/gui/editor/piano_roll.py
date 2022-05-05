@@ -29,6 +29,7 @@ logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
 
 class PianoRoll(QWidget):
+    # pylint: disable=duplicate-code
     def __init__(
         self,
         mf: MainFrame,

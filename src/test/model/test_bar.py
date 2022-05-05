@@ -1,7 +1,3 @@
-from typing import List
-
-import pytest
-
 from src.app.backend.midway_synth import MidwaySynth
 from src.app.model.bar import Bar
 from src.app.model.control import PitchBendChain
@@ -10,52 +6,7 @@ from src.app.model.types import NoteUnit
 from src.app.utils.properties import MidiAttr
 
 
-@pytest.fixture
-def two_notes() -> List:
-    return [
-        Event(
-            **{
-                "type": "3-note",
-                "channel": 0,
-                "beat": 0.0,
-                "pitch": 79,
-                "unit": NoteUnit.EIGHTH.value,
-                "velocity": MidiAttr.DEFAULT_VELOCITY,
-                "preset": None,
-                "controls": None,
-                "pitch_bend_chain": None,
-                "active": True,
-            }
-        ),
-        Event(
-            **{
-                "type": "3-note",
-                "channel": 0,
-                "beat": NoteUnit.EIGHTH.value,
-                "pitch": 80,
-                "unit": NoteUnit.EIGHTH.value,
-                "velocity": MidiAttr.DEFAULT_VELOCITY,
-                "preset": None,
-                "controls": None,
-                "pitch_bend_chain": None,
-                "active": True,
-            }
-        ),
-    ]
-
-
-@pytest.fixture
-def bar_result(two_notes) -> Bar:
-    return Bar(
-        **{
-            "meter": {"denominator": 4, "numerator": 4, "min_unit": 32},
-            "bar_num": 0,
-            "bar": two_notes,
-        }
-    )
-
-
-def test_note(note0, capsys):
+def test_note(note0):
     print(str(note0.dict()))
     assert note0.dict() == {
         "type": "3-note",
@@ -76,7 +27,7 @@ def test_bar_constructor(bar1):
     assert len(bar1) == 0
 
 
-def test_add_note(bar0, note0, capsys):
+def test_add_note(bar0, note0):
     b0 = bar0 + note0
     assert len(b0) == 1
     assert b0[0] == note0
@@ -118,7 +69,7 @@ def test_remove_event(bar0, note0, note1):
     b0.remove_event(event=note0)
     assert list(b0.events()) == [note1]
     b0.remove_event(event=note1)
-    assert list(b0.events()) == []
+    assert not list(b0.events())
 
 
 def test_add_events(bar0, note0, note1, note2, two_notes):
@@ -165,7 +116,7 @@ def test_program(program0):
     }
 
 
-def test_controls(control0, capsys):
+def test_controls(control0):
     print(control0.dict())
     assert control0.dict() == {
         "type": "1-controls",
@@ -182,13 +133,13 @@ def test_controls(control0, capsys):
     }
 
 
-def test_play_change_control(bar_c_major, control1, capsys):
+def test_play_change_control(bar_c_major, control1):
     bar_c_major.add_event(event=control1)
     print(bar_c_major)
     MidwaySynth.play_bar(bar=bar_c_major, bpm=120)
 
 
-def test_play_pitch_bend_parabola(bar0, note4, capsys, program_guitar, bpm):
+def test_play_pitch_bend_parabola(bar0, note4, program_guitar, bpm):
     pbc = PitchBendChain.gen_chain(
         bend_fun=PitchBendChain.fun_parabola_neq,
         bpm=bpm,
@@ -205,7 +156,7 @@ def test_play_pitch_bend_parabola(bar0, note4, capsys, program_guitar, bpm):
     MidwaySynth.play_bar(bar=bar0, bpm=bpm)
 
 
-def test_play_pitch_bend(bar_c_major, capsys, program_guitar):
+def test_play_pitch_bend(bar_c_major, program_guitar):
     bpm = 30
     pitch_bend_chain1 = PitchBendChain.gen_chain(bend_fun=PitchBendChain.fun_slide_up, bpm=bpm)
     pitch_bend_chain2 = PitchBendChain.gen_chain(
@@ -250,7 +201,7 @@ def test_remove_events_by_type_notes(bar0, note0, note1, note2, note3, two_notes
     assert len(b0) == 0
 
 
-def test_play_bar_changing_programs(bar_c_major, capsys):
+def test_play_bar_changing_programs(bar_c_major):
     bar = Bar(bar_num=0)
     for index, event in enumerate(bar_c_major):
         prog_event = Event(
@@ -288,11 +239,11 @@ def test_has_event_note_negative1(bar1, note4, note6):
     assert bar1.has_event(note6)
 
 
-def test_has_event_note_positive(bar0, bar1, note3, note0, note1, note2, capsys):
+def test_has_event_note_positive(bar0, note3, note2):
     bar0.add_events([note2, note3])
 
 
-def test_have_same_beat(capsys, bar0, note2, note3, note4):
+def test_have_same_beat(bar0, note2, note3, note4):
     bar0 += note2
     result = bar0.has_conflict(note3)
     assert result is False

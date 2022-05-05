@@ -15,7 +15,7 @@ def test_scale_loop(track_c_major):
     assert len(list(loop.get_compiled_sequence().events())) == 16
 
 
-def test_play_custom_loop(track_c_major, capsys):
+def test_play_custom_loop(track_c_major):
     composition = Composition.from_tracks(name="test_scale", tracks=[track_c_major])
     ms = MidwaySynth()
     ms.play_loop(
@@ -28,7 +28,7 @@ def test_play_custom_loop(track_c_major, capsys):
         sleep(0.1)
 
 
-def test_play_loop_composition(track_c_major, capsys):
+def test_play_loop_composition(track_c_major):
     composition = Composition.from_tracks(name="test_scale", tracks=[track_c_major])
     composition_loops = CompositionLoops.from_list(loop_lst=[composition.default_loop, composition.default_loop])
     assert composition_loops.get_first_loop_name() == "0"
