@@ -1,4 +1,3 @@
-from src.app.backend.midway_synth import MidwaySynth
 from src.app.model.bar import Bar
 from src.app.model.control import PitchBendChain
 from src.app.model.event import Event, EventType, Preset
@@ -133,13 +132,13 @@ def test_controls(control0):
     }
 
 
-def test_play_change_control(bar_c_major, control1):
+def test_play_change_control(bar_c_major, control1, synth):
     bar_c_major.add_event(event=control1)
     print(bar_c_major)
-    MidwaySynth.play_bar(bar=bar_c_major, bpm=120)
+    synth.play_bar(bar=bar_c_major, bpm=120)
 
 
-def test_play_pitch_bend_parabola(bar0, note4, program_guitar, bpm):
+def test_play_pitch_bend_parabola(bar0, note4, program_guitar, bpm, synth):
     pbc = PitchBendChain.gen_chain(
         bend_fun=PitchBendChain.fun_parabola_neq,
         bpm=bpm,
@@ -153,10 +152,10 @@ def test_play_pitch_bend_parabola(bar0, note4, program_guitar, bpm):
         pitch_bend_chain=pbc,
     )
     bar0.add_events([event0, note4, program_guitar])
-    MidwaySynth.play_bar(bar=bar0, bpm=bpm)
+    synth.play_bar(bar=bar0, bpm=bpm)
 
 
-def test_play_pitch_bend(bar_c_major, program_guitar):
+def test_play_pitch_bend(bar_c_major, program_guitar, synth):
     bpm = 30
     pitch_bend_chain1 = PitchBendChain.gen_chain(bend_fun=PitchBendChain.fun_slide_up, bpm=bpm)
     pitch_bend_chain2 = PitchBendChain.gen_chain(
@@ -185,7 +184,7 @@ def test_play_pitch_bend(bar_c_major, program_guitar):
     )
     print("pitch bend event", event1)
     bar_c_major.add_events(events=[event0, event1, event2, program_guitar])
-    MidwaySynth.play_bar(bar=bar_c_major, bpm=bpm)
+    synth.play_bar(bar=bar_c_major, bpm=bpm)
 
 
 def test_remove_events_by_type_notes(bar0, note0, note1, note2, note3, two_notes, program0, control0):
@@ -201,7 +200,7 @@ def test_remove_events_by_type_notes(bar0, note0, note1, note2, note3, two_notes
     assert len(b0) == 0
 
 
-def test_play_bar_changing_programs(bar_c_major):
+def test_play_bar_changing_programs(bar_c_major, synth):
     bar = Bar(bar_num=0)
     for index, event in enumerate(bar_c_major):
         prog_event = Event(
@@ -211,7 +210,7 @@ def test_play_bar_changing_programs(bar_c_major):
             preset=Preset(sf_name=MidiAttr.DEFAULT_SF2, bank=0, patch=index),
         )
         bar.add_events([prog_event, event])
-    MidwaySynth.play_bar(bar=bar, bpm=120)
+    synth.play_bar(bar=bar, bpm=120)
     bar = Bar(bar_num=0)
     for index, event in enumerate(bar_c_major):
         prog_event = Event(
@@ -221,7 +220,7 @@ def test_play_bar_changing_programs(bar_c_major):
             preset=Preset(sf_name=MidiAttr.DEFAULT_SF2, bank=0, patch=index + 64),
         )
         bar.add_events([prog_event, event])
-    MidwaySynth.play_bar(bar=bar, bpm=120)
+    synth.play_bar(bar=bar, bpm=120)
 
 
 def test_has_event_meta(bar0, program0):
