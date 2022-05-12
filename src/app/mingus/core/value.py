@@ -258,7 +258,7 @@ def determine(value):
         if value < v:
             break
         i += 1
-    scaled = float(value) / 2 ** i
+    scaled = float(value) / 2**i
     if scaled >= 0.9375:  # base value
         return (base_values[i], 0, 1, 1)
     elif scaled >= 0.8125:
@@ -275,7 +275,7 @@ def determine(value):
         return (base_values[i + 1], 0, 5, 4)
     d = 3
     for x in range(2, 5):
-        d += 2 ** x
-        if scaled == 2.0 ** x / d:
+        d += 2**x
+        if scaled == 2.0**x / d:
             return (v, x, 1, 1)
     return (base_values[i + 1], 0, 1, 1)

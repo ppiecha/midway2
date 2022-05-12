@@ -141,7 +141,7 @@ class BaseGridScene(QGraphicsScene):
                 x = self.round_to_cell(x)
             beat_ratio, bar_num = modf(self.ratio(x))
             beat = self.sequence.meter().unit_from_ratio(ratio=beat_ratio)
-            event.bar_num = bar_num
+            event.bar_num = int(bar_num)
             event.beat = beat
         return event
 
@@ -255,6 +255,7 @@ class BaseGridScene(QGraphicsScene):
             found = [node for node in self.nodes() if node.event == event]
             if len(found) == 0:
                 raise ValueError(f"Event {event} not found in bar {event.bar_num}")
+            logger.debug(f"found events {found}")
             self.delete_nodes(meta_notes=found, hard_delete=True)
 
     def remove_event(self, event: Event):

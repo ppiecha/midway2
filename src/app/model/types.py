@@ -1,5 +1,6 @@
+from dataclasses import dataclass
 from enum import Enum
-from typing import Union, NewType
+from typing import Union, NewType, Dict, Any, List
 
 from pydantic import PositiveInt, confloat, conint
 
@@ -34,3 +35,27 @@ class NoteUnit(float, Enum):
     THIRTY_SECOND = 32
     SIXTY_FOURTH = 64
     HUNDRED_TWENTY_EIGHTH = 128
+
+
+Json = Dict[str, Any]
+
+
+@dataclass
+class DictDiff:
+    d1: Dict
+    d2: Dict
+    diff: List
+
+
+def dict_diff(d1: Dict, d2: Dict):
+    # print(type(d1.items()))
+    # print(tuple(d1.items()))
+    # d1_set = set(tuple(d1.items()))
+    # d2_set = set(tuple(d2.items()))
+    # return d1_set.symmetric_difference(d2_set)
+    for d1_item in d1.items():
+        if d1_item not in d2.items():
+            yield d1_item
+    for d2_item in d2.items():
+        if d2_item not in d1.items():
+            yield d2_item

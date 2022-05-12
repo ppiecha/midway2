@@ -30,7 +30,6 @@ class Notification(Enum):
 class AppAttr:
     APP_NAME = "Midway"
     CONFIG_FILE = "config.ini"
-    EXCLUDED_JSON_FIELDS = {"parent_id"}
     SF2_DIR = "sf2"
     PATH_UTILS = os.path.dirname(os.path.abspath(__file__))
     PATH_APP = str(Path(PATH_UTILS).parent)

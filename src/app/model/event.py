@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional, List, Tuple
 
-from pydantic import BaseModel, NonNegativeFloat, NonNegativeInt
+from pydantic import BaseModel, NonNegativeFloat, NonNegativeInt, Field
 
 from src.app.mingus.containers.note import Note
 from src.app.model.control import Control, PitchBendChain
@@ -38,9 +38,7 @@ class Event(BaseModel):
     pitch_bend_chain: Optional[PitchBendChain]
     active: Optional[bool] = True
     bar_num: Optional[NonNegativeInt]
-
-    class Config:
-        extra = "allow"
+    parent_id: int = Field(None, exclude=True)
 
     def dbg(self) -> str:
         patch = self.preset.patch if self.preset else None
@@ -84,7 +82,10 @@ class Event(BaseModel):
             self.type == other.type
             and self.channel == other.channel
             and self.beat == other.beat
-            and (self.type != EventType.NOTE or (self.type == EventType.NOTE and self.pitch == other.pitch))
+            and (
+                self.type != EventType.NOTE
+                or (self.type == EventType.NOTE and self.pitch == other.pitch and self.bar_num == other.bar_num)
+            )
             and self.unit == other.unit
         )
 

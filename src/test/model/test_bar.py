@@ -6,7 +6,7 @@ from src.app.utils.properties import MidiAttr
 
 
 def test_note(note0):
-    print(str(note0.dict()))
+    print(str(note0.dict(exclude={"parent_id": True})))
     assert note0.dict() == {
         "type": "3-note",
         "channel": 0,

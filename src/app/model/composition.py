@@ -48,22 +48,21 @@ class Composition(BaseModel):
 
     @property
     def default_loop(self) -> Loop:
-        if self.get_custom_loop_by_name(loop_name=GuiAttr.DEFAULT, raise_not_found=False) is None:
-            self._update_default_loop()
+        # if self.get_custom_loop_by_name(loop_name=GuiAttr.DEFAULT, raise_not_found=False) is None:
+        self._update_default_loop()
         return self.get_custom_loop_by_name(loop_name=GuiAttr.DEFAULT, raise_not_found=True)
 
     def _update_default_loop(self):
-        if self.default_loop is None:
-            loop = Loop(name=GuiAttr.DEFAULT, tracks=[], checked=True)
-            for track in self.tracks:
-                version_name = track.get_default_version().version_name
-                tli = TrackLoopItem(
-                    loop_track=track,
-                    loop_track_version=version_name,
-                    loop_track_enabled=True,
-                )
-                loop.tracks.append(tli)
-            self.loops[LoopType.custom] = CustomLoops(loops=[loop])
+        loop = Loop(name=GuiAttr.DEFAULT, tracks=[], checked=True)
+        for track in self.tracks:
+            version_name = track.get_default_version().version_name
+            tli = TrackLoopItem(
+                loop_track=track,
+                loop_track_version=version_name,
+                loop_track_enabled=True,
+            )
+            loop.tracks.append(tli)
+        self.loops[LoopType.custom] = CustomLoops(loops=[loop])
 
     def new_track(self, track: Track, enable: bool):
         if not self.track_name_exists(track_name=track.name, current_track=track, raise_not_found=False):

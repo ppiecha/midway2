@@ -11,6 +11,7 @@ from src.app.model.bar import Bar
 from src.app.model.composition import Composition
 from src.app.model.control import Volume, Control, Expression
 from src.app.model.event import Event, EventType, Preset
+from src.app.model.project import Project
 from src.app.model.rhythm import Rhythm
 from src.app.model.sequence import Sequence
 from src.app.model.track import Track, TrackVersion, RhythmTrackVersion
@@ -296,3 +297,30 @@ def seq_empty_bars() -> Sequence:
             },
         },
     }
+
+
+@pytest.fixture()
+def project_template_file_name() -> str:
+    return "C:\\Users\\piotr\\_piotr_\\__GIT__\\Python\\midway2\\src\\project_template.json"
+
+
+@pytest.fixture()
+def test_project(note0, bar0) -> Project:
+    track_version = TrackVersion(
+        channel=100,
+        version_name="Default",
+        sf_name=MidiAttr.DEFAULT_SF2,
+        sequence=Sequence.from_bars(bars=[bar0 + note0]),
+    )
+    return Project(
+        name="Test project",
+        bpm=90,
+        compositions=[
+            Composition(
+                name="test composition",
+                tracks=[
+                    Track(name="Test track", current_version="Default", versions=[track_version]),
+                ],
+            ),
+        ],
+    )
