@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from functools import partial
 from typing import TYPE_CHECKING
 from typing import Tuple
 
@@ -108,7 +107,9 @@ class PianoRoll(QWidget):
         loop = self.composition.loops[LoopType.custom].get_loop_by_name(loop_name=GuiAttr.SINGLE_TRACK)
         loop.set_single_track_version(track=self.track, track_version=self.track_version)
         logger.debug("playing")
-        self.synth.play_composition(self.composition, loop_type=LoopType.custom, loop_name=GuiAttr.SINGLE_TRACK, bpm=mf.project.bpm)
+        self.synth.play_composition(
+            self.composition, loop_type=LoopType.custom, loop_name=GuiAttr.SINGLE_TRACK, bpm=mf.project.bpm
+        )
 
     def select_all(self, _: MainFrame):
         self.grid_view.grid_scene.select_all()
