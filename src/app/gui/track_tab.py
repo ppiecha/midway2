@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import logging
 from pathlib import Path
 from typing import List, Dict, Tuple, TYPE_CHECKING
 from PySide6.QtCore import Qt
@@ -17,6 +19,7 @@ from PySide6.QtWidgets import (
     QTableWidgetItem,
 )
 from src.app.gui.editor.piano_roll import PianoRoll
+from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import GuiAttr
 from src.app.gui.widgets import Box, FontBox, PresetBox, ChannelBox
 from src.app.backend.midway_synth import MidwaySynth
@@ -28,6 +31,8 @@ from src.app.model.track import Track, TrackVersion
 if TYPE_CHECKING:
     from src.app.gui.track_list import TrackListItem
     from src.app.gui.main_frame import MainFrame
+
+logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
 
 class MelodyTrackVersion(QWidget):
@@ -65,7 +70,8 @@ class MelodyTrackVersion(QWidget):
         self._preset = PresetBox(synth=self.synth)
         self.config_dlg_btn = QToolButton()
         self.config_dlg_btn.setDefaultAction(self.mf.menu.actions[GuiAttr.EDIT_TRACK_VERSION])
-        self.w_play = QPushButton("Play")
+        self.w_play = QToolButton()
+        self.w_play.setDefaultAction(self.piano_roll.ac_play)
         self.w_stop = QPushButton("Stop")
         self.w_metronome = QCheckBox("Metronome")
         self.w_stop_all_notes = QPushButton("Stop")
@@ -104,7 +110,6 @@ class MelodyTrackVersion(QWidget):
         self.sf_name = self.track_version.sf_name
         self._preset.currentIndexChanged.connect(self.on_preset_change)
         self.bank_patch = self.track_version.bank, self.track_version.patch
-        self.w_play.clicked.connect(self.piano_roll.play)
 
     def populate_font_combo(self):
         self._font.populate_font_combo()

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from functools import partial
 from typing import TYPE_CHECKING, Dict
 
@@ -11,11 +12,14 @@ from pubsub import pub
 from src.app.gui.dialogs.generic_config import GenericConfig, GenericConfigMode
 from src.app.model.composition import Composition
 from src.app.model.track import Track
+from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import GuiAttr
 import src.app.resources  # pylint: disable=unused-import
 
 if TYPE_CHECKING:
     from src.app.gui.main_frame import MainFrame
+
+logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
 
 class Action(QAction):
@@ -38,7 +42,6 @@ class Action(QAction):
         self.setStatusTip(status_tip or caption)
         if slot:
             self.triggered.connect(partial(slot, mf=mf))
-        # connect(openAct, & QAction::triggered, this, & MainWindow::open);
         mf.addAction(self)
 
 

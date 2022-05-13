@@ -11,7 +11,7 @@ from src.app.utils.properties import MidiAttr
 
 class Project(BaseModel):
     name: str
-    bpm: Bpm
+    bpm: Bpm = 90
     compositions: List[Composition]
 
     def num_of_bars(self) -> PositiveInt:
