@@ -84,7 +84,7 @@ def delete_composition(_: MainFrame):
 
 def new_track(mf: MainFrame):
     track_list = mf.composition_tab.current_track_list
-    composition = track_list.composition
+    composition = track_list.COMPOSITION
     if composition.get_next_free_channel() is not None:
         config = GenericConfig(mf=mf, mode=GenericConfigMode.new_track, composition=composition)
         mf.show_config_dlg(config=config)
@@ -125,7 +125,7 @@ def new_track_version(mf: MainFrame):
 
 def edit_track_version(mf: MainFrame):
     track_list = mf.composition_tab.current_track_list
-    composition = track_list.composition
+    composition = track_list.COMPOSITION
     track = track_list.current_track_list_item.track
     track_version = track_list.current_track_list_item.current_track_version
     config = GenericConfig(

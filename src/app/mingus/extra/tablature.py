@@ -420,7 +420,7 @@ def from_Suite(suite, maxwidth=80):
     This function makes use of the Suite's title, subtitle, author, email
     and description attributes.
     """
-    subtitle = str(len(suite.compositions)) + " Compositions" if suite.subtitle == "" else suite.subtitle
+    subtitle = str(len(suite.versions)) + " Compositions" if suite.subtitle == "" else suite.subtitle
     result = os.linesep.join(
         add_headers(
             maxwidth,

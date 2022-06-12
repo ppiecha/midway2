@@ -11,17 +11,18 @@ from src.app.model.bar import Bar
 from src.app.model.composition import Composition
 from src.app.model.control import Volume, Control, Expression
 from src.app.model.event import Event, EventType, Preset
-from src.app.model.project import Project
+from src.app.model.project_version import ProjectVersion
 from src.app.model.rhythm import Rhythm
 from src.app.model.sequence import Sequence
 from src.app.model.track import Track, TrackVersion, RhythmTrackVersion
 from src.app.model.types import Bpm, NoteUnit
+from src.app.model.variant import Variant, VariantType
 from src.app.utils.properties import MidiAttr, DrumPatch
 
 
 @pytest.fixture
 def bpm() -> Bpm:
-    return 60
+    return 120
 
 
 @pytest.fixture(name="bar0")
@@ -169,8 +170,8 @@ def bar_c_major(bar0) -> Bar:
     return bar0
 
 
-@pytest.fixture()
-def track_c_major(bar0, bar1) -> Track:
+@pytest.fixture(name="track_c_major")
+def fixture_track_c_major(bar0, bar1) -> Track:
     sequence = Sequence.from_bars([bar0, bar1])
     cmp = Composer(note=Note(name="C"))
     bar0_events = cmp.scale(cls=Major, octaves=2)[:8]
@@ -181,6 +182,38 @@ def track_c_major(bar0, bar1) -> Track:
         name="c major",
         versions=[TrackVersion.from_sequence(sequence=sequence, version_name="c")],
     )
+
+
+@pytest.fixture()
+def bar_c_major_up(track_c_major) -> Bar:
+    return track_c_major.get_default_version().get_sequence(include_defaults=True).bars[0]
+
+
+@pytest.fixture()
+def bar_c_major_down(track_c_major) -> Bar:
+    return track_c_major.get_default_version().get_sequence(include_defaults=True).bars[1]
+
+
+@pytest.fixture(name="empty_single_variant")
+def fixture_empty_single_variant() -> Variant:
+    return Variant(name="empty_single_variant", type=VariantType.SINGLE, selected=True, items=[])
+
+
+@pytest.fixture(name="empty_composition_variant")
+def fixture_empty_composition_variant() -> Variant:
+    return Variant(name="empty_composition_variant", type=VariantType.COMPOSITION, selected=True, items=[])
+
+
+@pytest.fixture(name="variant_c_major_composition")
+def fixture_variant_c_major_composition(track_c_major) -> Variant:
+    variant = Variant(name="variant_c_major", type=VariantType.COMPOSITION, selected=True, items=[])
+    return variant.add_track(track=track_c_major, enable=True)
+
+
+@pytest.fixture(name="variant_c_major_single")
+def fixture_variant_c_major_single(track_c_major) -> Variant:
+    variant = Variant(name="variant_c_major", type=VariantType.SINGLE, selected=True, items=[])
+    return variant.add_track(track=track_c_major, enable=True)
 
 
 @pytest.fixture(name="num_of_bars")
@@ -225,10 +258,10 @@ def fixture_bass_sequence(rhythm, num_of_bars) -> Sequence:
 
 
 @pytest.fixture()
-def drums_composition(drums_sequence) -> Composition:
+def drums_composition(drums_sequence) -> Composition | None:
     track_version = RhythmTrackVersion(sf_name=MidiAttr.DEFAULT_SF2, sequence=drums_sequence)
-    track = Track(name="Drums", versions=[track_version])
-    return Composition.from_tracks(tracks=[track], name="drums_composition")
+    # track = Track(name="Drums", versions=[track_version])
+    # return Composition.from_tracks(tracks=[track], name="drums_composition")
 
 
 @pytest.fixture(scope="session")
@@ -301,26 +334,9 @@ def seq_empty_bars() -> Sequence:
 
 @pytest.fixture()
 def project_template_file_name() -> str:
-    return "C:\\Users\\piotr\\_piotr_\\__GIT__\\Python\\midway2\\src\\project_template.json"
+    return "C:\\Users\\piotr\\_piotr_\\__GIT__\\Python\\midway2\\src\\app\\default_project.json"
 
 
-@pytest.fixture()
-def test_project(note0, bar0) -> Project:
-    track_version = TrackVersion(
-        channel=100,
-        version_name="Default",
-        sf_name=MidiAttr.DEFAULT_SF2,
-        sequence=Sequence.from_bars(bars=[bar0 + note0]),
-    )
-    return Project(
-        name="Test project",
-        bpm=90,
-        compositions=[
-            Composition(
-                name="test composition",
-                tracks=[
-                    Track(name="Test track", current_version="Default", versions=[track_version]),
-                ],
-            ),
-        ],
-    )
+@pytest.fixture(name="empty_project_version")
+def fixture_empty_project_version():
+    return ProjectVersion(name="empty_project_version")

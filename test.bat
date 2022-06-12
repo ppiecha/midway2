@@ -1,2 +1,1 @@
-pytest -k "test and not test_play"
-pytest -k "test_play"
+pytest -vv -k "test and not test_play"

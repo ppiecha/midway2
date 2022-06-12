@@ -15,13 +15,18 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QSpinBox,
 )
+
+from src.app.model.project_version import ProjectVersion
+from src.app.model.variant import Variant
+from src.app.model.variant_item import VariantItem
 from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import MidiAttr
 from src.app.backend.midway_synth import MidwaySynth
 from src.app.model.composition import Composition
 from src.app.model.event import Preset
 from src.app.model.track import Track, TrackVersion
-from src.app.model.loop import Loop, TrackLoopItem, LoopType
+
+# from src.app.model.variant_item import Loop, VariantItem, LoopType
 
 if TYPE_CHECKING:
     from src.app.gui.main_frame import MainFrame
@@ -80,17 +85,17 @@ class TrackVersionBox(QWidget):
     def __init__(
         self,
         parent,
-        composition: Composition,
-        loop: Loop,
-        loop_item: Optional[TrackLoopItem],
+        project_version: ProjectVersion,
+        variant: Variant,
+        variant_item: Optional[VariantItem],
         show_check_box: bool,
         show_combo: bool,
     ):
         super().__init__(parent)
-        self.composition = composition
-        self.loop = loop
-        self.loop_item = loop_item
-        self.is_loop_selector = not show_combo
+        self.project_version = project_version
+        self.variant = variant
+        self.variant_item = variant_item
+        self.is_variant_selector = not show_combo
         self.enabled = QCheckBox(self)
         self.enabled.setVisible(show_check_box)
         self.version = QComboBox(self)
@@ -109,19 +114,20 @@ class TrackVersionBox(QWidget):
         if show_combo:
             self.reload_versions()
 
-        self.enabled.stateChanged.connect(self.on_enable_changed)
+        # self.enabled.stateChanged.connect(self.on_enable_changed)
 
     def reload_versions(self, current_version: str = None):
         self.version.clear()
-        self.version.addItems([version.version_name for version in self.loop_item.loop_track.versions])
+        versions = self.project_version.tracks.get_track(identifier=self.variant_item.track_id).versions
+        self.version.addItems([version.name for version in versions])
         if current_version:
             self.version.setCurrentText(current_version)
 
-    def on_enable_changed(self):
-        if self.is_loop_selector:
-            self.composition.get_loops(loop_type=LoopType.custom).set_checked_loop(self.loop)
-        else:
-            self.loop_item.loop_track_enabled = self.enabled.isChecked()
+    # def on_enable_changed(self):
+    #     if self.is_variant_selector:
+    #         self.project_version.get_loops(loop_type=LoopType.custom).set_checked_loop(self.variant)
+    #     else:
+    #         self.variant_item.loop_track_enabled = self.enabled.isChecked()
 
 
 class BarBox(QSpinBox):
@@ -217,7 +223,7 @@ class DeriveTrackVersionBox(QWidget):
         if index >= 0:
             composition = [
                 composition
-                for composition in self.mf.project.compositions
+                for composition in self.mf.project.versions
                 if composition.name == self.composition_box.itemText(index)
             ]
             if composition:
@@ -237,7 +243,7 @@ class DeriveTrackVersionBox(QWidget):
 
     def load_composition(self, selected_value: str = None):
         self.composition_box.clear()
-        self.composition_box.addItems([composition.name for composition in self.mf.project.compositions])
+        self.composition_box.addItems([composition.name for composition in self.mf.project.versions])
         if selected_value:
             self.composition_box.setCurrentText(selected_value)
 
@@ -249,6 +255,6 @@ class DeriveTrackVersionBox(QWidget):
 
     def load_track_version(self, track: Track, selected_value: str = None):
         self.track_version_box.clear()
-        self.track_version_box.addItems([version.version_name for version in track.versions])
+        self.track_version_box.addItems([version.name for version in track.versions])
         if selected_value:
             self.track_version_box.setCurrentText(selected_value)

@@ -132,11 +132,7 @@ class NewTrackForm(NewNameForm):
         self.show_track_color(color=QColor.fromRgba(self.track.default_color) if self.track else Color.NODE_START)
         self.track_color.setEnabled(self.mode in (TrackEditMode.new_track, TrackEditMode.edit_track))
         self.version_name.setText(
-            self.track_version.version_name
-            if self.track_version
-            else GuiAttr.DEFAULT_VERSION_NAME
-            if not self.track
-            else ""
+            self.track_version.name if self.track_version else GuiAttr.DEFAULT_VERSION_NAME if not self.track else ""
         )
         self.version_name.setEnabled(self.mode in (TrackEditMode.new_track_version, TrackEditMode.edit_track_version))
         self.version_channel.setCurrentIndex(

@@ -4,6 +4,8 @@ from typing import Union, NewType, Dict, Any, List
 
 from pydantic import PositiveInt, confloat, conint
 
+from src.app.utils.exceptions import NoDataFound
+
 
 class Midi:
     MIN = 0
@@ -24,6 +26,7 @@ MidiBankValue = NewType("MidiValue", conint(ge=Midi.MIN, le=Midi.MAX + 1))
 Bend = conint(ge=0, lt=16384)
 BendNormalized = confloat(ge=-1, le=1)
 BendDurationNormalized = confloat(ge=0, le=1)
+# ListItem = Track | TrackVersion | None
 
 
 class NoteUnit(float, Enum):
@@ -48,14 +51,22 @@ class DictDiff:
 
 
 def dict_diff(d1: Dict, d2: Dict):
-    # print(type(d1.items()))
-    # print(tuple(d1.items()))
-    # d1_set = set(tuple(d1.items()))
-    # d2_set = set(tuple(d2.items()))
-    # return d1_set.symmetric_difference(d2_set)
     for d1_item in d1.items():
         if d1_item not in d2.items():
             yield d1_item
     for d2_item in d2.items():
         if d2_item not in d1.items():
             yield d2_item
+
+
+def get_one(data: List, raise_on_empty: bool = False, raise_on_multiple: bool = True):
+    if not data and raise_on_empty:
+        raise NoDataFound("List is empty on None. Expected exactly one element")
+    if raise_on_multiple and len(data) > 1:
+        raise NoDataFound(f"Found more than one element {data}. Expecting exactly one")
+    return data[0] if data else None
+
+
+class TrackType(str, Enum):
+    VOICE = "voice"
+    RHYTHM = "rhythm"

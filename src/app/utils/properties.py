@@ -20,11 +20,15 @@ class GridAttr(Flag):
     SHOW_SCROLLBARS = auto()
 
 
-class Notification(Enum):
+class NotificationMessage(Enum):
     EVENT_ADDED = "EVENT_ADDED"
     EVENT_REMOVED = "EVENT_REMOVED"
     EVENT_CHANGED = "EVENT_CHANGED"
     EVENT_COPIED = "EVENT_COPIED"
+
+    TRACK_ADDED = "TRACK_ADDED"
+    TRACK_REMOVED = "TRACK_REMOVED"
+    TRACK_CHANGED = "TRACK_CHANGED"
 
 
 class AppAttr:
@@ -58,7 +62,9 @@ class MidiAttr:
 
 class GuiAttr:
     DEFAULT_VERSION_NAME = "Default"
+    DEFAULT_COMPOSITION = "Default composition"
     DEFAULT_NUM_OF_BARS = 16
+    DEFAULT_BPM = 90
     # Grid
     RULER_HEIGHT = 20
     GRID_DIV_UNIT = NoteUnit.EIGHTH
@@ -146,7 +152,7 @@ class IniAttr(str, Enum):
     MAIN_WINDOW = "MAIN_WINDOW"
     EVENT_WINDOW = "EVENT_WINDOW"
     PROJECT_FILE = "project_file"
-    PROJECT_TEMPLATE = "project_template.json"
+    DEFAULT_PROJECT = "default_project.json"
     MAIN_WIN_SIZE = "main_win_size"
     MAIN_WIN_POS = "main_win_pos"
     EVENT_WIN_SIZE = "event_win_size"

@@ -331,7 +331,7 @@ class GeneralTab(QWidget):
         self.track_name_box.setText(config.track.name if config.track else "")
         self.show_track_color(color=QColor.fromRgba(config.track.default_color) if config.track else Color.NODE_START)
         self.version_name_box.setText(
-            config.track_version.version_name if config.track_version else GuiAttr.DEFAULT_VERSION_NAME
+            config.track_version.name if config.track_version else GuiAttr.DEFAULT_VERSION_NAME
         )
         self.version_channel_box.setCurrentIndex(
             config.track_version.channel if config.track_version else self.default_channel
@@ -382,8 +382,8 @@ class GeneralTab(QWidget):
             return valid
         if self.config.track:
             valid = not self.config.track.track_version_exists(
-                version_name=self.version_name,
-                current_version=self.config.track_version,
+                identifier=self.version_name,
+                existing_version=self.config.track_version,
             )
         if not valid:
             self.config.mf.show_message_box(f"Track name {self.track_name} exists in composition")

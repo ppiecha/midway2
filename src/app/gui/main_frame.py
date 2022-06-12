@@ -14,12 +14,12 @@ from PySide6.QtWidgets import (
 )
 
 from src.app.backend.midway_synth import MidwaySynth
-from src.app.gui.composition_tab import CompositionTab
+from src.app.gui.project_control import ProjectControl
 from src.app.gui.dialogs.generic_config import GenericConfigDlg, GenericConfig
 from src.app.gui.menu import MenuBar
 from src.app.gui.toolbar import ToolBar
 from src.app.gui.widgets import Box
-from src.app.model.project import Project, simple_project
+from src.app.model.project import Project, empty_project
 from src.app.model.serializer import read_json_file, write_json_file
 from src.app.model.types import dict_diff, DictDiff
 from src.app.utils.logger import get_console_logger
@@ -40,12 +40,13 @@ class MainFrame(QMainWindow):
         self.addToolBar(ToolBar(self))
         self.project_file = self.config.value(
             IniAttr.PROJECT_FILE,
-            os.path.join(AppAttr.PATH_SRC, IniAttr.PROJECT_TEMPLATE),
+            os.path.join(AppAttr.PATH_APP, IniAttr.DEFAULT_PROJECT),
         )
         self.project: Optional[Project] = None
         self.read_project_file(project_file_name=self.project_file)
         self.gen_config_dlg = GenericConfigDlg(mf=self)
-        self.composition_tab = CompositionTab(mf=self, parent=self, project=self.project)
+        self.composition_tab = ProjectControl(mf=self, parent=self, project=self.project)
+        print(self.project)
         self.main_box = Box(direction=QBoxLayout.TopToBottom)
         self.main_box.addWidget(self.composition_tab)
         self.setLayout(self.main_box)
@@ -72,11 +73,13 @@ class MainFrame(QMainWindow):
         if project_file_name and Path(project_file_name).exists():
             self.project = Project(**read_json_file(json_file_name=project_file_name))
         else:
-            self.show_message_box(f"Wrong last project file name or file doesn't exist {project_file_name}")
-            self.project = simple_project()
+            self.show_message_box(
+                message="Wrong last project file name or file doesn't exist", details=f"{project_file_name}"
+            )
+            self.project = empty_project()
 
     def save_project_file(self, project_file_name: str):
-        write_json_file(json_dict=self.project.dict(), json_file_name=project_file_name)
+        write_json_file(json_dict=self.project.json(indent=2), json_file_name=project_file_name)
 
     def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)
@@ -100,7 +103,7 @@ class MainFrame(QMainWindow):
         if self.project_file and Path(self.project_file).exists():
             last_saved_dict = read_json_file(json_file_name=self.project_file)
         else:
-            last_saved_dict = {}
+            last_saved_dict = {"name": "None"}
         last_saved_project = Project(**last_saved_dict)
         return self.project.json() != last_saved_project.json()
 
@@ -127,8 +130,14 @@ class MainFrame(QMainWindow):
     def show_message(self, message: str, timeout: int = 5000):
         self.status_bar.showMessage(message, timeout)
 
-    def show_message_box(self, message: str):
-        QMessageBox.information(self, "", message)
+    def show_message_box(
+        self,
+        message: str,
+        details: str = None,
+    ):
+        if details:
+            message = f"<b>{message}</b><br>{details}"
+        QMessageBox.information(self, AppAttr.APP_NAME, message)
 
     def set_brand(self):
         self.setWindowTitle(AppAttr.APP_NAME)

@@ -11,7 +11,7 @@ from src.app.model.event import Event, EventType, Diff, PairOfEvents
 from src.app.model.meter import Meter, invert
 from src.app.model.midi_keyboard import MidiRange
 from src.app.utils.logger import get_console_logger
-from src.app.utils.properties import Notification
+from src.app.utils.properties import NotificationMessage
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
@@ -102,7 +102,7 @@ class Sequence(BaseModel):
             self.bars[bar_num] += event
             if callback:
                 pub.sendMessage(
-                    topicName=Notification.EVENT_ADDED.value,
+                    topicName=NotificationMessage.EVENT_ADDED.value,
                     sequence_id=id(self),
                     event=event,
                 )
@@ -119,7 +119,7 @@ class Sequence(BaseModel):
         self.bars[bar_num].remove_event(event=event)
         if callback:
             pub.sendMessage(
-                topicName=Notification.EVENT_REMOVED.value,
+                topicName=NotificationMessage.EVENT_REMOVED.value,
                 sequence_id=id(self),
                 event=event,
             )
@@ -170,9 +170,14 @@ class Sequence(BaseModel):
         return str(self.bars)
 
     @classmethod
-    def from_bars(cls, bars: List[Bar]) -> Sequence:
+    def from_bars(cls, bars: List[Bar], overwrite_bar_nums: bool = False) -> Sequence:
+        if overwrite_bar_nums:
+            bars_copy = list(bars)
+        else:
+            bars_copy = bars
         sequence = cls(bars={})
-        for bar in bars:
+        for index, bar in enumerate(bars_copy):
+            bar.bar_num = index
             sequence += bar
         return sequence
 
@@ -250,7 +255,7 @@ class Sequence(BaseModel):
         for old, new in event_pairs:
             # logger.debug(f"event sent {[old.dbg(), new.dbg()]}")
             pub.sendMessage(
-                topicName=Notification.EVENT_CHANGED.value,
+                topicName=NotificationMessage.EVENT_CHANGED.value,
                 event=old,
                 changed_event=new,
             )

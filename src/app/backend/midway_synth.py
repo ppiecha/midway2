@@ -6,18 +6,20 @@ import weakref
 from logging import DEBUG
 from time import sleep
 from typing import List, Optional, Callable, NamedTuple
+from uuid import UUID
 
 from PySide6.QtCore import QThread
 
 from src.app import AppAttr
 from src.app.backend.synth import Sequencer, Synth
 from src.app.model.bar import Bar
-from src.app.model.composition import Composition
 from src.app.model.event import Event, Preset
-from src.app.model.loop import Loops, LoopType
-from src.app.model.types import Channel
+
+from src.app.model.project_version import ProjectVersion
+from src.app.model.track import Track
+from src.app.model.types import Channel, Bpm
 from src.app.utils.logger import get_console_logger
-from src.app.utils.properties import MidiAttr, GuiAttr
+from src.app.utils.properties import MidiAttr
 from src.app.utils.units import (
     unit2tick,
     bpm2time_scale,
@@ -43,7 +45,7 @@ class MidwaySynth(Synth):
         super().__init__()
         self.mf = mf
         self.sf2_path = sf2_path
-        self.loop_player: Optional[LoopPlayer] = None
+        self.player: Optional[Player] = None
         if mf:
             self.thread = FontLoader(mf=mf, synth=self)
             # self.thread.finished.connect(self.finished)
@@ -58,11 +60,7 @@ class MidwaySynth(Synth):
         return self.thread.isFinished()
 
     def is_playing(self) -> bool:
-        return (
-            self.loop_player
-            and self.loop_player.event_provider()
-            and self.loop_player.event_provider().sequencer() is not None
-        )
+        return self.player and self.player.event_provider() and self.player.event_provider().sequencer() is not None
 
     def load_sound_fonts(self):
         for file_name in self.get_sf_files(path=self.sf2_path):
@@ -104,8 +102,8 @@ class MidwaySynth(Synth):
         threading.Thread(target=self.play_note, args=(channel, pitch, secs)).start()
 
     def stop_loop_player(self):
-        if self.loop_player:
-            self.loop_player.stop()
+        if self.player:
+            self.player.stop()
 
     @staticmethod
     def play_bar(
@@ -124,76 +122,102 @@ class MidwaySynth(Synth):
         sequencer.play_bar(synth=fs, bar=bar, bpm=bpm, repeat=repeat)
         sleep(bar_length2sec(bar=bar, bpm=bpm) * repeat)
 
-    def play_loop(
+    def play(
         self,
-        loops: Loops,
-        loop_name: str,
-        bpm: float,
+        project_version: ProjectVersion,
+        start_variant_id: UUID,
+        last_variant_id: UUID = None,
+        track: Track = None,
+        bpm: Bpm = None,
         start_bar_num: int = 0,
         repeat: bool = False,
     ):
-        if self.loop_player:
-            self.loop_player.stop()
-        self.loop_player = LoopPlayer(synth=self, loops=loops)
-        self.loop_player.play(
+        if self.player:
+            self.player.stop()
+        self.player = Player(synth=self, project_version=project_version)
+        self.player.play(
             bpm=bpm,
-            start_loop_name=loop_name,
+            start_variant_id=start_variant_id,
+            last_variant_id=last_variant_id,
+            track=track,
             start_bar_num=start_bar_num,
             repeat=repeat,
         )
 
-    def play_composition(
-        self,
-        composition: Composition,
-        loop_type: LoopType,
-        loop_name: str,
-        bpm: float,
-        start_bar_num: int = 0,
-        repeat: bool = False,
-    ):
-        if self.loop_player:
-            self.loop_player.stop()
-        self.loop_player = LoopPlayer(synth=self, loops=composition.loops[loop_type])
-        self.loop_player.play(
-            bpm=bpm,
-            start_loop_name=loop_name,
-            start_bar_num=start_bar_num,
-            repeat=repeat,
-        )
+    def wait_to_the_end(self):
+        while self.is_playing():
+            sleep(0.1)
 
-    def play_composition_loop(
-        self,
-        composition: Composition,
-        bpm: float,
-        loop_name: str = GuiAttr.FIRST_COMPOSITION_LOOP,
-        start_bar_num: int = 0,
-        repeat: bool = False,
-    ):
-        self.play_composition(
-            composition=composition,
-            loop_type=LoopType.composition,
-            loop_name=loop_name,
-            bpm=bpm,
-            start_bar_num=start_bar_num,
-            repeat=repeat,
-        )
-
-    def play_custom_loop(
-        self,
-        composition: Composition,
-        bpm: float,
-        loop_name: str = GuiAttr.DEFAULT,
-        start_bar_num: int = 0,
-        repeat: bool = False,
-    ):
-        self.play_composition(
-            composition=composition,
-            loop_type=LoopType.custom,
-            loop_name=loop_name,
-            bpm=bpm,
-            start_bar_num=start_bar_num,
-            repeat=repeat,
-        )
+    # def play_loop(
+    #     self,
+    #     loops: Loops,
+    #     loop_name: str,
+    #     bpm: float,
+    #     start_bar_num: int = 0,
+    #     repeat: bool = False,
+    # ):
+    #     if self.loop_player:
+    #         self.loop_player.stop()
+    #     self.loop_player = LoopPlayer(synth=self, loops=loops)
+    #     self.loop_player.play(
+    #         bpm=bpm,
+    #         start_loop_name=loop_name,
+    #         start_bar_num=start_bar_num,
+    #         repeat=repeat,
+    #     )
+    #
+    # def play_composition(
+    #     self,
+    #     composition: Composition,
+    #     loop_type: LoopType,
+    #     loop_name: str,
+    #     bpm: float,
+    #     start_bar_num: int = 0,
+    #     repeat: bool = False,
+    # ):
+    #     if self.loop_player:
+    #         self.loop_player.stop()
+    #     self.loop_player = LoopPlayer(synth=self, loops=composition.loops[loop_type])
+    #     self.loop_player.play(
+    #         bpm=bpm,
+    #         start_loop_name=loop_name,
+    #         start_bar_num=start_bar_num,
+    #         repeat=repeat,
+    #     )
+    #
+    # def play_composition_loop(
+    #     self,
+    #     composition: Composition,
+    #     bpm: float,
+    #     loop_name: str = GuiAttr.FIRST_COMPOSITION_LOOP,
+    #     start_bar_num: int = 0,
+    #     repeat: bool = False,
+    # ):
+    #     self.play_composition(
+    #         composition=composition,
+    #         loop_type=LoopType.composition,
+    #         loop_name=loop_name,
+    #         bpm=bpm,
+    #         start_bar_num=start_bar_num,
+    #         repeat=repeat,
+    #     )
+    #
+    # def play_custom_loop(
+    #     self,
+    #     composition: Composition,
+    #     bpm: float,
+    #     loop_name: str = GuiAttr.DEFAULT,
+    #     start_bar_num: int = 0,
+    #     repeat: bool = False,
+    # ):
+    #     self.play_composition(
+    #         composition=composition,
+    #         loop_type=LoopType.custom,
+    #         loop_name=loop_name,
+    #         bpm=bpm,
+    #         start_bar_num=start_bar_num,
+    #         repeat=repeat,
+    #     )
 
 
 class TimedEvent(NamedTuple):
@@ -205,32 +229,40 @@ class EventProvider:
     def __init__(
         self,
         synth: MidwaySynth,
-        loops: Loops,
-        bpm: float,
-        start_loop_name: str,
+        project_version: ProjectVersion,
+        bpm: Bpm,
+        start_variant_id: UUID,
+        last_variant_id: UUID,
+        track: Track,
         start_bar_num: int,
         callback: Callable,
         repeat: bool,
     ):
         self.synth = synth
-        self.loops = loops
-        self.bpm = bpm
-        self.loop_name = start_loop_name
+        self.project_version = project_version
+        self.bpm = bpm or project_version.bpm
+        self.variant_id = start_variant_id
+        self.last_variant_id = last_variant_id
+        self.track = track
         self.bar_num = start_bar_num
         self.repeat = repeat
-        loop = loops.get_loop_by_name(loop_name=start_loop_name)
-        self.sequence = loop.get_compiled_sequence(include_defaults=True)
+        logger.debug(f"EventProvider variant id {self.variant_id}")
+        self.sequence = project_version.get_compiled_sequence(
+            variant_id=self.variant_id, single_track=self.track, include_defaults=True
+        )
         self.bar_length = self.sequence.bars[start_bar_num].length()
-        self.bar_duration = unit2tick(unit=self.bar_length, bpm=bpm)
+        self.bar_duration = unit2tick(unit=self.bar_length, bpm=self.bpm)
         self._sequencer = Sequencer(
             synth=synth,
-            time_scale=bpm2time_scale(bpm=bpm),
+            time_scale=bpm2time_scale(bpm=self.bpm),
             use_system_timer=False,
             callback=callback,
         )
         self.sequencer = weakref.ref(self._sequencer)
         self.tick = self.sequencer().get_tick()
-        self.stop_time = loops.get_total_num_of_bars() * self.bar_duration + self.tick
+        self.stop_time = (
+            self.project_version.get_total_num_of_bars(variant_id=self.variant_id) * self.bar_duration + self.tick
+        )
         self.skip_time = self.stop_time - int(self.bar_duration / 2)
 
     def events(self) -> List[TimedEvent]:
@@ -251,11 +283,16 @@ class EventProvider:
             self.bar_num += 1
         logger.debug(f"next bar is {self.bar_num}")
         if self.bar_num == 0:
-            next_loop = self.loops.get_next_loop(self.loop_name)
-            if next_loop:
-                logger.debug(f"Found next loop {next_loop.name}")
-                self.sequence = next_loop.get_compiled_sequence()
-                self.loop_name = next_loop.name
+            if (
+                not self.project_version.is_last_variant(variant_id=self.variant_id, repeat=self.repeat)
+                and self.variant_id != self.last_variant_id
+            ):
+                next_variant = self.project_version.get_next_variant(self.variant_id, repeat=self.repeat)
+                logger.debug(f"Found next next_variant {next_variant.name}")
+                self.sequence = self.project_version.get_compiled_sequence(
+                    variant_id=next_variant.id, single_track=self.track, include_defaults=True
+                )
+                self.variant_id = next_variant.id
             else:
                 logger.debug("No next loop")
                 self.sequence = None
@@ -265,10 +302,10 @@ class EventProvider:
         return int(self.tick + self.bar_duration / 2)
 
 
-class LoopPlayer:
-    def __init__(self, synth: MidwaySynth, loops: Loops):
+class Player:
+    def __init__(self, synth: MidwaySynth, project_version: ProjectVersion):
         self.synth = synth
-        self.loops = loops
+        self.project_version = project_version
         self._event_provider: Optional[EventProvider] = None
         self.event_provider = None
         self.callbacks = set()
@@ -276,14 +313,18 @@ class LoopPlayer:
     def is_playing(self) -> bool:
         return self.event_provider() is not None
 
-    def play(self, bpm: float, start_loop_name: str, start_bar_num: int, repeat: bool):
+    def play(
+        self, bpm: Bpm, start_variant_id: UUID, last_variant_id: UUID, track: Track, start_bar_num: int, repeat: bool
+    ):
         self.synth.system_reset()
         self.callbacks = set()
         self._event_provider = EventProvider(
             synth=self.synth,
-            loops=self.loops,
+            project_version=self.project_version,
             bpm=bpm,
-            start_loop_name=start_loop_name,
+            start_variant_id=start_variant_id,
+            last_variant_id=last_variant_id,
+            track=track,
             start_bar_num=start_bar_num,
             callback=self.seq_callback,
             repeat=repeat,

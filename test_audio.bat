@@ -1,1 +1,1 @@
-pytest -k "test_play"
+pytest -vv src/test/audio

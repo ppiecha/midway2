@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
 from pubsub import pub
 
 from src.app.gui.editor.selection import NodeSelection
-from src.app.utils.properties import Color, KeyAttr, GridAttr, Notification
+from src.app.utils.properties import Color, KeyAttr, GridAttr, NotificationMessage
 from src.app.utils.logger import get_console_logger
 from src.app.model.event import Event
 
@@ -46,8 +46,8 @@ class Node(QGraphicsItem):
         self.register_listeners()
 
     def register_listeners(self):
-        if not pub.subscribe(self.event_changed, Notification.EVENT_CHANGED.value):
-            raise Exception(f"Cannot register listener {Notification.EVENT_CHANGED}")
+        if not pub.subscribe(self.event_changed, NotificationMessage.EVENT_CHANGED.value):
+            raise Exception(f"Cannot register listener {NotificationMessage.EVENT_CHANGED}")
 
     def event_changed(self, event: Event, changed_event: Event):
         if id(event) == id(self.event):

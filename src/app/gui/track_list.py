@@ -23,9 +23,10 @@ from PySide6.QtWidgets import (
 from pubsub import pub
 
 from src.app.gui.dialogs.generic_config import GenericConfig, GenericConfigMode
-from src.app.gui.track_tab import TrackVersionTab
+from src.app.gui.track_control import TrackVersionTab
 from src.app.gui.widgets import Box
 from src.app.model.composition import Composition
+from src.app.model.project_version import ProjectVersion
 from src.app.model.track import Track, TrackVersion
 from src.app.utils.properties import GuiAttr
 import src.app.resources  # pylint: disable=unused-import
@@ -94,14 +95,14 @@ class TrackListItem(QWidget):
 
 
 class TrackList(QListWidget):
-    def __init__(self, mf: MainFrame, parent, stack: QStackedWidget, composition: Composition):
+    def __init__(self, mf: MainFrame, parent, stack: QStackedWidget, project_version: ProjectVersion):
         super().__init__(parent=parent)
         self.mf = mf
-        self.composition = composition
+        self.project_version = project_version
         self.list = QListWidget(self)
         self.map: Dict[str, TrackListItem] = {}
         self.stack = stack
-        for track in composition.tracks:
+        for track in project_version.tracks:
             self._new_track(track=track)
         self.select_first_item()
         self.main_box = Box(direction=QBoxLayout.TopToBottom)
@@ -119,7 +120,7 @@ class TrackList(QListWidget):
     def current_track_list_item(self) -> TrackListItem:
         current_item = self.list.currentItem()
         if not current_item:
-            raise ValueError(f"Cannot determine current item in track list in composition {self.composition}")
+            raise ValueError(f"Cannot determine current item in track list in composition {self.project_version}")
         return self.list.itemWidget(current_item)
 
     def select_first_item(self):
@@ -133,7 +134,7 @@ class TrackList(QListWidget):
             parent=self,
             track=track,
             list_item=widget_item,
-            composition=self.composition,
+            composition=self.project_version,
         )
         self.stack.addWidget(self.map[track.name].version_tab)
         widget_item.setSizeHint(self.map[track.name].sizeHint())
@@ -145,14 +146,14 @@ class TrackList(QListWidget):
         config = GenericConfig(
             mf=self.mf,
             mode=GenericConfigMode.edit_track,
-            composition=self.composition,
+            composition=self.project_version,
             track=track_list_item.track,
         )
         self.mf.show_config_dlg(config=config)
 
     def _delete_track(self, track: Track):
-        if not self.composition.track_name_exists(track_name=track.name):
-            raise ValueError(f"Track with name {track.name} does not exist in composition {self.composition.name}")
+        if not self.project_version.track_name_exists(track_name=track.name):
+            raise ValueError(f"Track with name {track.name} does not exist in composition {self.project_version.name}")
         track_list_item: TrackListItem = self.map.pop(track.name)
         self.list.removeItemWidget(track_list_item.list_item)
         self.stack.removeWidget(track_list_item)
@@ -160,7 +161,7 @@ class TrackList(QListWidget):
             track_list_item.version_tab._delete_track_version(
                 track_version=track_list_item.track.get_version(version_name=track_version_name)
             )
-        self.composition.delete_track(track=track)
+        self.project_version.delete_track(track=track)
         track_list_item.deleteLater()
 
     def register_listeners(self):
@@ -175,7 +176,7 @@ class TrackList(QListWidget):
         pass
 
     def new_track(self, composition: Composition, track: Track):
-        if self.composition == composition:
+        if self.project_version == composition:
             self._new_track(track=track)
             self.mf.menu.post_refresh_loops(composition=composition)
 
@@ -183,7 +184,7 @@ class TrackList(QListWidget):
         pass
 
     def delete_track(self, composition: Composition, track: Track):
-        if self.composition == composition:
+        if self.project_version == composition:
             self._delete_track(track=track)
 
     def display(self, current: int):

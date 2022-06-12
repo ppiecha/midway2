@@ -22,7 +22,7 @@ from src.app.model.midi_keyboard import BaseKeyboard
 from src.app.model.sequence import Sequence
 from src.app.model.types import Channel
 from src.app.utils.logger import get_console_logger
-from src.app.utils.properties import GuiAttr, KeyAttr, Notification, GridAttr, MidiAttr
+from src.app.utils.properties import GuiAttr, KeyAttr, NotificationMessage, GridAttr, MidiAttr
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
@@ -114,10 +114,10 @@ class BaseGridScene(QGraphicsScene):
         self.register_listeners()
 
     def register_listeners(self):
-        if not pub.subscribe(self.add_node, Notification.EVENT_ADDED.value):
-            raise Exception(f"Cannot register listener {Notification.EVENT_ADDED}")
-        if not pub.subscribe(self.remove_node, Notification.EVENT_REMOVED.value):
-            raise Exception(f"Cannot register listener {Notification.EVENT_REMOVED}")
+        if not pub.subscribe(self.add_node, NotificationMessage.EVENT_ADDED.value):
+            raise Exception(f"Cannot register listener {NotificationMessage.EVENT_ADDED}")
+        if not pub.subscribe(self.remove_node, NotificationMessage.EVENT_REMOVED.value):
+            raise Exception(f"Cannot register listener {NotificationMessage.EVENT_REMOVED}")
 
     def ratio(self, x: float) -> float:
         return x / self.bar_width

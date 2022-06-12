@@ -1,19 +1,23 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 from typing import List, Optional
+from uuid import UUID, uuid4
 
-from pydantic import BaseModel, PositiveInt
+from pydantic import BaseModel, PositiveInt, Field
 
 from src.app.model.bar import Bar
 from src.app.model.event import Event, EventType, Preset
 from src.app.model.sequence import Sequence
-from src.app.model.types import Channel, MidiValue, MidiBankValue
+from src.app.model.types import Channel, MidiValue, MidiBankValue, get_one, TrackType
+from src.app.utils.exceptions import DuplicatedName, NoDataFound
 from src.app.utils.properties import Color, MidiAttr
 
 
 class TrackVersion(BaseModel):
     channel: Channel
-    version_name: str = ""
+    id: UUID = Field(default_factory=uuid4)
+    name: str
     sf_name: str
     bank: MidiBankValue = MidiAttr.DEFAULT_BANK
     patch: MidiValue = MidiAttr.DEFAULT_PATCH
@@ -32,7 +36,7 @@ class TrackVersion(BaseModel):
     ) -> TrackVersion:
         return cls(
             channel=channel,
-            version_name=version_name,
+            name=version_name,
             num_of_bars=sequence.num_of_bars,
             sf_name=sf_name,
             sequence=sequence,
@@ -52,7 +56,7 @@ class TrackVersion(BaseModel):
                 if not first_bar.has_event(event=event):
                     first_bar.add_event(event=event)
                 return Sequence.from_bars(bars=bars)
-            raise ValueError(f"No bars in sequence {self.sequence}")
+            raise NoDataFound(f"No bars in sequence {self.sequence}")
         return self.sequence
 
 
@@ -62,54 +66,111 @@ class RhythmTrackVersion(TrackVersion):
 
 
 class Track(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
     name: str
-    versions: List[TrackVersion]
+    type: TrackType = TrackType.VOICE
+    versions: List[TrackVersion] = []
     default_color: int = Color.NODE_START.rgba()
     default_sf: str = MidiAttr.DEFAULT_SF2
     default_bank: MidiValue = MidiAttr.DEFAULT_BANK
     default_patch: MidiValue = MidiAttr.DEFAULT_PATCH
 
-    def add_track_version(self, track_version: TrackVersion):
+    def __iter__(self):
+        return iter(self.versions)
+
+    def __getitem__(self, item):
+        return self.versions[item]
+
+    def get_version(self, identifier: UUID | str, raise_not_found: bool = True) -> Optional[TrackVersion]:
+        match identifier:
+            case UUID() as uuid:
+                return get_one(
+                    data=[version for version in self.versions if version.id == uuid], raise_on_empty=raise_not_found
+                )
+            case str() as name:
+                return get_one(
+                    data=[version for version in self.versions if version.name == name], raise_on_empty=raise_not_found
+                )
+            case _:
+                raise TypeError(f"Wrong type {type(identifier)}")
+
+    def add_track_version(self, track_version: TrackVersion, raise_on_duplicate: bool = True) -> Track:
+        if raise_on_duplicate and any(version.name == track_version.name for version in self.versions):
+            raise DuplicatedName(
+                f"Version with name {track_version.name} already exists in track {self.name}. "
+                f"Current versions {[version.name for version in self.versions]}"
+            )
         default = self.get_default_version(raise_not_found=False)
         if default and default.num_of_bars != track_version.num_of_bars:
             raise ValueError(
                 f"Number of bars does not match. New " f"{track_version.num_of_bars} existing " f"{default.num_of_bars}"
             )
         self.versions.append(track_version)
+        return self
 
-    def delete_track_version(self, track_version: TrackVersion):
-        self.versions.remove(track_version)
+    def delete_track_version(self, track_version: TrackVersion, raise_not_exists: bool = True) -> Track:
+        if self.track_version_exists(identifier=track_version.name):
+            self.versions.remove(track_version)
+        elif raise_not_exists:
+            raise NoDataFound(f"Cannot find version {track_version.name} in track {self}")
+        return self
 
-    def track_version_by_name(self, track_version_name: str, raise_not_found: bool = True) -> Optional[TrackVersion]:
-        for version in self.versions:
-            if version.version_name == track_version_name:
-                return version
-        if raise_not_found:
-            raise ValueError(f"Cannot find version {track_version_name} " f"in versions {self.versions}")
-        return None
-
-    def track_version_exists(self, version_name: str, current_version: TrackVersion) -> bool:
-        version = self.track_version_by_name(track_version_name=version_name, raise_not_found=False)
-        return version and version != current_version
-
-    def get_version(self, version_name: str, raise_not_found: bool = False) -> Optional[TrackVersion]:
-        version = [version for version in self.versions if version_name == version.version_name]
-        if version:
-            if len(version) > 1:
-                raise ValueError(f"Found more than one version with name " f"{version_name} in track {self.name}")
-            version, *_ = version
-            return version
-        if raise_not_found:
-            raise ValueError(f"Cannot find version {version_name} in track {self}")
-        return None
+    def track_version_exists(self, identifier: UUID | str, existing_version: TrackVersion = None) -> bool:
+        version = self.get_version(identifier=identifier, raise_not_found=False)
+        return version and version != existing_version
 
     def get_default_version(self, raise_not_found: bool = True) -> Optional[TrackVersion]:
-        if self.versions:
-            return self.versions[0]
-        if raise_not_found:
-            raise ValueError("Cannot get default track version. No version defined")
-        return None
+        return get_one(data=self.versions, raise_on_empty=raise_not_found)
+
+    @classmethod
+    def from_sequence(
+        cls,
+        sequence: Sequence,
+        name: str = "",
+        channel: Channel = 0,
+        version_name: str = "",
+        sf_name: str = MidiAttr.DEFAULT_SF2,
+    ):
+        return cls(
+            name=name,
+            versions=[
+                TrackVersion.from_sequence(
+                    sequence=sequence, channel=channel, version_name=version_name, sf_name=sf_name
+                )
+            ],
+        )
 
 
 class RhythmDrumTrack(Track):
     versions: List[RhythmTrackVersion]
+
+
+class Tracks(BaseModel):
+    __root__: List[Track] = []
+
+    def __iter__(self) -> Iterator[Track]:
+        return iter(self.__root__)
+
+    def __getitem__(self, item) -> Track:
+        return self.__root__[item]
+
+    def __len__(self):
+        return len(self.__root__)
+
+    def add_track(self, track: Track, raise_on_duplicate: bool = True):
+        if raise_on_duplicate and any(t.name == track.name for t in self.__root__):
+            raise DuplicatedName(f"Track with name {track.name} already exists")
+        self.__root__.append(track)
+
+    def get_track(self, identifier: UUID | str, raise_not_found: bool = True) -> Optional[Track]:
+        match identifier:
+            case UUID() as uuid:
+                return get_one(
+                    data=[track for track in self.__root__ if track.id == uuid], raise_on_empty=raise_not_found
+                )
+            case str() as name:
+                return get_one(
+                    data=[track for track in self.__root__ if track.name == name], raise_on_empty=raise_not_found
+                )
+            case _:
+                raise TypeError(f"Wrong type {type(identifier)}")

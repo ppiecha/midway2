@@ -11,6 +11,22 @@ class EventAlreadyExists(Exception):
     pass
 
 
+class NoDataFound(Exception):
+    pass
+
+
+class NoItemSelected(Exception):
+    pass
+
+
+class OutOfVariants(Exception):
+    pass
+
+
+class DuplicatedName(Exception):
+    pass
+
+
 def fail(text: str):
     logger.critical(text)
     raise RuntimeError(text)

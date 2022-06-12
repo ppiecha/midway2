@@ -15,12 +15,10 @@ from src.app.gui.editor.ruler import HeaderView, RulerScene
 from src.app.gui.menu import Action
 from src.app.gui.widgets import Box
 from src.app.model.composition import Composition
-from src.app.model.loop import LoopType
 from src.app.model.sequence import Sequence
 from src.app.model.track import TrackVersion, Track
 from src.app.model.types import Bpm
 from src.app.utils.logger import get_console_logger
-from src.app.utils.properties import GuiAttr
 
 if TYPE_CHECKING:
     from src.app.gui.main_frame import MainFrame
@@ -36,12 +34,12 @@ class PianoRoll(QWidget):
         parent,
         track_version: TrackVersion,
         synth: MidwaySynth,
-        composition: Composition,
+        project_version: Composition,
         track: Track,
     ):
         super().__init__(parent=parent)
         self.mf = mf
-        self.composition = composition
+        self.project_version = project_version
         self.track = track
         self.track_version = track_version
         self.synth = synth
@@ -91,25 +89,25 @@ class PianoRoll(QWidget):
             shortcut=QKeySequence.Copy,
             slot=self.copy_selection,
         )
-        self.ac_play = Action(
-            mf=self.mf,
-            caption="Play pianoroll sequence",
-            shortcut=QKeySequence(Qt.Key_Enter),
-            slot=self.play,
-        )
+        # self.ac_play = Action(
+        #     mf=self.mf,
+        #     caption="Play pianoroll sequence",
+        #     shortcut=QKeySequence(Qt.Key_Enter),
+        #     slot=self.play,
+        # )
         self.ac_escape = Action(mf=self.mf, caption="Escape", shortcut=QKeySequence.Cancel, slot=self.escape)
 
         self.setLayout(self.box_main)
         self.sequence = self.track_version.sequence
         assert self.sequence is not None
 
-    def play(self, mf: MainFrame):
-        loop = self.composition.loops[LoopType.custom].get_loop_by_name(loop_name=GuiAttr.SINGLE_TRACK)
-        loop.set_single_track_version(track=self.track, track_version=self.track_version)
-        logger.debug("playing")
-        self.synth.play_composition(
-            self.composition, loop_type=LoopType.custom, loop_name=GuiAttr.SINGLE_TRACK, bpm=mf.project.bpm
-        )
+    # def play(self, mf: MainFrame):
+    #     loop = self.project_version.loops[LoopType.custom].get_loop_by_name(loop_name=GuiAttr.SINGLE_TRACK)
+    #     loop.set_single_track_version(track=self.track, track_version=self.track_version)
+    #     logger.debug("playing")
+    #     self.synth.play_composition(
+    #         self.project_version, loop_type=LoopType.custom, loop_name=GuiAttr.SINGLE_TRACK, bpm=mf.project.bpm
+    #     )
 
     def select_all(self, _: MainFrame):
         self.grid_view.grid_scene.select_all()

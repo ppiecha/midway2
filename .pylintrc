@@ -15,7 +15,6 @@ disable=
     too-many-statements,
     protected-access,
     no-self-use,
-    fixme,
     invalid-name,
     no-name-in-module
 

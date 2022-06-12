@@ -29,3 +29,17 @@ def test_exclude_nested():
     assert project.dict(exclude={"composition": {"tracks": {"__all__": {"parent_id"}}}}) == {
         "composition": {"tracks": [{"id": 1}, {"id": 2}]}
     }
+
+
+def test_pydantic_root():
+    class VariantItem(BaseModel):
+        name: str
+
+    class Variants(BaseModel):
+        __root__: List[VariantItem]
+
+    class Project(BaseModel):
+        variants: Variants
+
+    project = Project(variants=[VariantItem(name="first"), VariantItem(name="second")])
+    assert project.dict() == {"variants": [{"name": "first"}, {"name": "second"}]}

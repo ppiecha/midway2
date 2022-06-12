@@ -60,7 +60,7 @@ class MelodyTrackVersion(QWidget):
             parent=self,
             track_version=track_version,
             synth=synth,
-            composition=composition,
+            project_version=composition,
             track=track,
         )
         self.midi_box = Box(direction=QBoxLayout.LeftToRight)
@@ -71,7 +71,7 @@ class MelodyTrackVersion(QWidget):
         self.config_dlg_btn = QToolButton()
         self.config_dlg_btn.setDefaultAction(self.mf.menu.actions[GuiAttr.EDIT_TRACK_VERSION])
         self.w_play = QToolButton()
-        self.w_play.setDefaultAction(self.piano_roll.ac_play)
+        # self.w_play.setDefaultAction(self.piano_roll.ac_play)
         self.w_stop = QPushButton("Stop")
         self.w_metronome = QCheckBox("Metronome")
         self.w_stop_all_notes = QPushButton("Stop")
@@ -217,11 +217,11 @@ class MelodyTrackVersion(QWidget):
 
     @property
     def version_name(self) -> str:
-        return self.track_version.version_name
+        return self.track_version.name
 
     @version_name.setter
     def version_name(self, name: str) -> None:
-        self.track_version.version_name = name
+        self.track_version.name = name
         # TODO call list refresh and update tab name
 
 
@@ -349,7 +349,7 @@ class TrackVersionTab(QWidget):
         # self.tab_box.currentChanged.connect(self.on_tab_changed)
 
     def _new_track_version(self, track_version: TrackVersion):
-        self.map[track_version.version_name] = TrackTab(
+        self.map[track_version.name] = TrackTab(
             mf=self.mf,
             parent=self,
             track_version=track_version,
@@ -358,9 +358,9 @@ class TrackVersionTab(QWidget):
             track=self.track,
         )
         self.tab_box.addTab(
-            self.map[track_version.version_name],
+            self.map[track_version.name],
             QIcon(":/icons/note.png"),
-            track_version.version_name,
+            track_version.name,
         )
 
     def new_track_version(self, track: Track, track_version: TrackVersion):
@@ -368,10 +368,10 @@ class TrackVersionTab(QWidget):
             self._new_track_version(track_version=track_version)
 
     def _delete_track_version(self, track_version: TrackVersion):
-        self.track.get_version(version_name=track_version.version_name, raise_not_found=True)
-        track_tab = self.map.pop(track_version.version_name)
+        self.track.get_version(version_name=track_version.name, raise_not_found=True)
+        track_tab = self.map.pop(track_version.name)
         if (index := self.tab_box.indexOf(track_tab)) < 0:
-            raise ValueError(f"Cannot find {track_tab.track_version.version_name} tab when deleting")
+            raise ValueError(f"Cannot find {track_tab.track_version.name} tab when deleting")
         self.tab_box.removeTab(index)
         self.track.delete_track_version(track_version=track_version)
         track_tab.deleteLater()
@@ -381,7 +381,7 @@ class TrackVersionTab(QWidget):
 
     @property
     def versions(self) -> List[str]:
-        return [track_version.version_name for track_version in self.track.versions]
+        return [track_version.name for track_version in self.track.versions]
 
     def __iter__(self):
         return iter(self.map)
@@ -424,8 +424,8 @@ class TrackVersionTab(QWidget):
 
     @current_track_version.setter
     def current_track_version(self, track_version: TrackVersion) -> None:
-        if self.tab_box.currentWidget() != self.map[track_version.version_name]:
-            self.tab_box.setCurrentWidget(self.map[track_version.version_name])
+        if self.tab_box.currentWidget() != self.map[track_version.name]:
+            self.tab_box.setCurrentWidget(self.map[track_version.name])
 
     # def on_tab_changed(self, index: int):
     #     self.select_current_version(current_version=self.tab_box.widget(index).version_name)
