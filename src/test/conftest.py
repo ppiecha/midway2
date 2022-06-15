@@ -258,7 +258,7 @@ def fixture_bass_sequence(rhythm, num_of_bars) -> Sequence:
 
 
 @pytest.fixture()
-def drums_composition(drums_sequence) -> Composition | None:
+def drums_composition(drums_sequence) -> ProjectVersion | None:
     track_version = RhythmTrackVersion(sf_name=MidiAttr.DEFAULT_SF2, sequence=drums_sequence)
     # track = Track(name="Drums", versions=[track_version])
     # return Composition.from_tracks(tracks=[track], name="drums_composition")
@@ -339,4 +339,4 @@ def project_template_file_name() -> str:
 
 @pytest.fixture(name="empty_project_version")
 def fixture_empty_project_version():
-    return ProjectVersion(name="empty_project_version")
+    return Composition(name="empty_project_version")

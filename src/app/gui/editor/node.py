@@ -46,7 +46,7 @@ class Node(QGraphicsItem):
         self.register_listeners()
 
     def register_listeners(self):
-        if not pub.subscribe(self.event_changed, NotificationMessage.EVENT_CHANGED.value):
+        if not pub.subscribe(self.event_changed, NotificationMessage.EVENT_CHANGED):
             raise Exception(f"Cannot register listener {NotificationMessage.EVENT_CHANGED}")
 
     def event_changed(self, event: Event, changed_event: Event):

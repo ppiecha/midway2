@@ -1,17 +1,29 @@
-from typing import List
+from typing import List, Iterator
 
 from pydantic import BaseModel
 
 from src.app.model.project_version import ProjectVersion
 from src.app.model.sequence import Sequence
 from src.app.model.track import TrackVersion, Track, Tracks
-from src.app.model.types import TrackType
+from src.app.model.types import TrackType, get_one
 from src.app.utils.properties import MidiAttr, GuiAttr
 
 
 class Project(BaseModel):
     name: str
     versions: List[ProjectVersion] = []
+
+    def __iter__(self) -> Iterator[ProjectVersion]:
+        return iter(self.versions)
+
+    def __getitem__(self, item) -> ProjectVersion:
+        return self.versions[item]
+
+    def __len__(self):
+        return len(self.versions)
+
+    def get_version_by_name(self, version_name: str) -> ProjectVersion:
+        return get_one(data=[version for version in self if version.name == version_name], raise_on_empty=True)
 
 
 def empty_project() -> Project:

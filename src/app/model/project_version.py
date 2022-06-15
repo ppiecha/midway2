@@ -9,11 +9,11 @@ from pydantic import BaseModel
 from src.app.model.composition import Compositions
 from src.app.model.sequence import Sequence
 from src.app.model.track import Track, Tracks
-from src.app.model.types import Bpm
+from src.app.model.types import Bpm, get_one
 from src.app.model.variant import Variant, Variants, VariantType
 from src.app.utils.exceptions import NoDataFound, NoItemSelected, OutOfVariants
 from src.app.utils.notification import notify
-from src.app.utils.properties import NotificationMessage, GuiAttr
+from src.app.utils.properties import NotificationMessage, GuiAttr, MidiAttr
 
 
 class ProjectVersion(BaseModel):
@@ -142,3 +142,21 @@ class ProjectVersion(BaseModel):
             name="1", composition_name=composition.name, selected=True, enable_all_tracks=True
         )
         return project_version
+
+    def get_next_free_channel(self):
+        reserved = set()
+        for track in self.tracks:
+            for track_version in track.versions:
+                reserved.add(track_version.channel)
+        for channel in MidiAttr.CHANNELS:
+            if channel not in reserved:
+                return channel
+        return None
+
+    def get_first_track_version(self):
+        track: Track = get_one(data=list(self.tracks), raise_on_empty=True)
+        return track.get_default_version(raise_not_found=True)
+
+    def track_exists(self, identifier: UUID | str, existing_track: Track = None) -> bool:
+        track = self.tracks.get_track(identifier=identifier, raise_not_found=False)
+        return track and track != existing_track

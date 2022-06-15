@@ -85,7 +85,7 @@ class TrackVersionBox(QWidget):
     def __init__(
         self,
         parent,
-        project_version: ProjectVersion,
+        project_version: Composition,
         variant: Variant,
         variant_item: Optional[VariantItem],
         show_check_box: bool,
@@ -186,7 +186,7 @@ class DeriveTrackVersionBox(QWidget):
         super().__init__(parent)
         self.mf = mf
         self.form = QFormLayout()
-        self.composition_box = QComboBox()
+        self.project_version_box = QComboBox()
         self.track_box = QComboBox()
         self.track_version_box = QComboBox()
         self.derive_ctrl_events = QCheckBox("Derive control events")
@@ -194,7 +194,7 @@ class DeriveTrackVersionBox(QWidget):
         self.form.setContentsMargins(10, 10, 10, 10)
         self.form.setSpacing(5)
         self.form.setAlignment(Qt.AlignLeft)
-        self.form.addRow("Composition", self.composition_box)
+        self.form.addRow("Composition", self.project_version_box)
         self.form.addRow("Track", self.track_box)
         self.form.addRow("Track version", self.track_version_box)
         self.form.addRow("", self.derive_ctrl_events)
@@ -207,49 +207,42 @@ class DeriveTrackVersionBox(QWidget):
         self.frame_box.addWidget(self.frame)
         self.setLayout(self.frame_box)
 
-        self.composition_box.currentIndexChanged.connect(self.on_composition_changed)
+        self.project_version_box.currentIndexChanged.connect(self.on_project_version_changed)
         self.track_box.currentIndexChanged.connect(self.on_track_changed)
 
     def get_derived_version(self) -> TrackVersion:
-        composition = self.mf.project.composition_by_name(self.composition_box.currentText())
-        track = composition.track_by_name(track_name=self.track_box.currentText())
-        track_version = track.track_version_by_name(track_version_name=self.track_version_box.currentText())
+        project_version = self.mf.project.get_version_by_name(version_name=self.project_version_box.currentText())
+        track = project_version.tracks.get_track(identifier=self.track_box.currentText())
+        track_version = track.get_version(identifier=self.track_version_box.currentText())
         track_version = TrackVersion(**track_version.__dict__)
         if not self.derive_ctrl_events.isChecked():
             pass  # remove ctrl events
         return track_version
 
-    def on_composition_changed(self, index):
+    def on_project_version_changed(self, index):
         if index >= 0:
-            composition = [
-                composition
-                for composition in self.mf.project.versions
-                if composition.name == self.composition_box.itemText(index)
-            ]
-            if composition:
-                self.load_track(composition=composition[0])
+            project_version = self.mf.project.get_version_by_name(version_name=self.project_version_box.itemText(index))
+            if project_version:
+                self.load_track(project_version=project_version)
 
     def on_track_changed(self, index):
         if index >= 0:
-            track = [
-                track
-                for track in self.mf.project.composition_by_name(self.composition_box.currentText()).tracks
-                if track.name == self.track_box.itemText(index)
-            ]
+            project_version = self.mf.project.get_version_by_name(version_name=self.project_version_box.itemText(index))
+            track = project_version.tracks.get_track(identifier=self.track_box.itemText(index))
             if track:
-                self.load_track_version(track=track[0])
+                self.load_track_version(track=track)
             else:
                 raise ValueError("Track not found")
 
     def load_composition(self, selected_value: str = None):
-        self.composition_box.clear()
-        self.composition_box.addItems([composition.name for composition in self.mf.project.versions])
+        self.project_version_box.clear()
+        self.project_version_box.addItems([composition.name for composition in self.mf.project.versions])
         if selected_value:
-            self.composition_box.setCurrentText(selected_value)
+            self.project_version_box.setCurrentText(selected_value)
 
-    def load_track(self, composition: Composition, selected_value: str = None):
+    def load_track(self, project_version: ProjectVersion, selected_value: str = None):
         self.track_box.clear()
-        self.track_box.addItems([track.name for track in composition.tracks])
+        self.track_box.addItems([track.name for track in project_version.tracks])
         if selected_value:
             self.track_box.setCurrentText(selected_value)
 

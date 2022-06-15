@@ -28,7 +28,7 @@ from src.app.gui.widgets import Box
 from src.app.model.composition import Composition
 from src.app.model.project_version import ProjectVersion
 from src.app.model.track import Track, TrackVersion
-from src.app.utils.properties import GuiAttr
+from src.app.utils.properties import GuiAttr, NotificationMessage, MenuAttr
 import src.app.resources  # pylint: disable=unused-import
 
 if TYPE_CHECKING:
@@ -42,12 +42,14 @@ class TrackListItem(QWidget):
         parent,
         track: Track,
         list_item: QListWidgetItem,
-        composition: Composition,
+        project_version: ProjectVersion,
     ):
         super().__init__(parent=parent)
         self.track = track
         self.list_item = list_item
-        self.version_tab = TrackVersionTab(mf=mf, list_item=self, track=track, synth=mf.synth, composition=composition)
+        self.version_tab = TrackVersionTab(
+            mf=mf, list_item=self, track=track, synth=mf.synth, project_version=project_version
+        )
         self.icon = QLabel()
         self.icon.setPixmap(QPixmap(":/icons/track_item.png"))
         self.name = QLabel(track.name)
@@ -134,7 +136,7 @@ class TrackList(QListWidget):
             parent=self,
             track=track,
             list_item=widget_item,
-            composition=self.project_version,
+            project_version=self.project_version,
         )
         self.stack.addWidget(self.map[track.name].version_tab)
         widget_item.setSizeHint(self.map[track.name].sizeHint())
@@ -146,31 +148,31 @@ class TrackList(QListWidget):
         config = GenericConfig(
             mf=self.mf,
             mode=GenericConfigMode.edit_track,
-            composition=self.project_version,
+            project_version=self.project_version,
             track=track_list_item.track,
         )
         self.mf.show_config_dlg(config=config)
 
     def _delete_track(self, track: Track):
-        if not self.project_version.track_name_exists(track_name=track.name):
+        if not self.project_version.track_exists(identifier=track.name):
             raise ValueError(f"Track with name {track.name} does not exist in composition {self.project_version.name}")
         track_list_item: TrackListItem = self.map.pop(track.name)
         self.list.removeItemWidget(track_list_item.list_item)
         self.stack.removeWidget(track_list_item)
         for track_version_name in list(track_list_item.version_tab.map.keys()):
             track_list_item.version_tab._delete_track_version(
-                track_version=track_list_item.track.get_version(version_name=track_version_name)
+                track_version=track_list_item.track.get_version(identifier=track_version_name)
             )
-        self.project_version.delete_track(track=track)
+        self.project_version.remove_track(track=track)
         track_list_item.deleteLater()
 
     def register_listeners(self):
-        if not pub.subscribe(self.new_track, GuiAttr.NEW_TRACK):
-            raise Exception(f"Cannot register listener {GuiAttr.NEW_TRACK}")
-        if not pub.subscribe(self.rename_track, GuiAttr.EDIT_TRACK):
-            raise Exception(f"Cannot register listener {GuiAttr.EDIT_TRACK}")
-        if not pub.subscribe(self.delete_track, GuiAttr.DELETE_TRACK):
-            raise Exception(f"Cannot register listener {GuiAttr.DELETE_TRACK}")
+        if not pub.subscribe(self.new_track, NotificationMessage.TRACK_ADDED):
+            raise Exception(f"Cannot register listener {NotificationMessage.TRACK_ADDED}")
+        if not pub.subscribe(self.rename_track, NotificationMessage.TRACK_CHANGED):
+            raise Exception(f"Cannot register listener {NotificationMessage.TRACK_CHANGED}")
+        if not pub.subscribe(self.delete_track, NotificationMessage.TRACK_REMOVED):
+            raise Exception(f"Cannot register listener {NotificationMessage.TRACK_REMOVED}")
 
     def unregister_listener(self, topic):
         pass
@@ -208,4 +210,4 @@ class TrackListToolbar(QToolBar):
         super().__init__("Track list", track_list)
         self.setToolButtonStyle(Qt.ToolButtonIconOnly)
         self.setIconSize(QSize(16, 16))
-        self.addAction(mf.menu.actions[GuiAttr.NEW_TRACK])
+        self.addAction(mf.menu.actions[MenuAttr.TRACK_NEW])

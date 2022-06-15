@@ -25,6 +25,15 @@ class Variant(BaseModel):
     selected: bool
     items: List[VariantItem]
 
+    def __iter__(self) -> Iterator[VariantItem]:
+        return iter(self.items)
+
+    def __getitem__(self, item) -> VariantItem:
+        return self.items[item]
+
+    def __len__(self):
+        return len(self.items)
+
     def add_track(self, track: Track, enable: bool) -> Variant:
         self.items.append(VariantItem(track_id=track.id, version_id=track.get_default_version().id, enabled=enable))
         return self

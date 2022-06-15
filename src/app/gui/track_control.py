@@ -19,8 +19,9 @@ from PySide6.QtWidgets import (
     QTableWidgetItem,
 )
 from src.app.gui.editor.piano_roll import PianoRoll
+from src.app.model.project_version import ProjectVersion
 from src.app.utils.logger import get_console_logger
-from src.app.utils.properties import GuiAttr
+from src.app.utils.properties import GuiAttr, MenuAttr
 from src.app.gui.widgets import Box, FontBox, PresetBox, ChannelBox
 from src.app.backend.midway_synth import MidwaySynth
 from src.app.model.composition import Composition
@@ -47,12 +48,12 @@ class MelodyTrackVersion(QWidget):
         parent,
         track_version: TrackVersion,
         synth: MidwaySynth,
-        composition: Composition,
+        project_version: ProjectVersion,
         track: Track,
     ):
         super().__init__(parent=parent)
         self.mf = mf
-        self.composition = composition
+        self.project_version = project_version
         self.track = track
         self.track_version = track_version
         self.piano_roll = PianoRoll(
@@ -60,7 +61,7 @@ class MelodyTrackVersion(QWidget):
             parent=self,
             track_version=track_version,
             synth=synth,
-            project_version=composition,
+            project_version=project_version,
             track=track,
         )
         self.midi_box = Box(direction=QBoxLayout.LeftToRight)
@@ -234,12 +235,12 @@ class DrumsTrackVersion(QWidget):
         parent,
         track_version: TrackVersion,
         # synth: MidwaySynth,
-        composition: Composition,
+        project_version: ProjectVersion,
         track: Track,
     ):
         super().__init__(parent=parent)
         self.mf = mf
-        self.composition = composition
+        self.project_version = project_version
         self.track = track
         self.track_version = track_version
 
@@ -255,12 +256,12 @@ class TrackVersionMidiEvents(QWidget):
         parent,
         track_version: TrackVersion,
         # synth: MidwaySynth,
-        composition: Composition,
+        project_version: ProjectVersion,
         track: Track,
     ):
         super().__init__(parent=parent)
         self.mf = mf
-        self.composition = composition
+        self.project_version = project_version
         self.track = track
         self.track_version = track_version
         self.table = QTableWidget()
@@ -285,11 +286,11 @@ class TrackTab(QWidget):
         parent,
         track_version: TrackVersion,
         synth: MidwaySynth,
-        composition: Composition,
+        project_version: ProjectVersion,
         track: Track,
     ):
         super().__init__(parent=parent)
-        self.composition = composition
+        self.project_version = project_version
         self.track = track
         self.track_version = track_version
         self.tab_box = QTabWidget()
@@ -299,7 +300,7 @@ class TrackTab(QWidget):
             parent=self,
             track_version=track_version,
             synth=synth,
-            composition=composition,
+            project_version=project_version,
             track=self.track,
         )
         self.tab_box.addTab(self.track_item, QIcon(":/icons/piano.png"), "Piano roll")
@@ -308,7 +309,7 @@ class TrackTab(QWidget):
             parent=self,
             track_version=track_version,
             # synth=synth,
-            composition=composition,
+            project_version=project_version,
             track=self.track,
         )
         self.tab_box.addTab(self.track_version_table, "Events")
@@ -326,12 +327,12 @@ class TrackVersionTab(QWidget):
         list_item: TrackListItem,
         track: Track,
         synth: MidwaySynth,
-        composition: Composition,
+        project_version: ProjectVersion,
     ):
         super().__init__(parent=list_item)
         self.mf = mf
         self.synth = synth
-        self.composition = composition
+        self.project_version = project_version
         self.track = track
         self.list_item = list_item
         self.tab_box = QTabWidget()
@@ -354,7 +355,7 @@ class TrackVersionTab(QWidget):
             parent=self,
             track_version=track_version,
             synth=self.synth,
-            composition=self.composition,
+            project_version=self.project_version,
             track=self.track,
         )
         self.tab_box.addTab(
@@ -409,9 +410,9 @@ class TrackVersionTab(QWidget):
 
     def open_menu(self, position):
         menu = QMenu()
-        menu.addAction(self.mf.menu.actions[GuiAttr.NEW_TRACK_VERSION])
-        menu.addAction(self.mf.menu.actions[GuiAttr.EDIT_TRACK_VERSION])
-        menu.setDefaultAction(self.mf.menu.actions[GuiAttr.EDIT_TRACK_VERSION])
+        menu.addAction(self.mf.menu.actions[MenuAttr.TRACK_VERSION_NEW])
+        menu.addAction(self.mf.menu.actions[MenuAttr.TRACK_VERSION_EDIT])
+        menu.setDefaultAction(self.mf.menu.actions[MenuAttr.TRACK_VERSION_EDIT])
         menu.exec_(self.tab_box.tabBar().mapToGlobal(position))
         # menu.exec_(e.globalPos())
 

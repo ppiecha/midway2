@@ -32,7 +32,7 @@ class ProjectControl(QWidget):
         self.main_box.addWidget(self.tab_box)
         self.setLayout(self.main_box)
 
-    def new_project_version(self, project_version: ProjectVersion):
+    def new_project_version(self, project_version: Composition):
         tracks_splitter = QSplitter(Qt.Horizontal)
         tracks_stack = QStackedWidget(self)
         self.map[project_version.name] = TrackList(
@@ -114,7 +114,7 @@ class ProjectControl(QWidget):
 
 
 class SequencerBox(QWidget):
-    def __init__(self, mf, parent, project_version: ProjectVersion):
+    def __init__(self, mf, parent, project_version: Composition):
         super().__init__(parent=parent)
         self.project_version = project_version
         self.splitter = QSplitter(Qt.Horizontal)
@@ -143,7 +143,7 @@ class SequencerBox(QWidget):
 
 
 class SingleVariantBox(QWidget):
-    def __init__(self, mf, parent, project_version: ProjectVersion):
+    def __init__(self, mf, parent, project_version: Composition):
         super().__init__(parent=parent)
         self.main_box = Box(direction=QBoxLayout.LeftToRight)
         self.custom_loop_grid = SingleVariantGrid(parent=self, mf=mf, project_version=project_version)
@@ -152,7 +152,7 @@ class SingleVariantBox(QWidget):
 
 
 class CompositionVariantBox(QWidget):
-    def __init__(self, mf, parent, project_version: ProjectVersion):
+    def __init__(self, mf, parent, project_version: Composition):
         super().__init__(parent=parent)
         self.main_box = Box(direction=QBoxLayout.TopToBottom)
         self.composition_loop_grid = CompositionVariantGrid(parent=self, mf=mf, project_version=project_version)

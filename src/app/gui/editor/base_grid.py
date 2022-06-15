@@ -114,9 +114,9 @@ class BaseGridScene(QGraphicsScene):
         self.register_listeners()
 
     def register_listeners(self):
-        if not pub.subscribe(self.add_node, NotificationMessage.EVENT_ADDED.value):
+        if not pub.subscribe(self.add_node, NotificationMessage.EVENT_ADDED):
             raise Exception(f"Cannot register listener {NotificationMessage.EVENT_ADDED}")
-        if not pub.subscribe(self.remove_node, NotificationMessage.EVENT_REMOVED.value):
+        if not pub.subscribe(self.remove_node, NotificationMessage.EVENT_REMOVED):
             raise Exception(f"Cannot register listener {NotificationMessage.EVENT_REMOVED}")
 
     def ratio(self, x: float) -> float:

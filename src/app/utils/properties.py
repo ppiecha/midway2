@@ -20,7 +20,7 @@ class GridAttr(Flag):
     SHOW_SCROLLBARS = auto()
 
 
-class NotificationMessage(Enum):
+class NotificationMessage:
     EVENT_ADDED = "EVENT_ADDED"
     EVENT_REMOVED = "EVENT_REMOVED"
     EVENT_CHANGED = "EVENT_CHANGED"
@@ -72,17 +72,8 @@ class GuiAttr:
     # Custom sequences
     DEFAULT = "Default"
     SINGLE_TRACK = "Single"
-    # Composition loop
-    FIRST_COMPOSITION_LOOP = "0"
-    # Action name
-    # Project
-    NEW_PROJECT = "New project"
-    DELETE_PROJECT = "Delete project"
-    # Composition
-    NEW_COMPOSITION = "Add composition"
-    DELETE_COMPOSITION = "Delete composition"
     # Track
-    NEW_TRACK = "New track"
+    # TODO find & replace with menu attr
     EDIT_TRACK = "Edit track"
     DELETE_TRACK = "Delete track"
     NEW_TRACK_VERSION = "New track version"
@@ -95,6 +86,29 @@ class GuiAttr:
     # Generic config tab
     GENERAL = "General"
     PRESET = "Preset"
+
+
+class MenuAttr:
+    # Project
+    PROJECT_NEW = "New project"
+    # Project version
+    PROJECT_VERSION_NEW = "New project version"
+    PROJECT_VERSION_REMOVE = "Remove project version"
+    # Variant
+    VARIANT_NEW = "New variant"
+    VARIANT_REMOVE = "Remove variant"
+    # Composition
+    COMPOSITION_NEW = "New composition"
+    COMPOSITION_REMOVE = "Remove composition"
+    # Track
+    TRACK_NEW = "New track"
+    TRACK_EDIT = "Edit track"
+    TRACK_REMOVE = "Remove track"
+    # Track version
+    TRACK_VERSION_NEW = "New track version"
+    TRACK_VERSION_EDIT = "Edit track version"
+    TRACK_VERSION_REMOVE = "Remove track version"
+    TRACK_VERSION_PLAY = "Play track version"
 
 
 class KeyAttr(int, Enum):

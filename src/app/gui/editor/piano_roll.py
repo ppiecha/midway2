@@ -14,7 +14,7 @@ from src.app.gui.editor.grid import GridScene
 from src.app.gui.editor.ruler import HeaderView, RulerScene
 from src.app.gui.menu import Action
 from src.app.gui.widgets import Box
-from src.app.model.composition import Composition
+from src.app.model.project_version import ProjectVersion
 from src.app.model.sequence import Sequence
 from src.app.model.track import TrackVersion, Track
 from src.app.model.types import Bpm
@@ -34,7 +34,7 @@ class PianoRoll(QWidget):
         parent,
         track_version: TrackVersion,
         synth: MidwaySynth,
-        project_version: Composition,
+        project_version: ProjectVersion,
         track: Track,
     ):
         super().__init__(parent=parent)

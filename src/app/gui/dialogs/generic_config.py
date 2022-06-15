@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
 
 from src.app.gui.widgets import Box, ChannelBox, DeriveTrackVersionBox, BarBox
 from src.app.gui.editor.keyboard import KeyboardView, PianoKeyboard
+from src.app.model.project_version import ProjectVersion
 from src.app.model.sequence import Sequence
 from src.app.utils.properties import Color, GuiAttr, IniAttr, MidiAttr
 from src.app.model.composition import Composition
@@ -49,7 +50,7 @@ class GenericConfig(NamedTuple):
     mf: MainFrame
     mode: Optional[GenericConfigMode] = None
     project: Optional[Project] = None
-    composition: Optional[Composition] = None
+    project_version: Optional[ProjectVersion] = None
     track: Optional[Track] = None
     track_version: Optional[TrackVersion] = None
     node: Optional[Node] = None
@@ -88,17 +89,15 @@ class GenericConfigDlg(QDialog):
 
     def apply_changes(self):
         if self.config.mode == GenericConfigMode.new_track:
-            self.mf.project.composition_by_name(
-                composition_name=self.config.composition.name, raise_not_found=True
-            ).new_track(track=self.general.track, enable=True)
-            self.config.mf.menu.post_new_track(composition=self.config.composition, track=self.general.track)
+            self.config.project_version.add_track(track=self.general.track, enable=True)
+            self.config.mf.menu.post_new_track(composition=self.config.project_version, track=self.general.track)
 
     def load_config(self, config: GenericConfig):
         self.config = GenericConfig(
             mf=config.mf,
             mode=config.mode,
             project=config.project,
-            composition=config.composition,
+            project_version=config.project_version,
             track=config.track,
             track_version=config.track_version,
             node=config.node,
@@ -327,7 +326,7 @@ class GeneralTab(QWidget):
     def load_config(self, config: GenericConfig):
         self.config = config
         self.project_name_box.setText(config.mf.project.name)
-        self.composition_name_box.setText(config.composition.name)
+        self.composition_name_box.setText(config.project_version.name)
         self.track_name_box.setText(config.track.name if config.track else "")
         self.show_track_color(color=QColor.fromRgba(config.track.default_color) if config.track else Color.NODE_START)
         self.version_name_box.setText(
@@ -344,7 +343,7 @@ class GeneralTab(QWidget):
         self.enable_inheritance_box.setEnabled(
             config.mode == (GenericConfigMode.new_track or GenericConfigMode.new_track_version)
         )
-        self.derive_form_box.load_composition(selected_value=self.config.composition.name)
+        self.derive_form_box.load_composition(selected_value=self.config.project_version.name)
         self.enable_in_loops_box.setChecked(not config.track and config.mode == GenericConfigMode.new_track)
         self.enable_in_loops_box.setEnabled(config.mode == GenericConfigMode.new_track)
 
@@ -367,9 +366,9 @@ class GeneralTab(QWidget):
         if not valid:
             self.config.mf.show_message_box("Track name is empty")
             return valid
-        if self.config.composition:
-            valid = not self.config.composition.track_name_exists(
-                track_name=self.track_name, current_track=self.config.track
+        if self.config.project_version:
+            valid = not self.config.project_version.track_exists(
+                identifier=self.track_name, existing_track=self.config.track
             )
         if not valid:
             self.config.mf.show_message_box(f"Track name {self.track_name} exists in composition")
@@ -418,28 +417,27 @@ class GeneralTab(QWidget):
 
     @property
     def default_channel(self):
-        return self.config.composition.get_first_track_version().channel
+        return self.config.project_version.get_first_track_version().channel
 
     @property
     def bars(self) -> int:
         return self.version_bars_box.value()
 
     @property
-    def default_num_of_bars(self):
-        return self.config.composition.get_first_track_version().num_of_bars
+    def default_num_of_bars(self) -> int:
+        return self.config.project_version.get_first_track_version().num_of_bars()
 
     @property
     def version(self) -> TrackVersion:
         return TrackVersion(
             channel=self.channel,
-            version_name=self.version_name,
-            num_of_bars=self.bars,
-            sf_name=self.config.mf.synth.sf_name(self.preset.sfid),
+            name=self.version_name,
+            sf_name=self.preset.sf_name,
             bank=self.preset.bank,
             patch=self.preset.patch,
             sequence=self.derive_form_box.get_derived_version()
             if self.enable_inheritance_box.isChecked()
-            else Sequence(num_of_bars=self.bars),
+            else Sequence.from_num_of_bars(num_of_bars=self.bars),
         )
 
     @property
@@ -448,7 +446,7 @@ class GeneralTab(QWidget):
             name=self.track_name,
             versions=[self.version],
             default_color=self.track_color,
-            default_sf=self.config.mf.synth.sf_name(sfid=self.preset.sfid),
+            default_sf=self.preset.sf_name,
             default_bank=self.preset.bank,
             default_patch=self.preset.patch,
         )
