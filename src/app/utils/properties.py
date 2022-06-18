@@ -69,20 +69,9 @@ class GuiAttr:
     RULER_HEIGHT = 20
     GRID_DIV_UNIT = NoteUnit.EIGHTH
     GRID_MIN_UNIT = value.thirty_second
-    # Custom sequences
+    # Single variant
     DEFAULT = "Default"
     SINGLE_TRACK = "Single"
-    # Track
-    # TODO find & replace with menu attr
-    EDIT_TRACK = "Edit track"
-    DELETE_TRACK = "Delete track"
-    NEW_TRACK_VERSION = "New track version"
-    EDIT_TRACK_VERSION = "Edit track version"
-    DELETE_TRACK_VERSION = "Delete track version"
-    # Loop
-    REFRESH_LOOPS = "REFRESH_LOOPS"
-    NEW_LOOP = "New loop"
-    DELETE_LOOP = "Delete loop"
     # Generic config tab
     GENERAL = "General"
     PRESET = "Preset"
@@ -111,7 +100,7 @@ class MenuAttr:
     TRACK_VERSION_PLAY = "Play track version"
 
 
-class KeyAttr(int, Enum):
+class KeyAttr:
     W_WIDTH = 60
     W_HEIGHT = 14
     B_WIDTH = 24

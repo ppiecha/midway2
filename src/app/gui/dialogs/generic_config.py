@@ -1,5 +1,5 @@
 from __future__ import annotations
-from enum import auto, Enum
+from enum import Enum, auto
 from pathlib import Path
 from typing import Any, NamedTuple, TYPE_CHECKING, Optional
 
@@ -27,7 +27,6 @@ from src.app.gui.editor.keyboard import KeyboardView, PianoKeyboard
 from src.app.model.project_version import ProjectVersion
 from src.app.model.sequence import Sequence
 from src.app.utils.properties import Color, GuiAttr, IniAttr, MidiAttr
-from src.app.model.composition import Composition
 from src.app.model.event import Preset
 from src.app.model.types import Channel
 from src.app.model.project import Project
@@ -39,7 +38,7 @@ if TYPE_CHECKING:
     from src.app.gui.editor.node import Node
 
 
-class GenericConfigMode(int, Enum):
+class GenericConfigMode(Enum):
     new_track = auto()
     edit_track = auto()
     new_track_version = auto()
@@ -90,7 +89,7 @@ class GenericConfigDlg(QDialog):
     def apply_changes(self):
         if self.config.mode == GenericConfigMode.new_track:
             self.config.project_version.add_track(track=self.general.track, enable=True)
-            self.config.mf.menu.post_new_track(composition=self.config.project_version, track=self.general.track)
+            # self.config.mf.menu.post_new_track(composition=self.config.project_version, track=self.general.track)
 
     def load_config(self, config: GenericConfig):
         self.config = GenericConfig(

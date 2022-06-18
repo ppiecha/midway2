@@ -61,7 +61,7 @@ def save_project_as(_: MainFrame):
 
 
 def delete_project(mf: MainFrame):
-    mf.composition_tab.delete_all_compositions()
+    mf.project_control.delete_all_compositions()
 
 
 # Composition
@@ -83,7 +83,7 @@ def delete_composition(_: MainFrame):
 
 
 def new_track(mf: MainFrame):
-    track_list = mf.composition_tab.current_track_list
+    track_list = mf.project_control.current_track_list
     project_version = track_list.project_version
     if project_version.get_next_free_channel() is not None:
         config = GenericConfig(mf=mf, mode=GenericConfigMode.new_track, project_version=project_version)
@@ -93,7 +93,7 @@ def new_track(mf: MainFrame):
 
 
 def edit_track(mf: MainFrame):
-    track_list = mf.composition_tab.current_track_list
+    track_list = mf.project_control.current_track_list
     if track_list.currentItem():
         track_list.edit_track(track_list.currentItem())
     else:
@@ -110,15 +110,13 @@ def delete_track(_: MainFrame):
 
 
 def new_track_version(mf: MainFrame):
-    track_list = mf.composition_tab.current_track_list
-    composition = track_list.project_version_box
-    track = track_list.current_track_list_item.track_box
-    if composition.get_next_free_channel() is not None:
+    current_project_version = mf.current_project_version
+    if current_project_version.get_next_free_channel() is not None:
         config = GenericConfig(
             mf=mf,
             mode=GenericConfigMode.new_track_version,
-            composition=composition,
-            track=track,
+            project_version=current_project_version,
+            track=mf.current_track,
         )
         mf.show_config_dlg(config=config)
     else:
@@ -126,16 +124,12 @@ def new_track_version(mf: MainFrame):
 
 
 def edit_track_version(mf: MainFrame):
-    track_list = mf.composition_tab.current_track_list
-    project_version = track_list.project_version
-    track = track_list.current_track_list_item.track
-    track_version = track_list.current_track_list_item.current_track_version
     config = GenericConfig(
         mf=mf,
         mode=GenericConfigMode.edit_track_version,
-        project_version=project_version,
-        track=track,
-        track_version=track_version,
+        project_version=mf.current_project_version,
+        track=mf.current_track,
+        track_version=mf.current_track_version,
     )
     mf.show_config_dlg(config=config)
 

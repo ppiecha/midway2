@@ -102,7 +102,7 @@ class Sequence(BaseModel):
             self.bars[bar_num] += event
             if callback:
                 pub.sendMessage(
-                    topicName=NotificationMessage.EVENT_ADDED.value,
+                    topicName=NotificationMessage.EVENT_ADDED,
                     sequence_id=id(self),
                     event=event,
                 )
@@ -119,7 +119,7 @@ class Sequence(BaseModel):
         self.bars[bar_num].remove_event(event=event)
         if callback:
             pub.sendMessage(
-                topicName=NotificationMessage.EVENT_REMOVED.value,
+                topicName=NotificationMessage.EVENT_REMOVED,
                 sequence_id=id(self),
                 event=event,
             )

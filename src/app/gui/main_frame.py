@@ -18,9 +18,12 @@ from src.app.gui.project_control import ProjectControl
 from src.app.gui.dialogs.generic_config import GenericConfigDlg, GenericConfig
 from src.app.gui.menu import MenuBar
 from src.app.gui.toolbar import ToolBar
+from src.app.gui.track_list import TrackList, TrackListItem
 from src.app.gui.widgets import Box
 from src.app.model.project import Project, empty_project
+from src.app.model.project_version import ProjectVersion
 from src.app.model.serializer import read_json_file, write_json_file
+from src.app.model.track import Track, TrackVersion
 from src.app.model.types import dict_diff, DictDiff
 from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import IniAttr, AppAttr
@@ -45,10 +48,9 @@ class MainFrame(QMainWindow):
         self.project: Optional[Project] = None
         self.read_project_file(project_file_name=self.project_file)
         self.gen_config_dlg = GenericConfigDlg(mf=self)
-        self.composition_tab = ProjectControl(mf=self, parent=self, project=self.project)
-        print(self.project)
+        self.project_control = ProjectControl(mf=self, parent=self, project=self.project)
         self.main_box = Box(direction=QBoxLayout.TopToBottom)
-        self.main_box.addWidget(self.composition_tab)
+        self.main_box.addWidget(self.project_control)
         self.setLayout(self.main_box)
         self.central_widget = QWidget()  # define central widget
         self.setCentralWidget(self.central_widget)
@@ -83,7 +85,7 @@ class MainFrame(QMainWindow):
 
     def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)
-        self.composition_tab.set_keyboard_position()
+        self.project_control.set_keyboard_position()
 
     def unsaved_changes(self) -> DictDiff:
         if self.project_file and Path(self.project_file).exists():
@@ -148,3 +150,28 @@ class MainFrame(QMainWindow):
     def show_config_dlg(self, config: GenericConfig):
         self.gen_config_dlg.load_config(config=config)
         self.gen_config_dlg.show()
+
+    @property
+    def current_track_list(self) -> TrackList:
+        return self.project_control.current_track_list
+
+    @property
+    def current_project_version(self) -> ProjectVersion:
+        return self.current_track_list.project_version
+
+    @property
+    def current_track_list_item(self) -> TrackListItem:
+        return self.current_track_list.current_track_list_item
+
+    @property
+    def current_track(self) -> Track:
+        return self.current_track_list_item.track
+
+    @property
+    def current_track_version(self) -> TrackVersion:
+        return self.current_track_list_item.current_track_version
+
+
+
+
+

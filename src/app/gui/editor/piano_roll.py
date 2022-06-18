@@ -7,6 +7,7 @@ from typing import Tuple
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeySequence
 from PySide6.QtWidgets import QWidget, QBoxLayout
+from pydantic import NonNegativeInt, PositiveInt
 
 from src.app.backend.midway_synth import MidwaySynth
 from src.app.gui.editor.base_grid import BaseGridView, KeyboardGridBox
@@ -17,7 +18,7 @@ from src.app.gui.widgets import Box
 from src.app.model.project_version import ProjectVersion
 from src.app.model.sequence import Sequence
 from src.app.model.track import TrackVersion, Track
-from src.app.model.types import Bpm
+from src.app.model.types import Bpm, Channel
 from src.app.utils.logger import get_console_logger
 
 if TYPE_CHECKING:
@@ -132,15 +133,15 @@ class PianoRoll(QWidget):
         return self.mf.project.bpm
 
     @property
-    def channel(self) -> int:
+    def channel(self) -> Channel:
         return self.track_version.channel
 
     @channel.setter
-    def channel(self, value: int) -> None:
+    def channel(self, value: Channel) -> None:
         self.track_version.channel = value
 
     @property
-    def sequence(self):
+    def sequence(self) -> Sequence:
         return self.track_version.sequence
 
     @sequence.setter
@@ -150,7 +151,7 @@ class PianoRoll(QWidget):
         self.grid_view.grid_scene.sequence = value
 
     @property
-    def num_of_bars(self) -> int:
+    def num_of_bars(self) -> PositiveInt:
         return self.track_version.num_of_bars()
 
     @num_of_bars.setter

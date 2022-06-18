@@ -3,6 +3,8 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 from typing import List, Dict, Tuple, TYPE_CHECKING
+from uuid import UUID
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
@@ -70,7 +72,7 @@ class MelodyTrackVersion(QWidget):
         self.populate_font_combo()
         self._preset = PresetBox(synth=self.synth)
         self.config_dlg_btn = QToolButton()
-        self.config_dlg_btn.setDefaultAction(self.mf.menu.actions[GuiAttr.EDIT_TRACK_VERSION])
+        self.config_dlg_btn.setDefaultAction(self.mf.menu.actions[MenuAttr.TRACK_VERSION_EDIT])
         self.w_play = QToolButton()
         # self.w_play.setDefaultAction(self.piano_roll.ac_play)
         self.w_stop = QPushButton("Stop")
@@ -179,6 +181,7 @@ class MelodyTrackVersion(QWidget):
 
     @preset.setter
     def preset(self, preset: Preset) -> None:
+        self.track_version.sf_name = self.sf_name
         self.track_version.bank = preset.bank
         self.track_version.patch = preset.patch
         self.synth.preset_change(channel=self.channel, preset=preset)
@@ -277,7 +280,7 @@ class TrackVersionMidiEvents(QWidget):
         pass
 
 
-class TrackTab(QWidget):
+class TrackVersionDetailControl(QWidget):
     """This tab control contains tab with piano roll and track version info"""
 
     def __init__(
@@ -318,7 +321,7 @@ class TrackTab(QWidget):
         self.setLayout(self.main_box)
 
 
-class TrackVersionTab(QWidget):
+class TrackVersionControl(QWidget):
     """Control tab of track versions"""
 
     def __init__(
@@ -336,7 +339,7 @@ class TrackVersionTab(QWidget):
         self.track = track
         self.list_item = list_item
         self.tab_box = QTabWidget()
-        self.map: Dict[str, TrackTab] = {}
+        self.map: Dict[UUID, TrackVersionDetailControl] = {}
         # self.tab_box.setTabsClosable(True)
         for track_version in self.track.versions:
             self._new_track_version(track_version=track_version)
@@ -350,7 +353,7 @@ class TrackVersionTab(QWidget):
         # self.tab_box.currentChanged.connect(self.on_tab_changed)
 
     def _new_track_version(self, track_version: TrackVersion):
-        self.map[track_version.name] = TrackTab(
+        self.map[track_version.id] = TrackVersionDetailControl(
             mf=self.mf,
             parent=self,
             track_version=track_version,
@@ -359,7 +362,7 @@ class TrackVersionTab(QWidget):
             track=self.track,
         )
         self.tab_box.addTab(
-            self.map[track_version.name],
+            self.map[track_version.id],
             QIcon(":/icons/note.png"),
             track_version.name,
         )
@@ -369,8 +372,8 @@ class TrackVersionTab(QWidget):
             self._new_track_version(track_version=track_version)
 
     def _delete_track_version(self, track_version: TrackVersion):
-        self.track.get_version(version_name=track_version.name, raise_not_found=True)
-        track_tab = self.map.pop(track_version.name)
+        self.track.get_version(identifier=track_version.name, raise_not_found=True)
+        track_tab = self.map.pop(track_version.id)
         if (index := self.tab_box.indexOf(track_tab)) < 0:
             raise ValueError(f"Cannot find {track_tab.track_version.name} tab when deleting")
         self.tab_box.removeTab(index)
@@ -378,7 +381,7 @@ class TrackVersionTab(QWidget):
         track_tab.deleteLater()
 
     def on_double_click(self, _):
-        self.mf.menu.actions[GuiAttr.EDIT_TRACK_VERSION].trigger()
+        self.mf.menu.actions[MenuAttr.TRACK_VERSION_EDIT].trigger()
 
     @property
     def versions(self) -> List[str]:
@@ -387,7 +390,7 @@ class TrackVersionTab(QWidget):
     def __iter__(self):
         return iter(self.map)
 
-    def __getitem__(self, version: str) -> TrackTab:
+    def __getitem__(self, version: UUID) -> TrackVersionDetailControl:
         track_version = self.map.get(version)
         if track_version is None:
             raise IndexError
@@ -418,15 +421,15 @@ class TrackVersionTab(QWidget):
 
     @property
     def current_track_version(self) -> TrackVersion:
-        track_tab: TrackTab = self.tab_box.currentWidget()
+        track_tab: TrackVersionDetailControl = self.tab_box.currentWidget()
         if not track_tab:
             raise ValueError(f"Cannot determine tab with current track version. Track {self.track.name}")
         return track_tab.track_version
 
     @current_track_version.setter
     def current_track_version(self, track_version: TrackVersion) -> None:
-        if self.tab_box.currentWidget() != self.map[track_version.name]:
-            self.tab_box.setCurrentWidget(self.map[track_version.name])
+        if self.tab_box.currentWidget() != self.map[track_version.id]:
+            self.tab_box.setCurrentWidget(self.map[track_version.id])
 
     # def on_tab_changed(self, index: int):
     #     self.select_current_version(current_version=self.tab_box.widget(index).version_name)

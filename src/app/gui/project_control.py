@@ -13,10 +13,12 @@ from src.app.gui.widgets import Box
 from src.app.model.composition import Composition
 from src.app.model.project import Project
 from src.app.model.project_version import ProjectVersion
-from src.app.utils.properties import GuiAttr
+from src.app.utils.logger import get_console_logger
 
 if TYPE_CHECKING:
     from src.app.gui.main_frame import MainFrame
+
+logger = get_console_logger(__name__)
 
 
 class ProjectControl(QWidget):
@@ -32,7 +34,7 @@ class ProjectControl(QWidget):
         self.main_box.addWidget(self.tab_box)
         self.setLayout(self.main_box)
 
-    def new_project_version(self, project_version: Composition):
+    def new_project_version(self, project_version: ProjectVersion):
         tracks_splitter = QSplitter(Qt.Horizontal)
         tracks_stack = QStackedWidget(self)
         self.map[project_version.name] = TrackList(
@@ -51,17 +53,13 @@ class ProjectControl(QWidget):
         self.tab_box.addTab(vert_splitter, QIcon(":/icons/composition.png"), project_version.name)
 
     def index_of_track_list(self, track_list: TrackList) -> int:
-        for index in range(self.tab_box.count()):
-            widget = self.tab_box.widget(index)
-            if widget.track_list == track_list:
-                return index
-        return -1
+        return self.tab_box.indexOf(track_list)
 
-    def delete_composition(self, composition: Composition):
-        track_list = self.map.pop(composition.name)
+    def delete_project_version(self, project_version: ProjectVersion):
+        track_list = self.map.pop(project_version.name)
         index = self.index_of_track_list(track_list=track_list)
-        for track_name in list(track_list.map.keys()):
-            track_list.delete_track(composition=composition, track=track_list[track_name].track)
+        for track_id in list(track_list.map.keys()):
+            track_list.delete_track(composition=composition, track=track_list[track_id].track)
         self.tab_box.removeTab(index)
         self.project.delete_composition(composition=composition)
         track_list.deleteLater()
@@ -69,7 +67,7 @@ class ProjectControl(QWidget):
 
     def delete_all_compositions(self):
         for composition in list(self.project.versions):
-            self.delete_composition(composition=composition)
+            self.delete_project_version(composition=composition)
 
     @property
     def current_track_list(self) -> TrackList:
@@ -81,16 +79,16 @@ class ProjectControl(QWidget):
         return track_list
 
     def init_fonts(self):
-        for composition in self:
-            for track in self[composition]:
-                for track_version in self[composition][track].version_tab:
-                    self[composition][track].version_tab[track_version].track_item.init_fonts()
+        for track_list in self.map.values():
+            for track_list_item in track_list.map.values():
+                for track_version_detail_control in track_list_item.version_tab.map.values():
+                    track_version_detail_control.track_item.init_fonts()
 
     def set_keyboard_position(self):
-        for composition in self:
-            for track in self[composition]:
-                for track_version in self[composition][track].version_tab:
-                    self[composition][track].version_tab[track_version].track_item.set_keyboard_position()
+        for track_list in self.map.values():
+            for track_list_item in track_list.map.values():
+                for track_version_detail_control in track_list_item.version_tab.map.values():
+                    track_version_detail_control.track_item.set_keyboard_position()
 
     @property
     def name(self) -> str:
@@ -114,7 +112,7 @@ class ProjectControl(QWidget):
 
 
 class SequencerBox(QWidget):
-    def __init__(self, mf, parent, project_version: Composition):
+    def __init__(self, mf, parent, project_version: ProjectVersion):
         super().__init__(parent=parent)
         self.project_version = project_version
         self.splitter = QSplitter(Qt.Horizontal)
@@ -130,11 +128,11 @@ class SequencerBox(QWidget):
         self.main_box.addWidget(self.splitter)
         self.setLayout(self.main_box)
         self.resize(QSize(self.width(), 400))
-        self.register_listeners()
+        # self.register_listeners()
 
-    def register_listeners(self):
-        if not pub.subscribe(self.reload_tracks, GuiAttr.REFRESH_LOOPS):
-            raise Exception(f"Cannot register listener {GuiAttr.REFRESH_LOOPS}")
+    # def register_listeners(self):
+    #     if not pub.subscribe(self.reload_tracks, GuiAttr.REFRESH_LOOPS):
+    #         raise Exception(f"Cannot register listener {GuiAttr.REFRESH_LOOPS}")
 
     def reload_tracks(self, composition: Composition):
         if self.project_version == composition:
@@ -143,7 +141,7 @@ class SequencerBox(QWidget):
 
 
 class SingleVariantBox(QWidget):
-    def __init__(self, mf, parent, project_version: Composition):
+    def __init__(self, mf, parent, project_version: ProjectVersion):
         super().__init__(parent=parent)
         self.main_box = Box(direction=QBoxLayout.LeftToRight)
         self.custom_loop_grid = SingleVariantGrid(parent=self, mf=mf, project_version=project_version)
@@ -152,7 +150,7 @@ class SingleVariantBox(QWidget):
 
 
 class CompositionVariantBox(QWidget):
-    def __init__(self, mf, parent, project_version: Composition):
+    def __init__(self, mf, parent, project_version: ProjectVersion):
         super().__init__(parent=parent)
         self.main_box = Box(direction=QBoxLayout.TopToBottom)
         self.composition_loop_grid = CompositionVariantGrid(parent=self, mf=mf, project_version=project_version)

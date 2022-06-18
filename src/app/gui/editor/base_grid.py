@@ -8,7 +8,7 @@ from PySide6.QtCore import QRectF, QPointF
 from PySide6.QtGui import Qt, QMouseEvent
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsSceneMouseEvent, QBoxLayout
 from pubsub import pub
-from pydantic import NonNegativeInt
+from pydantic import NonNegativeInt, PositiveInt
 
 from src.app.backend.synth import Synth
 from src.app.gui.editor.key import BlackPianoKey
@@ -38,7 +38,7 @@ class BaseGridView(GraphicsView):
     def __init__(
         self,
         cls: Type[BaseGridScene],
-        num_of_bars: int,
+        num_of_bars: PositiveInt,
         channel: Channel,
         synth: Synth,
     ):
@@ -95,7 +95,7 @@ class BaseGridScene(QGraphicsScene):
         self,
         grid_view: BaseGridView,
         channel: Channel,
-        num_of_bars: NonNegativeInt,
+        num_of_bars: PositiveInt,
         numerator: int = 4,
         denominator: int = 4,
         grid_divider=GuiAttr.GRID_DIV_UNIT,

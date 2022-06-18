@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from typing import Dict
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from PySide6.QtCore import QSize
 from PySide6.QtGui import QPixmap, Qt
@@ -23,7 +24,7 @@ from PySide6.QtWidgets import (
 from pubsub import pub
 
 from src.app.gui.dialogs.generic_config import GenericConfig, GenericConfigMode
-from src.app.gui.track_control import TrackVersionTab
+from src.app.gui.track_control import TrackVersionControl
 from src.app.gui.widgets import Box
 from src.app.model.composition import Composition
 from src.app.model.project_version import ProjectVersion
@@ -47,7 +48,7 @@ class TrackListItem(QWidget):
         super().__init__(parent=parent)
         self.track = track
         self.list_item = list_item
-        self.version_tab = TrackVersionTab(
+        self.version_tab = TrackVersionControl(
             mf=mf, list_item=self, track=track, synth=mf.synth, project_version=project_version
         )
         self.icon = QLabel()
@@ -102,7 +103,7 @@ class TrackList(QListWidget):
         self.mf = mf
         self.project_version = project_version
         self.list = QListWidget(self)
-        self.map: Dict[str, TrackListItem] = {}
+        self.map: Dict[UUID, TrackListItem] = {}
         self.stack = stack
         for track in project_version.tracks:
             self._new_track(track=track)
@@ -131,17 +132,17 @@ class TrackList(QListWidget):
 
     def _new_track(self, track: Track):
         widget_item = QListWidgetItem(self.list)
-        self.map[track.name] = TrackListItem(
+        self.map[track.id] = TrackListItem(
             mf=self.mf,
             parent=self,
             track=track,
             list_item=widget_item,
             project_version=self.project_version,
         )
-        self.stack.addWidget(self.map[track.name].version_tab)
-        widget_item.setSizeHint(self.map[track.name].sizeHint())
+        self.stack.addWidget(self.map[track.id].version_tab)
+        widget_item.setSizeHint(self.map[track.id].sizeHint())
         self.list.addItem(widget_item)
-        self.list.setItemWidget(widget_item, self.map[track.name])
+        self.list.setItemWidget(widget_item, self.map[track.id])
 
     def edit_track(self, item: QListWidgetItem):
         track_list_item: TrackListItem = self.list.itemWidget(item)
@@ -154,9 +155,9 @@ class TrackList(QListWidget):
         self.mf.show_config_dlg(config=config)
 
     def _delete_track(self, track: Track):
-        if not self.project_version.track_exists(identifier=track.name):
-            raise ValueError(f"Track with name {track.name} does not exist in composition {self.project_version.name}")
-        track_list_item: TrackListItem = self.map.pop(track.name)
+        if not self.project_version.track_exists(identifier=track.id):
+            raise ValueError(f"Track with name {track.id} does not exist in composition {self.project_version.name}")
+        track_list_item: TrackListItem = self.map.pop(track.id)
         self.list.removeItemWidget(track_list_item.list_item)
         self.stack.removeWidget(track_list_item)
         for track_version_name in list(track_list_item.version_tab.map.keys()):
@@ -195,8 +196,8 @@ class TrackList(QListWidget):
     def __iter__(self):
         return iter(self.map)
 
-    def __getitem__(self, track_name) -> TrackListItem:
-        track_list_item = self.map[track_name]
+    def __getitem__(self, track_id: UUID) -> TrackListItem:
+        track_list_item = self.map[track_id]
         if track_list_item is None:
             raise IndexError
         return track_list_item

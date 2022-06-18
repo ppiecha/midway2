@@ -69,9 +69,9 @@ class MidwaySynth(Synth):
             self.load_sf(file_name=file_name)
         if self.mf:
             self.mf.show_message(message="Fonts loaded")
-            while not hasattr(self.mf, "composition_tab"):
+            while not hasattr(self.mf, "project_control"):
                 sleep(0.01)
-            self.mf.composition_tab.init_fonts()
+            self.mf.project_control.init_fonts()
         self.start(driver=MidiAttr.DRIVER)
 
     def finished(self):
