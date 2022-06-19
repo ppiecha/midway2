@@ -1,9 +1,14 @@
+from __future__ import annotations
+
+import typing
 from dataclasses import dataclass
 from enum import Enum
 from functools import lru_cache
 from typing import Dict, Optional
 
 from src.app.model.event import EventType, Event
+if typing.TYPE_CHECKING:
+    from src.app.model.track import TrackVersion
 from src.app.model.types import Channel, Pitch, Midi
 from src.app.utils.properties import KeyAttr, GuiAttr
 
@@ -57,8 +62,11 @@ class MidiKey:
 
 
 class BaseKeyboard:
-    def __init__(self, channel: Channel = None):
+    def __init__(self, channel: Optional[Channel] = None, track_version: Optional[TrackVersion] = None):
+        if channel and track_version:
+            assert channel == track_version.channel
         self.channel = channel
+        self.track_version = track_version
         self.keys: Dict[Pitch, MidiKey] = {}
         self.build_keyboard_keys()
 

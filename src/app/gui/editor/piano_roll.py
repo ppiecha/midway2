@@ -50,6 +50,7 @@ class PianoRoll(QWidget):
             num_of_bars=self.num_of_bars,
             channel=track_version.channel,
             synth=synth,
+            track_version=track_version
         )
         self.grid_view.verticalScrollBar().valueChanged.connect(self.on_change_ver)
         self.grid_view.horizontalScrollBar().valueChanged.connect(self.on_change_hor)
@@ -60,6 +61,7 @@ class PianoRoll(QWidget):
             num_of_bars=self.num_of_bars,
             channel=track_version.channel,
             synth=synth,
+            track_version=track_version,
         )
         self.header_view = HeaderView(keyboard_=self.ruler_view.keyboard_view.keyboard)
         self.box_main = Box(direction=QBoxLayout.TopToBottom)

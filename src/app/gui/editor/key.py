@@ -13,8 +13,8 @@ from PySide6.QtWidgets import (
 )
 
 from src.app.mingus.containers.note import Note
-from src.app.model.event import Event, EventType
-from src.app.model.midi_keyboard import MidiKey
+from src.app.model.event import Event, EventType, Preset
+from src.app.model.midi_keyboard import MidiKey, BaseKeyboard
 from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import Color, MidiAttr, KeyAttr
 
@@ -130,10 +130,14 @@ class PianoKey(Key):
         return str(self.note)
 
     def play_note(self):
+        preset = None
+        if track_version := self.keyboard.track_version:
+            preset = Preset(sf_name=track_version.sf_name, bank=track_version.bank, patch=track_version.patch)
         self.keyboard.synth.note_on(
             channel=self.note.channel,
             pitch=int(self.note),
             velocity=MidiAttr.DEFAULT_VELOCITY,
+            preset=preset
         )
 
     def play_note_in_thread(self, secs):

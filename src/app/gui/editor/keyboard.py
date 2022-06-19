@@ -15,12 +15,13 @@ from src.app.backend.midway_synth import MidwaySynth
 from src.app.backend.synth import Synth
 from src.app.gui.editor.key import WhitePianoKey, BlackPianoKey, PianoKey, MetaKey
 from src.app.gui.widgets import GraphicsView
-from src.app.model.event import EventType, Event
+from src.app.model.event import EventType, Event, Preset
 from src.app.model.midi_keyboard import (
     MidiKeyboard,
     MidiRange,
     MetaMidiKeyboard,
 )
+from src.app.model.track import TrackVersion
 from src.app.model.types import Channel, Pitch, Midi
 from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import KeyAttr, get_app_palette
@@ -35,10 +36,11 @@ class KeyboardView(GraphicsView):
         synth: Optional[Synth],
         channel: Optional[int],
         callback: Optional[callable] = None,
+        track_version: Optional[TrackVersion] = None,
     ):
         super().__init__()
         self.synth = synth
-        self.keyboard = cls(synth=synth, channel=channel, callback=callback)
+        self.keyboard = cls(synth=synth, channel=channel, callback=callback, track_version=track_version)
         keyboard_scene = QGraphicsScene()
         keyboard_scene.setSceneRect(self.keyboard.rect())
         keyboard_scene.addItem(self.keyboard)
@@ -51,9 +53,9 @@ class KeyboardView(GraphicsView):
 
 
 class PianoKeyboard(QGraphicsWidget, MidiKeyboard):
-    def __init__(self, synth: Synth, channel: Channel, callback: callable):
+    def __init__(self, synth: Synth, channel: Channel, callback: callable, track_version: TrackVersion):
         QGraphicsWidget.__init__(self)
-        MidiKeyboard.__init__(self, channel=channel)
+        MidiKeyboard.__init__(self, channel=channel, track_version=track_version)
         self.piano_keys: Dict[Pitch, PianoKey] = {}
         self.callback = callback
         self.synth = synth
@@ -88,7 +90,7 @@ class PianoKeyboard(QGraphicsWidget, MidiKeyboard):
 
 
 class MetaKeyboard(QGraphicsWidget, MetaMidiKeyboard):
-    def __init__(self, synth: Optional[Synth], channel: Channel, callback: Optional[callable]):
+    def __init__(self, synth: Optional[Synth], channel: Channel, callback: callable, track_version: Optional[TrackVersion] = None):
         QGraphicsWidget.__init__(self)
         MetaMidiKeyboard.__init__(self, channel=channel)
         self.meta_keys: Dict[EventType, MetaKey] = {}

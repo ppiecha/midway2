@@ -12,6 +12,7 @@ from PySide6.QtCore import QThread
 
 from src.app import AppAttr
 from src.app.backend.synth import Sequencer, Synth
+from src.app.mingus.containers import Note
 from src.app.model.bar import Bar
 from src.app.model.event import Event, Preset
 
@@ -86,7 +87,10 @@ class MidwaySynth(Synth):
         sfid = self.sfid(sf_name=preset.sf_name)
         self.program_select(chan=channel, sfid=sfid, bank=preset.bank, preset=preset.patch)
 
-    def note_on(self, channel: int, pitch: int, velocity: int):
+    def note_on(self, channel: int, pitch: int, velocity: int, preset: Optional[Preset] = None):
+        logger.debug(f"Playing {str(Note().from_int(pitch))} on channel {channel} using preset {preset}")
+        if preset and preset != self.get_current_preset(channel=channel):
+            self.preset_change(channel=channel, preset=preset)
         self.noteon(chan=channel, key=pitch, vel=velocity)
 
     def play_note(self, channel, pitch, secs: float):

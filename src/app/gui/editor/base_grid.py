@@ -20,6 +20,7 @@ from src.app.model.event import Event, EventType, Diff, EventDiff
 from src.app.model.meter import invert
 from src.app.model.midi_keyboard import BaseKeyboard
 from src.app.model.sequence import Sequence
+from src.app.model.track import TrackVersion
 from src.app.model.types import Channel
 from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import GuiAttr, KeyAttr, NotificationMessage, GridAttr, MidiAttr
@@ -41,6 +42,7 @@ class BaseGridView(GraphicsView):
         num_of_bars: PositiveInt,
         channel: Channel,
         synth: Synth,
+        track_version: TrackVersion,
     ):
         super().__init__(show_scrollbars=GridAttr.SHOW_SCROLLBARS in cls.GRID_ATTR)
         self._num_of_bars = num_of_bars
@@ -53,6 +55,7 @@ class BaseGridView(GraphicsView):
             synth=synth,
             channel=channel,
             callback=self.mark,
+            track_version=track_version,
         )
 
     @property
