@@ -81,7 +81,10 @@ class MainFrame(QMainWindow):
             self.project = empty_project()
 
     def save_project_file(self, project_file_name: str):
-        write_json_file(json_dict=self.project.json(indent=2), json_file_name=project_file_name)
+        write_json_file(
+            json_dict=self.project.json(indent=2, exclude_none=True, exclude_defaults=True, exclude_unset=True),
+            json_file_name=project_file_name,
+        )
 
     def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)
@@ -170,8 +173,3 @@ class MainFrame(QMainWindow):
     @property
     def current_track_version(self) -> TrackVersion:
         return self.current_track_list_item.current_track_version
-
-
-
-
-

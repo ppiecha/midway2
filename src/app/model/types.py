@@ -1,10 +1,16 @@
+from __future__ import annotations
+
+import typing
 from dataclasses import dataclass
 from enum import Enum
-from typing import Union, NewType, Dict, Any, List
+from typing import Union, NewType, Dict, Any, List, NamedTuple
 
-from pydantic import PositiveInt, confloat, conint
-
+from pydantic import PositiveInt, confloat, conint, BaseModel
 from src.app.utils.exceptions import NoDataFound
+
+if typing.TYPE_CHECKING:
+    from src.app.model.event import Event
+
 
 
 class Midi:
@@ -70,3 +76,17 @@ def get_one(data: List, raise_on_empty: bool = False, raise_on_multiple: bool = 
 class TrackType(str, Enum):
     VOICE = "voice"
     RHYTHM = "rhythm"
+
+
+class TimedEvent(NamedTuple):
+    time: int
+    event: Event
+
+
+class Preset(BaseModel):
+    sf_name: str
+    bank: MidiBankValue
+    patch: MidiValue
+
+    def __eq__(self, other: Preset):
+        return self.sf_name == other.sf_name and self.bank == other.bank and self.patch == other.patch

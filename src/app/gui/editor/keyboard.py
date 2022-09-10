@@ -15,7 +15,7 @@ from src.app.backend.midway_synth import MidwaySynth
 from src.app.backend.synth import Synth
 from src.app.gui.editor.key import WhitePianoKey, BlackPianoKey, PianoKey, MetaKey
 from src.app.gui.widgets import GraphicsView
-from src.app.model.event import EventType, Event, Preset
+from src.app.model.event import EventType, Event
 from src.app.model.midi_keyboard import (
     MidiKeyboard,
     MidiRange,
@@ -90,7 +90,9 @@ class PianoKeyboard(QGraphicsWidget, MidiKeyboard):
 
 
 class MetaKeyboard(QGraphicsWidget, MetaMidiKeyboard):
-    def __init__(self, synth: Optional[Synth], channel: Channel, callback: callable, track_version: Optional[TrackVersion] = None):
+    def __init__(
+        self, synth: Optional[Synth], channel: Channel, callback: callable, track_version: Optional[TrackVersion] = None
+    ):
         QGraphicsWidget.__init__(self)
         MetaMidiKeyboard.__init__(self, channel=channel)
         self.meta_keys: Dict[EventType, MetaKey] = {}

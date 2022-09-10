@@ -110,7 +110,7 @@ def beat2tick(beat: Beat, bpm: Bpm) -> int:
     return tick
 
 
-def bpm2time_scale(bpm: float):
+def bpm2time_scale(bpm: Bpm):
     time_scale = round(second2tick(second=1, ticks_per_beat=MidiAttr.TICKS_PER_BEAT, tempo=bpm2tempo(bpm=bpm)))
     return time_scale
 

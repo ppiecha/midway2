@@ -27,8 +27,7 @@ from src.app.gui.editor.keyboard import KeyboardView, PianoKeyboard
 from src.app.model.project_version import ProjectVersion
 from src.app.model.sequence import Sequence
 from src.app.utils.properties import Color, GuiAttr, IniAttr, MidiAttr
-from src.app.model.event import Preset
-from src.app.model.types import Channel
+from src.app.model.types import Channel, Preset
 from src.app.model.project import Project
 from src.app.model.track import TrackVersion, Track
 import src.app.resources  # pylint: disable=unused-import

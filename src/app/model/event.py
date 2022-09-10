@@ -9,14 +9,8 @@ from pydantic import BaseModel, NonNegativeFloat, NonNegativeInt, Field
 from src.app.mingus.containers.note import Note
 from src.app.model.control import Control, PitchBendChain
 from src.app.model.meter import invert
-from src.app.model.types import Unit, Channel, Beat, Pitch, MidiValue, MidiBankValue
+from src.app.model.types import Unit, Channel, Beat, Pitch, MidiValue, Preset
 from src.app.utils.properties import MidiAttr
-
-
-class Preset(BaseModel):
-    sf_name: str
-    bank: MidiBankValue
-    patch: MidiValue
 
 
 class EventType(str, Enum):
@@ -33,7 +27,7 @@ class Event(BaseModel):
     pitch: Optional[Pitch]
     unit: Optional[NonNegativeFloat]
     velocity: Optional[MidiValue] = MidiAttr.DEFAULT_VELOCITY
-    preset: Optional[Preset]
+    preset: Optional[Preset] = None
     controls: Optional[List[Control]]
     pitch_bend_chain: Optional[PitchBendChain]
     active: Optional[bool] = True

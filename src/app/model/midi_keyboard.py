@@ -7,10 +7,11 @@ from functools import lru_cache
 from typing import Dict, Optional
 
 from src.app.model.event import EventType, Event
-if typing.TYPE_CHECKING:
-    from src.app.model.track import TrackVersion
 from src.app.model.types import Channel, Pitch, Midi
 from src.app.utils.properties import KeyAttr, GuiAttr
+
+if typing.TYPE_CHECKING:
+    from src.app.model.track import TrackVersion
 
 
 class MidiRange:

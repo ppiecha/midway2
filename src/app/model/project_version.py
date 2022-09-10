@@ -71,13 +71,13 @@ class ProjectVersion(BaseModel):
         variants = self._get_variants(variant_id=variant_id)
         return variants.get_variant(variant_id=variant_id)
 
-    def _get_compiled_sequence(self, variant_id: UUID, track: Track, include_defaults: bool = False) -> Sequence:
+    def _get_compiled_sequence(self, variant_id: UUID, track: Track, include_preset: bool = True) -> Sequence:
         variant = self.get_variant(variant_id=variant_id)
         version_id = variant.get_track_variant_item(track=track).version_id
-        return track.get_version(identifier=version_id).get_sequence(include_defaults=include_defaults)
+        return track.get_version(identifier=version_id).get_sequence(include_preset=include_preset)
 
     def get_compiled_sequence(
-        self, variant_id: UUID, single_track: Track = None, include_defaults: bool = False, raise_not_found: bool = True
+        self, variant_id: UUID, single_track: Track = None, include_preset: bool = True, raise_not_found: bool = True
     ) -> Sequence:
         variant = self.get_variant(variant_id=variant_id)
         if single_track:
@@ -89,13 +89,11 @@ class ProjectVersion(BaseModel):
         sequence = None
         if tracks:
             sequence = copy.deepcopy(
-                self._get_compiled_sequence(
-                    variant_id=variant_id, track=tracks.pop(0), include_defaults=include_defaults
-                )
+                self._get_compiled_sequence(variant_id=variant_id, track=tracks.pop(0), include_preset=include_preset)
             )
             for track in tracks:
                 sequence += copy.deepcopy(
-                    self._get_compiled_sequence(variant_id=variant_id, track=track, include_defaults=include_defaults)
+                    self._get_compiled_sequence(variant_id=variant_id, track=track, include_preset=include_preset)
                 )
         return sequence
 

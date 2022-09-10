@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, Union, Optional, List, Any
+from typing import Dict, Union, Optional, List, Any, Iterator
 
 from pubsub import pub
 from pydantic import PositiveInt, BaseModel, NonNegativeInt
@@ -19,7 +19,7 @@ _bars = Dict[int, Union[Bar, type(None)]]
 
 
 class Sequence(BaseModel):
-    bars: Dict[NonNegativeInt, Bar] = {}
+    bars: Dict[int, Bar] = {}
 
     def is_empty(self) -> bool:
         for bar in self.bars.values():
@@ -85,8 +85,11 @@ class Sequence(BaseModel):
             raise ValueError(f"Bar index out of range {index} -> {self.bars}")
         return self.bars[index]
 
-    def events(self):
-        return (event for bar_num, bar in self.bars.items() for event in bar.events())
+    def __iter__(self) -> Iterator[Bar]:
+        return iter(self.bars.values())
+
+    def events(self, deep_copy: bool = False):
+        return (event for bar_num, bar in self.bars.items() for event in bar.events(deep_copy=deep_copy))
 
     def __len__(self):
         """Enable the len() method for Bars."""
@@ -255,7 +258,7 @@ class Sequence(BaseModel):
         for old, new in event_pairs:
             # logger.debug(f"event sent {[old.dbg(), new.dbg()]}")
             pub.sendMessage(
-                topicName=NotificationMessage.EVENT_CHANGED.value,
+                topicName=NotificationMessage.EVENT_CHANGED,
                 event=old,
                 changed_event=new,
             )

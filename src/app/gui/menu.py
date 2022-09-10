@@ -7,13 +7,10 @@ from typing import TYPE_CHECKING, Dict
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import QMenuBar, QMenu
-from pubsub import pub
 
 from src.app.gui.dialogs.generic_config import GenericConfig, GenericConfigMode
-from src.app.model.composition import Composition
-from src.app.model.track import Track
 from src.app.utils.logger import get_console_logger
-from src.app.utils.properties import GuiAttr, MenuAttr
+from src.app.utils.properties import MenuAttr
 import src.app.resources  # pylint: disable=unused-import
 
 if TYPE_CHECKING:
@@ -61,7 +58,7 @@ def save_project_as(_: MainFrame):
 
 
 def delete_project(mf: MainFrame):
-    mf.project_control.delete_all_compositions()
+    mf.project_control.delete_all_project_versions()
 
 
 # Composition

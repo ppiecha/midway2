@@ -8,14 +8,13 @@ from src.app.backend.midway_synth import MidwaySynth
 from src.app.mingus.containers.note import Note
 from src.app.mingus.core.scales import Major
 from src.app.model.bar import Bar
-from src.app.model.composition import Composition
 from src.app.model.control import Volume, Control, Expression
-from src.app.model.event import Event, EventType, Preset
+from src.app.model.event import Event, EventType
 from src.app.model.project_version import ProjectVersion
 from src.app.model.rhythm import Rhythm
 from src.app.model.sequence import Sequence
 from src.app.model.track import Track, TrackVersion, RhythmTrackVersion
-from src.app.model.types import Bpm, NoteUnit
+from src.app.model.types import Bpm, NoteUnit, Preset
 from src.app.model.variant import Variant, VariantType
 from src.app.utils.properties import MidiAttr, DrumPatch
 
@@ -186,12 +185,12 @@ def fixture_track_c_major(bar0, bar1) -> Track:
 
 @pytest.fixture()
 def bar_c_major_up(track_c_major) -> Bar:
-    return track_c_major.get_default_version().get_sequence(include_defaults=True).bars[0]
+    return track_c_major.get_default_version().get_sequence(include_preset=True).bars[0]
 
 
 @pytest.fixture()
 def bar_c_major_down(track_c_major) -> Bar:
-    return track_c_major.get_default_version().get_sequence(include_defaults=True).bars[1]
+    return track_c_major.get_default_version().get_sequence(include_preset=True).bars[1]
 
 
 @pytest.fixture(name="empty_single_variant")
@@ -339,4 +338,4 @@ def project_template_file_name() -> str:
 
 @pytest.fixture(name="empty_project_version")
 def fixture_empty_project_version():
-    return Composition(name="empty_project_version")
+    return ProjectVersion(name="empty_project_version")

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import logging
+import threading
 from dataclasses import asdict
+from time import sleep
 from typing import Union, Optional
 
 from PySide6.QtCore import Qt, QPoint, QRect, QSize
@@ -13,8 +15,8 @@ from PySide6.QtWidgets import (
 )
 
 from src.app.mingus.containers.note import Note
-from src.app.model.event import Event, EventType, Preset
-from src.app.model.midi_keyboard import MidiKey, BaseKeyboard
+from src.app.model.event import Event, EventType
+from src.app.model.midi_keyboard import MidiKey
 from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import Color, MidiAttr, KeyAttr
 
@@ -132,16 +134,18 @@ class PianoKey(Key):
     def play_note(self):
         preset = None
         if track_version := self.keyboard.track_version:
-            preset = Preset(sf_name=track_version.sf_name, bank=track_version.bank, patch=track_version.patch)
+            preset = track_version.preset()
         self.keyboard.synth.note_on(
-            channel=self.note.channel,
-            pitch=int(self.note),
-            velocity=MidiAttr.DEFAULT_VELOCITY,
-            preset=preset
+            channel=self.note.channel, pitch=int(self.note), velocity=MidiAttr.DEFAULT_VELOCITY, preset=preset
         )
 
+    def play_note_for_period(self, secs):
+        self.play_note()
+        sleep(secs)
+        self.stop_note()
+
     def play_note_in_thread(self, secs):
-        self.keyboard.synth.play_note_in_thread(channel=self.note.channel, pitch=int(self.note), secs=secs)
+        threading.Thread(target=self.play_note_for_period, args=(secs,)).start()
 
     def stop_note(self):
         self.keyboard.synth.noteoff(chan=self.note.channel, key=int(self.note))

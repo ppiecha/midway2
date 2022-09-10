@@ -2,24 +2,41 @@
 
 > Midi way to compose your own music.
 
-It is a MIDI sequencer with graphical user interface written in QT 
+MIDI sequencer with graphical user interface written in QT 
 
-It uses Fluidsynth - real-time software synthesizer based on the SoundFont 2 specifications
+Backend uses Fluidsynth - real-time software synthesizer based on the SoundFont 2 specifications
 
-###Testing
+### Requirements
+Python >= 3.10 \
+Windows >= 10 \
+see `requirements.txt` file
+
+### Installation
+Create virtual environment and then
+```commandline
+pip install -r requirements.txt
+```
+Add `/ext/fluidsynth-2.2.9-win10-x64/bin` folder to your system path
+
+### Running
+```commandline
+python main.py
+```
+
+### Testing
 Non-audio tests
 ```bash
 pytest -vv -k "test and not test_play"
 ```
 Audio tests
-```bash
+```commandline
 pytest -vv -k "test_play"
 ```
 Code formatting
-```bash
+```commandline
 black -l 120 src --target-version py310
 ```
-Quality check
+Code quality check
 ```commandline
-
+pylint src
 ```

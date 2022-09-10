@@ -53,9 +53,10 @@ from typing import List, Optional, Dict, Any
 
 from six import binary_type, iteritems, text_type
 
+from src.app.model.types import Bpm, Preset
 from src.app.utils.logger import get_console_logger
 from src.app.model.bar import Bar
-from src.app.model.event import Event, Preset, EventType
+from src.app.model.event import Event, EventType
 
 # Constants
 from src.app.utils.properties import MidiAttr
@@ -100,6 +101,7 @@ AUDIO_FILE_TYPES = (
 lib = (
     find_library("fluidsynth")
     or find_library("libfluidsynth")
+    or find_library("libfluidsynth-3")
     or find_library("libfluidsynth-2")
     or find_library("libfluidsynth-1")
 )
@@ -1648,10 +1650,17 @@ class Sequencer:
     # Added by me
     # -----------------------------------------------------------------------------------------------
 
-    def send_event(self, time: int, event: Event, bpm: float, synth_seq_id):
+    def send_event(self, time: int, event: Event, bpm: Bpm, synth_seq_id):
         if event.active:
             match event.type:
                 case EventType.NOTE:
+                    if event.preset is not None:
+                        self.program_change(
+                            time=time,
+                            channel=event.channel,
+                            preset=event.preset,
+                            dest=synth_seq_id,
+                        )
                     self.note(
                         time=time,
                         channel=event.channel,
@@ -1688,7 +1697,15 @@ class Sequencer:
                 case _:
                     raise ValueError(f"Event type {event.type} not supported")
 
-    def play_bar(self, synth: Synth, bar: Bar, bpm: int, start_tick: int = 0, repeat: int = 1):
+    # def send_events(self, timed_events: List[TimedEvent], bpm: Bpm, synth_seq_id):
+    #     last_preset: Dict[Channel, Preset] = {}
+    #     for timed_event in timed_events:
+    #         if timed_event.event.type == EventType.NOTE:
+    #             if last_preset is None or last_preset != timed_event.event.preset:
+    #                 # send program change to current event
+    #         self.send_event(time=timed_event.time, event=timed_event.event, bpm=bpm, synth_seq_id=synth_seq_id)
+
+    def play_bar(self, synth: Synth, bar: Bar, bpm: Bpm, start_tick: int = 0, repeat: int = 1):
         synth_seq_id = self.register_fluidsynth(synth)
         offset = self.get_tick() + start_tick
         for counter in range(repeat):

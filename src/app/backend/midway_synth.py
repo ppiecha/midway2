@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import gc
-import threading
 import weakref
 from logging import DEBUG
 from time import sleep
-from typing import List, Optional, Callable, NamedTuple
+from typing import List, Optional, Callable
 from uuid import UUID
 
 from PySide6.QtCore import QThread
@@ -14,11 +13,10 @@ from src.app import AppAttr
 from src.app.backend.synth import Sequencer, Synth
 from src.app.mingus.containers import Note
 from src.app.model.bar import Bar
-from src.app.model.event import Event, Preset
 
 from src.app.model.project_version import ProjectVersion
 from src.app.model.track import Track
-from src.app.model.types import Channel, Bpm
+from src.app.model.types import Channel, Bpm, TimedEvent, Preset
 from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import MidiAttr
 from src.app.utils.units import (
@@ -88,22 +86,11 @@ class MidwaySynth(Synth):
         self.program_select(chan=channel, sfid=sfid, bank=preset.bank, preset=preset.patch)
 
     def note_on(self, channel: int, pitch: int, velocity: int, preset: Optional[Preset] = None):
-        logger.debug(f"Playing {str(Note().from_int(pitch))} on channel {channel} using preset {preset}")
         if preset and preset != self.get_current_preset(channel=channel):
             self.preset_change(channel=channel, preset=preset)
+            logger.debug(f"Preset changed to {preset}")
+        logger.debug(f"Playing {str(Note().from_int(pitch))} on channel {channel} using preset {preset}")
         self.noteon(chan=channel, key=pitch, vel=velocity)
-
-    def play_note(self, channel, pitch, secs: float):
-        self.note_on(
-            channel=channel,
-            pitch=pitch,
-            velocity=MidiAttr.DEFAULT_VELOCITY,
-        )
-        sleep(secs)
-        self.noteoff(chan=channel, key=pitch)
-
-    def play_note_in_thread(self, channel, pitch, secs: float):
-        threading.Thread(target=self.play_note, args=(channel, pitch, secs)).start()
 
     def stop_loop_player(self):
         if self.player:
@@ -112,7 +99,7 @@ class MidwaySynth(Synth):
     @staticmethod
     def play_bar(
         bar: Bar,
-        bpm: int,
+        bpm: Bpm,
         channel: Channel = 0,
         bank=MidiAttr.DEFAULT_BANK,
         patch=MidiAttr.DEFAULT_PATCH,
@@ -224,11 +211,6 @@ class MidwaySynth(Synth):
     #     )
 
 
-class TimedEvent(NamedTuple):
-    time: int
-    event: Event
-
-
 class EventProvider:
     def __init__(
         self,
@@ -252,7 +234,7 @@ class EventProvider:
         self.repeat = repeat
         logger.debug(f"EventProvider variant id {self.variant_id}")
         self.sequence = project_version.get_compiled_sequence(
-            variant_id=self.variant_id, single_track=self.track, include_defaults=True
+            variant_id=self.variant_id, single_track=self.track, include_preset=True
         )
         self.bar_length = self.sequence.bars[start_bar_num].length()
         self.bar_duration = unit2tick(unit=self.bar_length, bpm=self.bpm)
@@ -294,7 +276,7 @@ class EventProvider:
                 next_variant = self.project_version.get_next_variant(self.variant_id, repeat=self.repeat)
                 logger.debug(f"Found next next_variant {next_variant.name}")
                 self.sequence = self.project_version.get_compiled_sequence(
-                    variant_id=next_variant.id, single_track=self.track, include_defaults=True
+                    variant_id=next_variant.id, single_track=self.track, include_preset=True
                 )
                 self.variant_id = next_variant.id
             else:

@@ -8,7 +8,7 @@ from PySide6.QtCore import QRectF, QPointF
 from PySide6.QtGui import Qt, QMouseEvent
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsSceneMouseEvent, QBoxLayout
 from pubsub import pub
-from pydantic import NonNegativeInt, PositiveInt
+from pydantic import PositiveInt
 
 from src.app.backend.synth import Synth
 from src.app.gui.editor.key import BlackPianoKey
@@ -211,6 +211,8 @@ class BaseGridScene(QGraphicsScene):
             e=e, node=node, moving=moving, resizing=resizing, user_defined=user_defined
         )
         return self.sequence.get_changed_event(old_event=event_diff.event, diff=event_diff.diff)
+        # event.preset = self.keyboard.track_version.preset()
+        # return event
 
     # def point_to_event(
     #     self,

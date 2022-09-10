@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from collections.abc import Iterator
 from typing import List, Optional
 from uuid import UUID, uuid4
@@ -7,9 +8,9 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, PositiveInt, Field
 
 from src.app.model.bar import Bar
-from src.app.model.event import Event, EventType, Preset
+from src.app.model.event import EventType
 from src.app.model.sequence import Sequence
-from src.app.model.types import Channel, MidiValue, MidiBankValue, get_one, TrackType
+from src.app.model.types import Channel, MidiValue, MidiBankValue, get_one, TrackType, Preset
 from src.app.utils.exceptions import DuplicatedName, NoDataFound
 from src.app.utils.properties import Color, MidiAttr
 
@@ -22,6 +23,11 @@ class TrackVersion(BaseModel):
     bank: MidiBankValue = MidiAttr.DEFAULT_BANK
     patch: MidiValue = MidiAttr.DEFAULT_PATCH
     sequence: Sequence
+
+    def preset(self):
+        if any(item is None for item in (self.sf_name, self.bank, self.patch)):
+            raise RuntimeError(f"Not all preset parts defined {(self.sf_name, self.bank, self.patch)}")
+        return Preset(sf_name=self.sf_name, bank=self.bank, patch=self.patch)
 
     def num_of_bars(self) -> PositiveInt:
         return self.sequence.num_of_bars()
@@ -42,21 +48,26 @@ class TrackVersion(BaseModel):
             sequence=sequence,
         )
 
-    def get_sequence(self, include_defaults: bool = False) -> Sequence:
-        if include_defaults:
-            bars: List[Bar] = list(self.sequence.bars.values())
-            if bars:
-                first_bar, *_ = bars
-                event = Event(
-                    type=EventType.PROGRAM,
-                    channel=self.channel,
-                    beat=0,
-                    preset=Preset(sf_name=self.sf_name, bank=self.bank, patch=self.patch),
-                )
-                if not first_bar.has_event(event=event):
-                    first_bar.add_event(event=event)
-                return Sequence.from_bars(bars=bars)
-            raise NoDataFound(f"No bars in sequence {self.sequence}")
+    def get_sequence(self, include_preset: bool = True) -> Sequence:
+        if include_preset:
+            last_preset = None
+            bars: List[Bar] = []
+            for old_bar in list(self.sequence):
+                new_bar: Bar = copy.deepcopy(old_bar)
+                new_bar.clear()
+                for event in old_bar.events(deep_copy=True):
+                    match event.type:
+                        case EventType.NOTE:
+                            if last_preset is None:
+                                last_preset = self.preset()
+                            event.preset = last_preset
+                            new_bar.add_event(event=event)
+                        case EventType.PROGRAM:
+                            last_preset = event.preset
+                        case _:
+                            new_bar.add_event(event=event)
+                bars.append(new_bar)
+            return Sequence.from_bars(bars=bars)
         return self.sequence
 
 

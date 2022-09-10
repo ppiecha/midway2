@@ -1,20 +1,15 @@
 import logging
-import sys
 
 from PySide6.QtCore import Qt, QRect
 from PySide6.QtGui import QPainter, QPen, QBrush
 from PySide6.QtWidgets import (
     QGraphicsItem,
     QGraphicsScene,
-    QApplication,
-    QBoxLayout,
-    QWidget,
 )
 
-from src.app.backend.midway_synth import MidwaySynth
 from src.app.gui.editor.base_grid import BaseGridScene, BaseGridView
 from src.app.gui.editor.keyboard import MetaKeyboard
-from src.app.gui.widgets import GraphicsView, Box
+from src.app.gui.widgets import GraphicsView
 from src.app.model.event import EventType
 from src.app.model.midi_keyboard import (
     MetaKeyPos,
@@ -23,7 +18,7 @@ from src.app.model.midi_keyboard import (
 from src.app.model.sequence import Sequence
 from src.app.model.types import Channel
 from src.app.utils.logger import get_console_logger
-from src.app.utils.properties import KeyAttr, Color, GuiAttr, get_app_palette, GridAttr
+from src.app.utils.properties import KeyAttr, Color, GuiAttr, GridAttr
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
@@ -249,20 +244,3 @@ class Ruler(QGraphicsItem):
 
     def boundingRect(self):
         return self.get_rect()
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    app.setStyle("Fusion")  # Style needed for palette to work
-    app.setPalette(get_app_palette())
-    ruler_view = BaseGridView(cls=RulerScene, num_of_bars=1, channel=0, synth=MidwaySynth())
-    keyboard = ruler_view.keyboard_view.keyboard
-    header_view = HeaderView(keyboard_=keyboard)
-    ruler_view.num_of_bars = 1
-    box_ruler = Box(direction=QBoxLayout.LeftToRight)
-    widget = QWidget()
-    box_ruler.addWidget(header_view)
-    box_ruler.addWidget(ruler_view)
-    widget.setLayout(box_ruler)
-    widget.show()
-    sys.exit(app.exec())

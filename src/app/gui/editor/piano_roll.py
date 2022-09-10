@@ -7,7 +7,7 @@ from typing import Tuple
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeySequence
 from PySide6.QtWidgets import QWidget, QBoxLayout
-from pydantic import NonNegativeInt, PositiveInt
+from pydantic import PositiveInt
 
 from src.app.backend.midway_synth import MidwaySynth
 from src.app.gui.editor.base_grid import BaseGridView, KeyboardGridBox
@@ -50,7 +50,7 @@ class PianoRoll(QWidget):
             num_of_bars=self.num_of_bars,
             channel=track_version.channel,
             synth=synth,
-            track_version=track_version
+            track_version=track_version,
         )
         self.grid_view.verticalScrollBar().valueChanged.connect(self.on_change_ver)
         self.grid_view.horizontalScrollBar().valueChanged.connect(self.on_change_hor)

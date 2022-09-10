@@ -51,6 +51,7 @@ class MidiAttr:
     MAX_MIDI = 128
     MAX_CHANNEL = 256
     DEFAULT_SF2 = os.path.join(AppAttr.PATH_SF2, "FluidR3.sf2")
+    DEFAULT_SF2_CHORIUM = os.path.join(AppAttr.PATH_SF2, "ChoriumRevA.SF2")
     DEFAULT_BANK = 0
     DEFAULT_PATCH = 0
     DEFAULT_VELOCITY = 100

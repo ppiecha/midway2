@@ -5,7 +5,6 @@ from typing import Dict, TYPE_CHECKING
 from PySide6.QtCore import QSize
 from PySide6.QtGui import Qt, QIcon
 from PySide6.QtWidgets import QWidget, QTabWidget, QSplitter, QStackedWidget, QBoxLayout
-from pubsub import pub
 
 from src.app.gui.variant_grid import SingleVariantGrid, CompositionVariantGrid
 from src.app.gui.track_list import TrackList
@@ -59,15 +58,15 @@ class ProjectControl(QWidget):
         track_list = self.map.pop(project_version.name)
         index = self.index_of_track_list(track_list=track_list)
         for track_id in list(track_list.map.keys()):
-            track_list.delete_track(composition=composition, track=track_list[track_id].track)
+            track_list.delete_track(project_version=project_version, track=track_list[track_id].track)
         self.tab_box.removeTab(index)
-        self.project.delete_composition(composition=composition)
+        self.project.delete_project_version(project_version=project_version)
         track_list.deleteLater()
         # self.tab_box.widget(index).deleteLater()
 
-    def delete_all_compositions(self):
-        for composition in list(self.project.versions):
-            self.delete_project_version(composition=composition)
+    def delete_all_project_versions(self):
+        for project_version in list(self.project.versions):
+            self.delete_project_version(project_version=project_version)
 
     @property
     def current_track_list(self) -> TrackList:

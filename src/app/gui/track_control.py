@@ -23,11 +23,10 @@ from PySide6.QtWidgets import (
 from src.app.gui.editor.piano_roll import PianoRoll
 from src.app.model.project_version import ProjectVersion
 from src.app.utils.logger import get_console_logger
-from src.app.utils.properties import GuiAttr, MenuAttr
+from src.app.utils.properties import MenuAttr
 from src.app.gui.widgets import Box, FontBox, PresetBox, ChannelBox
 from src.app.backend.midway_synth import MidwaySynth
-from src.app.model.composition import Composition
-from src.app.model.event import Preset
+from src.app.model.types import Preset
 from src.app.model.sequence import Sequence
 from src.app.model.track import Track, TrackVersion
 

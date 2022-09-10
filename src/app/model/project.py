@@ -25,6 +25,9 @@ class Project(BaseModel):
     def get_version_by_name(self, version_name: str) -> ProjectVersion:
         return get_one(data=[version for version in self if version.name == version_name], raise_on_empty=True)
 
+    def delete_project_version(self, project_version: ProjectVersion):
+        self.versions.remove(project_version)
+
 
 def empty_project() -> Project:
     sequence = Sequence.from_num_of_bars(num_of_bars=GuiAttr.DEFAULT_NUM_OF_BARS)

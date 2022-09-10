@@ -2,13 +2,28 @@ from uuid import uuid4
 
 import pytest
 
+from src.app.model.sequence import Sequence
 from src.app.model.track import TrackVersion, Track
 
 from src.app.model.types import TrackType
 from src.app.utils.exceptions import NoDataFound, DuplicatedName
+from src.app.utils.properties import MidiAttr
 
 
-def test_version_constructor(sequence):
+def test_version_constructor(bar0, bar1, note1, note2, program_guitar):
+    sequence = Sequence.from_bars(bars=[bar0, bar1])
+    bar0.add_event(event=note1)
+    bar1.add_events(events=[note2, program_guitar])
+    version = TrackVersion(
+        channel=0, name="test_version_constructor", sf_name=MidiAttr.DEFAULT_SF2_CHORIUM, sequence=sequence
+    )
+    print(version.get_sequence())
+    compiled_sequence = version.get_sequence()
+    assert list(compiled_sequence.bars[0].events())[0].preset.sf_name == MidiAttr.DEFAULT_SF2_CHORIUM
+    assert list(compiled_sequence.bars[1].events())[0].preset.sf_name == MidiAttr.DEFAULT_SF2
+
+
+def test_version_from_sequence(sequence):
     version = TrackVersion.from_sequence(sequence=sequence)
     assert version.num_of_bars() == 2
 
@@ -34,7 +49,7 @@ class TestTrackVersion:
 
     def test_get_sequence(self, sequence):
         version = TrackVersion.from_sequence(sequence=sequence)
-        assert sequence == version.get_sequence()
+        assert sequence == version.get_sequence(include_preset=False)
 
 
 class TestTrack:

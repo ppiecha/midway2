@@ -29,7 +29,7 @@ from src.app.gui.widgets import Box
 from src.app.model.composition import Composition
 from src.app.model.project_version import ProjectVersion
 from src.app.model.track import Track, TrackVersion
-from src.app.utils.properties import GuiAttr, NotificationMessage, MenuAttr
+from src.app.utils.properties import NotificationMessage, MenuAttr
 import src.app.resources  # pylint: disable=unused-import
 
 if TYPE_CHECKING:
@@ -186,8 +186,8 @@ class TrackList(QListWidget):
     def rename_track(self, composition: Composition, track: Track, new_name: str):
         pass
 
-    def delete_track(self, composition: Composition, track: Track):
-        if self.project_version == composition:
+    def delete_track(self, project_version: ProjectVersion, track: Track):
+        if self.project_version == project_version:
             self._delete_track(track=track)
 
     def display(self, current: int):

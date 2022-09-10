@@ -133,7 +133,9 @@ class Bar(BaseModel):
     def __iter__(self) -> Iterator[Event]:
         return iter(self.bar)
 
-    def events(self):
+    def events(self, deep_copy: bool = False):
+        if deep_copy:
+            return (copy.deepcopy(event) for event in self.bar)
         return (event for event in self.bar)
 
     def __repr__(self) -> str:
