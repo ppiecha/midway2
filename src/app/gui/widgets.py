@@ -85,7 +85,7 @@ class TrackVersionBox(QWidget):
     def __init__(
         self,
         parent,
-        project_version: Composition,
+        project_version: ProjectVersion,
         variant: Variant,
         variant_item: Optional[VariantItem],
         show_check_box: bool,

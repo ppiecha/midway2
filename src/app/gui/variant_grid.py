@@ -15,14 +15,11 @@ from PySide6.QtWidgets import (
 from src.app.gui.menu import Action
 from src.app.gui.widgets import TrackVersionBox, Box
 from src.app.model.project_version import ProjectVersion
+from src.app.model.types import ABCWidgetFinalMeta
 from src.app.model.variant import Variant, VariantType
 
 
-class FinalMeta(type(QWidget), type(ABC)):
-    pass
-
-
-class VariantGrid(QWidget, ABC, metaclass=FinalMeta):
+class VariantGrid(QWidget, ABC, metaclass=ABCWidgetFinalMeta):
     def __init__(self, parent, mf, project_version: ProjectVersion):
         super().__init__(parent)
         self.mf = mf

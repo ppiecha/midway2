@@ -15,7 +15,7 @@ from src.app.mingus.containers import Note
 from src.app.model.bar import Bar
 
 from src.app.model.project_version import ProjectVersion
-from src.app.model.track import Track
+from src.app.model.track import Track, TrackVersion, Tracks
 from src.app.model.types import Channel, Bpm, TimedEvent, Preset
 from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import MidiAttr
@@ -134,6 +134,14 @@ class MidwaySynth(Synth):
             start_bar_num=start_bar_num,
             repeat=repeat,
         )
+
+    def play_track_version(self, track: Track, track_version: TrackVersion, bpm: Bpm = None, repeat: bool = False):
+        project_version = ProjectVersion.init_from_tracks(
+            "single_track_variant", bpm=bpm, tracks=Tracks.from_tracks(tracks=[track]), add_to_composition=False
+        )
+        variant = project_version.variants.get_first_variant()
+        variant.set_track_version(track=track, version=track_version)
+        self.play(project_version=project_version, start_variant_id=variant.id, repeat=repeat)
 
     def wait_to_the_end(self):
         while self.is_playing():

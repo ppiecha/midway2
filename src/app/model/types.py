@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 import typing
+from abc import ABC
 from dataclasses import dataclass
 from enum import Enum
 from typing import Union, NewType, Dict, Any, List, NamedTuple
 
+from PySide6.QtWidgets import QWidget
 from pydantic import PositiveInt, confloat, conint, BaseModel
 from src.app.utils.exceptions import NoDataFound
 
 if typing.TYPE_CHECKING:
     from src.app.model.event import Event
-
 
 
 class Midi:
@@ -90,3 +91,7 @@ class Preset(BaseModel):
 
     def __eq__(self, other: Preset):
         return self.sf_name == other.sf_name and self.bank == other.bank and self.patch == other.patch
+
+
+class ABCWidgetFinalMeta(type(QWidget), type(ABC)):
+    pass

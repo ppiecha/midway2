@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, Dict, Tuple, TYPE_CHECKING
 from uuid import UUID
@@ -26,7 +27,7 @@ from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import MenuAttr
 from src.app.gui.widgets import Box, FontBox, PresetBox, ChannelBox
 from src.app.backend.midway_synth import MidwaySynth
-from src.app.model.types import Preset
+from src.app.model.types import Preset, ABCWidgetFinalMeta
 from src.app.model.sequence import Sequence
 from src.app.model.track import Track, TrackVersion
 
@@ -35,6 +36,21 @@ if TYPE_CHECKING:
     from src.app.gui.main_frame import MainFrame
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
+
+
+class TrackVersionControlTab(QWidget, ABC, metaclass=ABCWidgetFinalMeta):
+    @abstractmethod
+    def play(self):
+        pass
+
+    @abstractmethod
+    def repeat(self) -> bool:
+        pass
+
+
+class BaseTrackVersionControlTab(TrackVersionControlTab):
+    def play(self):
+        pass
 
 
 class MelodyTrackVersion(QWidget):
@@ -297,7 +313,7 @@ class TrackVersionDetailControl(QWidget):
         self.track_version = track_version
         self.tab_box = QTabWidget()
         self.tab_box.setTabPosition(QTabWidget.South)
-        self.track_item = MelodyTrackVersion(
+        self.track_version_control_tab = MelodyTrackVersion(
             mf=mf,
             parent=self,
             track_version=track_version,
@@ -305,7 +321,7 @@ class TrackVersionDetailControl(QWidget):
             project_version=project_version,
             track=self.track,
         )
-        self.tab_box.addTab(self.track_item, QIcon(":/icons/piano.png"), "Piano roll")
+        self.tab_box.addTab(self.track_version_control_tab, QIcon(":/icons/piano.png"), "Piano roll")
         self.track_version_table = TrackVersionMidiEvents(
             mf=mf,
             parent=self,
@@ -419,8 +435,16 @@ class TrackVersionControl(QWidget):
         # menu.exec_(e.globalPos())
 
     @property
+    def current_track_version_detail_control(self) -> TrackVersionDetailControl:
+        return self.tab_box.currentWidget()
+
+    @property
+    def current_track_version_control_tab(self) -> BaseTrackVersionControlTab:
+        return self.current_track_version_detail_control.track_version_control_tab
+
+    @property
     def current_track_version(self) -> TrackVersion:
-        track_tab: TrackVersionDetailControl = self.tab_box.currentWidget()
+        track_tab = self.current_track_version_detail_control
         if not track_tab:
             raise ValueError(f"Cannot determine tab with current track version. Track {self.track.name}")
         return track_tab.track_version

@@ -132,13 +132,14 @@ class ProjectVersion(BaseModel):
         return variant
 
     @classmethod
-    def init_from_tracks(cls, name: str, bpm: Bpm, tracks: Tracks) -> ProjectVersion:
+    def init_from_tracks(cls, name: str, bpm: Bpm, tracks: Tracks, add_to_composition: bool = True) -> ProjectVersion:
         project_version = cls(name=name, bpm=bpm, tracks=tracks)
         project_version.add_single_variant(name=GuiAttr.DEFAULT_VERSION_NAME, selected=True, enable_all_tracks=True)
         composition = project_version.compositions.add_empty_composition(name=GuiAttr.DEFAULT_COMPOSITION)
-        project_version.add_composition_variant(
-            name="1", composition_name=composition.name, selected=True, enable_all_tracks=True
-        )
+        if add_to_composition:
+            project_version.add_composition_variant(
+                name="1", composition_name=composition.name, selected=True, enable_all_tracks=True
+            )
         return project_version
 
     def get_next_free_channel(self):

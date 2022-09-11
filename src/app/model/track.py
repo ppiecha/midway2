@@ -185,3 +185,7 @@ class Tracks(BaseModel):
                 )
             case _:
                 raise TypeError(f"Wrong type {type(identifier)}")
+
+    @classmethod
+    def from_tracks(cls, tracks: List[Track]) -> Tracks:
+        return cls(__root__=tracks)

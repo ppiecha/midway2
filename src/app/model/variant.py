@@ -130,5 +130,5 @@ class Variants(BaseModel):
         for variant in self:
             variant.remove_track(track=track)
 
-    def get_first_variant(self):
+    def get_first_variant(self) -> Variant:
         return get_one(list(self), raise_on_empty=True, raise_on_multiple=False)

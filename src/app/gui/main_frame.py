@@ -18,6 +18,7 @@ from src.app.gui.project_control import ProjectControl
 from src.app.gui.dialogs.generic_config import GenericConfigDlg, GenericConfig
 from src.app.gui.menu import MenuBar
 from src.app.gui.toolbar import ToolBar
+from src.app.gui.track_control import BaseTrackVersionControlTab
 from src.app.gui.track_list import TrackList, TrackListItem
 from src.app.gui.widgets import Box
 from src.app.model.project import Project, empty_project
@@ -173,3 +174,7 @@ class MainFrame(QMainWindow):
     @property
     def current_track_version(self) -> TrackVersion:
         return self.current_track_list_item.current_track_version
+
+    @property
+    def current_track_version_control_tab(self) -> BaseTrackVersionControlTab:
+        return self.current_track_list.current_track_list_item.current_track_version_control_tab

@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
 from pubsub import pub
 
 from src.app.gui.dialogs.generic_config import GenericConfig, GenericConfigMode
-from src.app.gui.track_control import TrackVersionControl
+from src.app.gui.track_control import TrackVersionControl, BaseTrackVersionControlTab
 from src.app.gui.widgets import Box
 from src.app.model.composition import Composition
 from src.app.model.project_version import ProjectVersion
@@ -73,6 +73,10 @@ class TrackListItem(QWidget):
     @property
     def current_track_version(self) -> TrackVersion:
         return self.version_tab.current_track_version
+
+    @property
+    def current_track_version_control_tab(self) -> BaseTrackVersionControlTab:
+        return self.version_tab.current_track_version_control_tab
 
     @current_track_version.setter
     def current_track_version(self, track_version: TrackVersion) -> None:

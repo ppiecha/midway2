@@ -81,13 +81,13 @@ class ProjectControl(QWidget):
         for track_list in self.map.values():
             for track_list_item in track_list.map.values():
                 for track_version_detail_control in track_list_item.version_tab.map.values():
-                    track_version_detail_control.track_item.init_fonts()
+                    track_version_detail_control.track_version_control_tab.init_fonts()
 
     def set_keyboard_position(self):
         for track_list in self.map.values():
             for track_list_item in track_list.map.values():
                 for track_version_detail_control in track_list_item.version_tab.map.values():
-                    track_version_detail_control.track_item.set_keyboard_position()
+                    track_version_detail_control.track_version_control_tab.set_keyboard_position()
 
     @property
     def name(self) -> str:

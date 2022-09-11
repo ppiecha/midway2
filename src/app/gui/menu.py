@@ -135,8 +135,14 @@ def delete_track_version(_: MainFrame):
     pass
 
 
-def play_track_version(_: MainFrame):
-    pass
+def play_track_version(mf: MainFrame):
+    current_project_version = mf.current_project_version
+    track = mf.current_track
+    track_version = mf.current_track_version
+    track_version_tab = mf.current_track_version_control_tab
+    mf.synth.play_track_version(
+        track=track, track_version=track_version, bpm=current_project_version.bpm, repeat=track_version_tab.repeat()
+    )
 
 
 def get_actions(mf: MainFrame) -> Dict[str, Action]:
