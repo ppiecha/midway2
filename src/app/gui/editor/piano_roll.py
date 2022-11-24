@@ -94,7 +94,7 @@ class PianoRoll(QWidget):
         )
         # self.ac_play = Action(
         #     mf=self.mf,
-        #     caption="Play pianoroll sequence",
+        #     caption="Play piano roll sequence",
         #     shortcut=QKeySequence(Qt.Key_Enter),
         #     slot=self.play,
         # )

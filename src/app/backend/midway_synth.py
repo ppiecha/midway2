@@ -92,7 +92,7 @@ class MidwaySynth(Synth):
         logger.debug(f"Playing {str(Note().from_int(pitch))} on channel {channel} using preset {preset}")
         self.noteon(chan=channel, key=pitch, vel=velocity)
 
-    def stop_loop_player(self):
+    def stop(self):
         if self.player:
             self.player.stop()
 
@@ -332,10 +332,10 @@ class Player:
             self.event_provider()._sequencer = None
         if self.event_provider():
             self._event_provider = None
-        self.synth.system_reset()
+        # self.synth.system_reset()
         gc.collect()
         if self.event_provider() is None:
-            logger.debug("stopped and released")
+            logger.debug("stopped and disposed")
 
     def seq_callback(self, time, event, seq, data):
         def should_stop() -> bool:

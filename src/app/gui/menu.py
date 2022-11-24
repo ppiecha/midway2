@@ -16,6 +16,7 @@ import src.app.resources  # pylint: disable=unused-import
 if TYPE_CHECKING:
     from src.app.gui.main_frame import MainFrame
 
+
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
 
@@ -136,13 +137,18 @@ def delete_track_version(_: MainFrame):
 
 
 def play_track_version(mf: MainFrame):
-    current_project_version = mf.current_project_version
-    track = mf.current_track
-    track_version = mf.current_track_version
-    track_version_tab = mf.current_track_version_control_tab
+    current_project_version_info = mf.get_current_project_version_info()
     mf.synth.play_track_version(
-        track=track, track_version=track_version, bpm=current_project_version.bpm, repeat=track_version_tab.repeat()
+        track=current_project_version_info.track,
+        track_version=current_project_version_info.track_version,
+        bpm=current_project_version_info.project_version.bpm,
+        repeat=current_project_version_info.track_version_control_tab.repeat(),
     )
+
+
+def stop_track_version(mf: MainFrame):
+    print("STOPPED")
+    mf.synth.stop()
 
 
 def get_actions(mf: MainFrame) -> Dict[str, Action]:
@@ -179,6 +185,18 @@ def get_actions(mf: MainFrame) -> Dict[str, Action]:
             caption=MenuAttr.TRACK_VERSION_PLAY,
             slot=play_track_version,
             icon=QIcon(":/icons/play.png"),
+        ),
+        MenuAttr.TRACK_VERSION_STOP: Action(
+            mf=mf,
+            caption=MenuAttr.TRACK_VERSION_STOP,
+            slot=stop_track_version,
+            icon=QIcon(":/icons/stop.png"),
+        ),
+        MenuAttr.TRACK_VERSION_STOP_ALL_NOTES: Action(
+            mf=mf,
+            caption=MenuAttr.TRACK_VERSION_STOP_ALL_NOTES,
+            slot=None,
+            icon=QIcon(":/icons/stop_all.png"),
         ),
     }
 

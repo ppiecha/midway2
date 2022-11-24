@@ -1,6 +1,7 @@
+from __future__ import annotations
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, NamedTuple
 
 from PySide6.QtCore import QSettings, Qt
 from PySide6.QtGui import QIcon, QShowEvent, QCloseEvent
@@ -178,3 +179,22 @@ class MainFrame(QMainWindow):
     @property
     def current_track_version_control_tab(self) -> BaseTrackVersionControlTab:
         return self.current_track_list.current_track_list_item.current_track_version_control_tab
+
+    def get_current_project_version_info(self) -> CurrentProjectVersionInfo:
+        return CurrentProjectVersionInfo(
+            project_version=self.current_project_version,
+            track_list=self.current_track_list,
+            track_list_item=self.current_track_list_item,
+            track=self.current_track,
+            track_version=self.current_track_version,
+            track_version_control_tab=self.current_track_version_control_tab,
+        )
+
+
+class CurrentProjectVersionInfo(NamedTuple):
+    project_version: ProjectVersion
+    track_list: TrackList
+    track_list_item: TrackListItem
+    track: Track
+    track_version: TrackVersion
+    track_version_control_tab: BaseTrackVersionControlTab

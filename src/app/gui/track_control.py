@@ -11,10 +11,8 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QWidget,
     QBoxLayout,
-    QCheckBox,
     QComboBox,
     QLabel,
-    QPushButton,
     QTabWidget,
     QMenu,
     QToolButton,
@@ -47,65 +45,60 @@ class TrackVersionControlTab(QWidget, ABC, metaclass=ABCWidgetFinalMeta):
     def repeat(self) -> bool:
         pass
 
-
-class BaseTrackVersionControlTab(TrackVersionControlTab):
-    def play(self):
+    @abstractmethod
+    def create_piano_roll(self) -> PianoRoll:
         pass
 
 
-class MelodyTrackVersion(QWidget):
-    """
-    Widgets contains melody track version controls:
-    piano roll, sound font, bank and patch
-    """
-
+class BaseTrackVersionControlTab(TrackVersionControlTab):
     def __init__(
         self,
         mf: MainFrame,
         parent,
-        track_version: TrackVersion,
-        synth: MidwaySynth,
         project_version: ProjectVersion,
         track: Track,
+        track_version: TrackVersion,
     ):
         super().__init__(parent=parent)
         self.mf = mf
         self.project_version = project_version
         self.track = track
         self.track_version = track_version
-        self.piano_roll = PianoRoll(
-            mf=mf,
-            parent=self,
-            track_version=track_version,
-            synth=synth,
-            project_version=project_version,
-            track=track,
-        )
-        self.midi_box = Box(direction=QBoxLayout.LeftToRight)
-        self._channel = ChannelBox(default_channel=self.channel)
+        self.piano_roll = self.create_piano_roll()
+
         self._font = FontBox(synth=self.synth)
         self.populate_font_combo()
         self._preset = PresetBox(synth=self.synth)
+        self._channel = ChannelBox(default_channel=self.channel)
+
+        self.w_play = QToolButton()
+        self.w_play.setDefaultAction(self.mf.menu.actions[MenuAttr.TRACK_VERSION_PLAY])
+        self.w_stop = QToolButton()
+        self.w_stop.setDefaultAction(self.mf.menu.actions[MenuAttr.TRACK_VERSION_STOP])
+        # self.w_metronome = QCheckBox("Metronome")
+        self.w_stop_all_notes = QToolButton()
+        self.w_stop_all_notes.setDefaultAction(self.mf.menu.actions[MenuAttr.TRACK_VERSION_STOP_ALL_NOTES])
         self.config_dlg_btn = QToolButton()
         self.config_dlg_btn.setDefaultAction(self.mf.menu.actions[MenuAttr.TRACK_VERSION_EDIT])
-        self.w_play = QToolButton()
-        # self.w_play.setDefaultAction(self.piano_roll.ac_play)
-        self.w_stop = QPushButton("Stop")
-        self.w_metronome = QCheckBox("Metronome")
-        self.w_stop_all_notes = QPushButton("Stop")
+
+        # Layout
+        self.midi_box = Box(direction=QBoxLayout.LeftToRight)
         self.midi_box.setSpacing(5)
         self.midi_box.setContentsMargins(5, 5, 5, 5)
         self.midi_box.addWidget(QLabel("Font"))
         self.midi_box.addWidget(self._font)
         self.midi_box.addWidget(QLabel("Preset"))
         self.midi_box.addWidget(self._preset)
-        self.midi_box.addWidget(self.config_dlg_btn)
+        self.midi_box.addWidget(self._channel)
+
+        self.midi_box.addStretch()
+
         self.midi_box.addWidget(self.w_play)
         self.midi_box.addWidget(self.w_stop)
-        self.midi_box.addWidget(self.w_metronome)
+        # self.midi_box.addWidget(self.w_metronome)
         self.midi_box.addWidget(self.w_stop_all_notes)
-        self.midi_box.addStretch()
-        self.midi_box.addWidget(self._channel)
+        self.midi_box.addWidget(self.config_dlg_btn)
+
         self.top_box = Box(direction=QBoxLayout.TopToBottom)
         self.top_box.addLayout(self.midi_box)
         self.main_box = Box(direction=QBoxLayout.TopToBottom)
@@ -116,11 +109,14 @@ class MelodyTrackVersion(QWidget):
 
         self.num_of_bars = self.track_version.num_of_bars()
 
-    def set_keyboard_position(self):
-        piano_keyboard = self.piano_roll.grid_view.keyboard_view
-        self.piano_roll.grid_view.keyboard_view.verticalScrollBar().setValue(
-            piano_keyboard.verticalScrollBar().maximum() // 2
-        )
+    def play(self):
+        pass
+
+    def create_piano_roll(self) -> PianoRoll:
+        pass
+
+    def repeat(self) -> bool:
+        pass
 
     def init_fonts(self):
         self.populate_font_combo()
@@ -243,6 +239,29 @@ class MelodyTrackVersion(QWidget):
         self.track_version.name = name
         # TODO call list refresh and update tab name
 
+    def set_keyboard_position(self):
+        piano_keyboard = self.piano_roll.grid_view.keyboard_view
+        self.piano_roll.grid_view.keyboard_view.verticalScrollBar().setValue(
+            piano_keyboard.verticalScrollBar().maximum() // 2
+        )
+
+
+class MelodyTrackVersion(BaseTrackVersionControlTab):
+    """
+    Widgets contains melody track version controls:
+    piano roll, sound font, bank and patch
+    """
+
+    def create_piano_roll(self) -> PianoRoll:
+        return PianoRoll(
+            mf=self.mf,
+            parent=self,
+            track_version=self.track_version,
+            synth=self.mf.synth,
+            project_version=self.project_version,
+            track=self.track,
+        )
+
 
 class DrumsTrackVersion(QWidget):
     """Widgets contains drums track version controls"""
@@ -317,7 +336,6 @@ class TrackVersionDetailControl(QWidget):
             mf=mf,
             parent=self,
             track_version=track_version,
-            synth=synth,
             project_version=project_version,
             track=self.track,
         )

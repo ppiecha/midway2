@@ -2,10 +2,18 @@
 
 > Midi way to compose your own music.
 
-MIDI sequencer with graphical user interface written in QT 
+MIDI sequencer (desktop app) written in Python. 
+GUI written in QT framework (PySide6)
 
-Backend uses Fluidsynth - real-time software synthesizer based on the SoundFont 2 specifications
+Backend uses Fluidsynth - real-time software synthesizer based on the SoundFont 2 specifications\
+https://www.fluidsynth.org/
 
+## Features
+
+- Runtime switching between soundfonts - sound is limited only by your imagination
+- track version as building block. Blocks can be composed (combined and concatenated) to build larger pieces up to full composition
+- playback
+- export in WAV or FLAC
 ### Requirements
 Python >= 3.10 \
 Windows >= 10 \

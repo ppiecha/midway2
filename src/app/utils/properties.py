@@ -64,7 +64,7 @@ class MidiAttr:
 class GuiAttr:
     DEFAULT_VERSION_NAME = "Default"
     DEFAULT_COMPOSITION = "Default composition"
-    DEFAULT_NUM_OF_BARS = 16
+    DEFAULT_NUM_OF_BARS = 8
     DEFAULT_BPM = 90
     # Grid
     RULER_HEIGHT = 20
@@ -99,6 +99,8 @@ class MenuAttr:
     TRACK_VERSION_EDIT = "Edit track version"
     TRACK_VERSION_REMOVE = "Remove track version"
     TRACK_VERSION_PLAY = "Play track version"
+    TRACK_VERSION_STOP = "Stop track version"
+    TRACK_VERSION_STOP_ALL_NOTES = "Stop all notes"
 
 
 class KeyAttr:
