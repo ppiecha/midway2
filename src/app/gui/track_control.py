@@ -322,7 +322,6 @@ class TrackVersionDetailControl(QWidget):
         mf,
         parent,
         track_version: TrackVersion,
-        synth: MidwaySynth,
         project_version: ProjectVersion,
         track: Track,
     ):
@@ -390,7 +389,6 @@ class TrackVersionControl(QWidget):
             mf=self.mf,
             parent=self,
             track_version=track_version,
-            synth=self.synth,
             project_version=self.project_version,
             track=self.track,
         )

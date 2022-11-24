@@ -22,7 +22,6 @@ from src.app.model.variant_item import VariantItem
 from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import MidiAttr
 from src.app.backend.midway_synth import MidwaySynth
-from src.app.model.composition import Composition
 from src.app.model.types import Preset
 from src.app.model.track import Track, TrackVersion
 
