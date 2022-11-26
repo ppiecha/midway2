@@ -8,7 +8,7 @@ from typing import Union, NewType, Dict, Any, List, NamedTuple
 
 from PySide6.QtWidgets import QWidget
 from pydantic import PositiveInt, confloat, conint, BaseModel
-from src.app.utils.exceptions import NoDataFound
+from src.app.utils.exceptions import NoDataFound, TooMany
 
 if typing.TYPE_CHECKING:
     from src.app.model.event import Event
@@ -70,7 +70,7 @@ def get_one(data: List, raise_on_empty: bool = False, raise_on_multiple: bool = 
     if not data and raise_on_empty:
         raise NoDataFound("List is empty on None. Expected exactly one element")
     if raise_on_multiple and len(data) > 1:
-        raise NoDataFound(f"Found more than one element {data}. Expecting exactly one")
+        raise TooMany(f"Found more than one element {data}. Expecting exactly one")
     return data[0] if data else None
 
 

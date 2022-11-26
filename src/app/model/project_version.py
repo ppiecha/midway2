@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 from src.app.model.composition import Compositions
 from src.app.model.sequence import Sequence
-from src.app.model.track import Track, Tracks
+from src.app.model.track import Track, Tracks, TrackVersion
 from src.app.model.types import Bpm, get_one
 from src.app.model.variant import Variant, Variants, VariantType
 from src.app.utils.exceptions import NoDataFound, NoItemSelected, OutOfVariants
@@ -27,7 +27,12 @@ class ProjectVersion(BaseModel):
         self.tracks.add_track(track=track)
         self.variants.add_track(track=track, enable=enable)
         self.compositions.add_track(track=track, enable=enable)
-        notify(message=NotificationMessage.TRACK_ADDED, track=track)
+        notify(message=NotificationMessage.TRACK_ADDED, project_version=self, track=track)
+        return self
+
+    def add_track_version(self, track: Track, track_version: TrackVersion):
+        modified_track = self.tracks.get_track(identifier=track.name).add_track_version(track_version=track_version)
+        notify(message=NotificationMessage.TRACK_VERSION_ADDED, track=modified_track, track_version=track_version)
         return self
 
     # not tested
@@ -37,6 +42,10 @@ class ProjectVersion(BaseModel):
         self.compositions.remove_track(track=track)
         notify(message=NotificationMessage.TRACK_REMOVED, track=track)
         return self
+
+    def remove_track_version(self, track: Track, track_version: TrackVersion):
+        modified_track = self.tracks.get_track(identifier=track.name).delete_track_version(track_version=track_version)
+        notify(message=NotificationMessage.TRACK_VERSION_REMOVED, track=modified_track, track_version=track_version)
 
     # not tested
     def change_track(self, track_id: int, new_track: Track) -> ProjectVersion:
@@ -153,7 +162,7 @@ class ProjectVersion(BaseModel):
         return None
 
     def get_first_track_version(self):
-        track: Track = get_one(data=list(self.tracks), raise_on_empty=True)
+        track: Track = get_one(data=list(self.tracks), raise_on_empty=True, raise_on_multiple=False)
         return track.get_default_version(raise_not_found=True)
 
     def track_exists(self, identifier: UUID | str, existing_track: Track = None) -> bool:

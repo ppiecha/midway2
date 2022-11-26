@@ -15,6 +15,10 @@ class NoDataFound(Exception):
     pass
 
 
+class TooMany(Exception):
+    pass
+
+
 class NoItemSelected(Exception):
     pass
 

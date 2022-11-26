@@ -32,6 +32,10 @@ class Compositions(BaseModel):
         for composition in self:
             composition.variants.add_track(track=track, enable=enable)
 
+    def remove_track(self, track: Track):
+        for composition in self:
+            composition.variants.remove_track(track=track)
+
     def add_composition(self, composition: Composition):
         self.__root__.append(composition)
         return composition

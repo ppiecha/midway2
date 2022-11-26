@@ -37,11 +37,11 @@ if TYPE_CHECKING:
     from src.app.gui.editor.node import Node
 
 
-class GenericConfigMode(Enum):
-    new_track = auto()
-    edit_track = auto()
-    new_track_version = auto()
-    edit_track_version = auto()
+class GenericConfigMode(str, Enum):
+    NEW_TRACK = "New track"
+    EDIT_TRACK = "Edit track"
+    NEW_TRACK_VERSION = "New track version"
+    EDIT_TRACK_VERSION = "Edit track version"
 
 
 class GenericConfig(NamedTuple):
@@ -86,9 +86,19 @@ class GenericConfigDlg(QDialog):
             self.reject()
 
     def apply_changes(self):
-        if self.config.mode == GenericConfigMode.new_track:
-            self.config.project_version.add_track(track=self.general.track, enable=True)
-            # self.config.mf.menu.post_new_track(composition=self.config.project_version, track=self.general.track)
+        match self.config.mode:
+            case GenericConfigMode.NEW_TRACK:
+                self.config.project_version.add_track(track=self.general.track, enable=True)
+            case GenericConfigMode.NEW_TRACK_VERSION:
+                self.config.project_version.add_track_version(
+                    track=self.general.track, track_version=self.general.version
+                )
+
+    @staticmethod
+    def get_caption(config: GenericConfig) -> str:
+        if config.node:
+            return "Node settings"
+        return config.mode.value
 
     def load_config(self, config: GenericConfig):
         self.config = GenericConfig(
@@ -100,7 +110,7 @@ class GenericConfigDlg(QDialog):
             track_version=config.track_version,
             node=config.node,
         )
-        self.setWindowTitle("Node settings" if self.config.node else "General settings")
+        self.setWindowTitle(GenericConfigDlg.get_caption(config=config))
         self.load_window_geometry(config=self.config)
         if self.config.node:
             self.tab_box.setTabEnabled(self.tab_map[GuiAttr.GENERAL], False)
@@ -326,9 +336,13 @@ class GeneralTab(QWidget):
         self.project_name_box.setText(config.mf.project.name)
         self.composition_name_box.setText(config.project_version.name)
         self.track_name_box.setText(config.track.name if config.track else "")
+        self.track_name_box.setEnabled(config.mode in (GenericConfigMode.NEW_TRACK, GenericConfigMode.EDIT_TRACK))
         self.show_track_color(color=QColor.fromRgba(config.track.default_color) if config.track else Color.NODE_START)
         self.version_name_box.setText(
             config.track_version.name if config.track_version else GuiAttr.DEFAULT_VERSION_NAME
+        )
+        self.version_name_box.setEnabled(
+            config.mode in (GenericConfigMode.NEW_TRACK_VERSION, GenericConfigMode.EDIT_TRACK_VERSION)
         )
         self.version_channel_box.setCurrentIndex(
             config.track_version.channel if config.track_version else self.default_channel
@@ -339,11 +353,11 @@ class GeneralTab(QWidget):
         )
         self.enable_inheritance_box.setChecked(False)
         self.enable_inheritance_box.setEnabled(
-            config.mode == (GenericConfigMode.new_track or GenericConfigMode.new_track_version)
+            config.mode == (GenericConfigMode.NEW_TRACK or GenericConfigMode.NEW_TRACK_VERSION)
         )
         self.derive_form_box.load_composition(selected_value=self.config.project_version.name)
-        self.enable_in_loops_box.setChecked(not config.track and config.mode == GenericConfigMode.new_track)
-        self.enable_in_loops_box.setEnabled(config.mode == GenericConfigMode.new_track)
+        self.enable_in_loops_box.setChecked(not config.track and config.mode == GenericConfigMode.NEW_TRACK)
+        self.enable_in_loops_box.setEnabled(config.mode == GenericConfigMode.NEW_TRACK)
 
     def get_track_color(self):
         color = QColorDialog.getColor(

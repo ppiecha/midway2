@@ -112,9 +112,11 @@ class Track(BaseModel):
                 f"Current versions {[version.name for version in self.versions]}"
             )
         default = self.get_default_version(raise_not_found=False)
-        if default and default.num_of_bars != track_version.num_of_bars:
+        if default and default.num_of_bars() != track_version.num_of_bars():
             raise ValueError(
-                f"Number of bars does not match. New " f"{track_version.num_of_bars} existing " f"{default.num_of_bars}"
+                f"Number of bars does not match. New "
+                f"{track_version.num_of_bars()} existing "
+                f"{default.num_of_bars()}"
             )
         self.versions.append(track_version)
         return self
@@ -131,7 +133,7 @@ class Track(BaseModel):
         return version and version != existing_version
 
     def get_default_version(self, raise_not_found: bool = True) -> Optional[TrackVersion]:
-        return get_one(data=self.versions, raise_on_empty=raise_not_found)
+        return get_one(data=self.versions, raise_on_empty=raise_not_found, raise_on_multiple=False)
 
     @classmethod
     def from_sequence(
@@ -168,10 +170,17 @@ class Tracks(BaseModel):
     def __len__(self):
         return len(self.__root__)
 
-    def add_track(self, track: Track, raise_on_duplicate: bool = True):
+    def add_track(self, track: Track, raise_on_duplicate: bool = True) -> Tracks:
         if raise_on_duplicate and any(t.name == track.name for t in self.__root__):
             raise DuplicatedName(f"Track with name {track.name} already exists")
         self.__root__.append(track)
+        return self
+
+    def remove_track(self, track: Track) -> Tracks:
+        if not any(t.name == track.name for t in self.__root__):
+            raise NoDataFound(f"Cannot remove track {track.name}. Not found")
+        self.__root__ = [t for t in self.__root__ if t.name != track.name]
+        return self
 
     def get_track(self, identifier: UUID | str, raise_not_found: bool = True) -> Optional[Track]:
         match identifier:

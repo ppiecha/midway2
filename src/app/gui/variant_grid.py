@@ -64,7 +64,7 @@ class VariantGrid(QWidget, ABC, metaclass=ABCWidgetFinalMeta):
     #         )
     #     return Loop(**loop)
 
-    def insert_loop(self, variant_index: int, variant: Variant):
+    def insert_variant(self, variant_index: int, variant: Variant):
         self.table.setColumnCount(variant_index + 1)
         item = QTableWidgetItem(variant.name)
         self.table.setHorizontalHeaderItem(variant_index, item)
@@ -103,23 +103,6 @@ class VariantGrid(QWidget, ABC, metaclass=ABCWidgetFinalMeta):
         self.table.setUpdatesEnabled(True)
 
 
-class VariantToolbar(QToolBar):
-    def __init__(self, variant_grid: VariantGrid):
-        super().__init__("Variant grid", variant_grid)
-        self.setToolButtonStyle(Qt.ToolButtonIconOnly)
-        self.setIconSize(QSize(16, 16))
-        a_add_loop = Action(
-            mf=variant_grid.mf,
-            caption="Add track",
-            icon=QIcon(":/icons/add.png"),
-            shortcut=None,
-            slot=None,
-            tip="Add new loop",
-            status_tip="Add new loop",
-        )
-        self.addAction(a_add_loop)
-
-
 class SingleVariantGrid(VariantGrid):
     # def __init__(self, parent, mf, project_version: ProjectVersion):
     #     super().__init__(parent=parent, mf=mf, project_version=project_version)
@@ -134,7 +117,7 @@ class SingleVariantGrid(VariantGrid):
         self.table.setRowCount(len(self.project_version.tracks) + 1)
         self.table.setVerticalHeaderLabels(["Current"] + [track.name for track in self.project_version.tracks])
         for variant_index, variant in enumerate(self.project_version.variants):
-            self.insert_loop(variant_index=variant_index, variant=variant)
+            self.insert_variant(variant_index=variant_index, variant=variant)
         self.set_updates_enabled()
 
 
@@ -153,5 +136,22 @@ class CompositionVariantGrid(VariantGrid):
         self.table.setVerticalHeaderLabels([track.name for track in self.project_version.tracks])
         if self.project_version.compositions:
             for variant_index, variant in enumerate(self.project_version.compositions[0].variants):
-                self.insert_loop(variant_index=variant_index, variant=variant)
+                self.insert_variant(variant_index=variant_index, variant=variant)
         self.set_updates_enabled()
+
+
+class VariantToolbar(QToolBar):
+    def __init__(self, variant_grid: VariantGrid):
+        super().__init__("Variant grid", variant_grid)
+        self.setToolButtonStyle(Qt.ToolButtonIconOnly)
+        self.setIconSize(QSize(16, 16))
+        a_add_loop = Action(
+            mf=variant_grid.mf,
+            caption="Add track",
+            icon=QIcon(":/icons/add.png"),
+            shortcut=None,
+            slot=None,
+            tip="Add new loop",
+            status_tip="Add new loop",
+        )
+        self.addAction(a_add_loop)

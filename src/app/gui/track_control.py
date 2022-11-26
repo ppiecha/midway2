@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, Dict, Tuple, TYPE_CHECKING
 from uuid import UUID
+from pubsub import pub
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
@@ -22,7 +23,7 @@ from PySide6.QtWidgets import (
 from src.app.gui.editor.piano_roll import PianoRoll
 from src.app.model.project_version import ProjectVersion
 from src.app.utils.logger import get_console_logger
-from src.app.utils.properties import MenuAttr
+from src.app.utils.properties import MenuAttr, NotificationMessage
 from src.app.gui.widgets import Box, FontBox, PresetBox, ChannelBox
 from src.app.backend.midway_synth import MidwaySynth
 from src.app.model.types import Preset, ABCWidgetFinalMeta
@@ -384,6 +385,19 @@ class TrackVersionControl(QWidget):
         self.tab_box.tabBarDoubleClicked.connect(self.on_double_click)
         # self.tab_box.currentChanged.connect(self.on_tab_changed)
 
+        self.register_listeners()
+
+    def register_listeners(self):
+        if not pub.subscribe(self.new_track_version, NotificationMessage.TRACK_VERSION_ADDED):
+            raise Exception(f"Cannot register listener {NotificationMessage.TRACK_VERSION_ADDED}")
+        # if not pub.subscribe(self.rename_track, NotificationMessage.TRACK_CHANGED):
+        #     raise Exception(f"Cannot register listener {NotificationMessage.TRACK_CHANGED}")
+        if not pub.subscribe(self.delete_track_version, NotificationMessage.TRACK_VERSION_REMOVED):
+            raise Exception(f"Cannot register listener {NotificationMessage.TRACK_VERSION_REMOVED}")
+
+    def unregister_listener(self, topic):
+        pass
+
     def _new_track_version(self, track_version: TrackVersion):
         self.map[track_version.id] = TrackVersionDetailControl(
             mf=self.mf,
@@ -403,13 +417,15 @@ class TrackVersionControl(QWidget):
             self._new_track_version(track_version=track_version)
 
     def _delete_track_version(self, track_version: TrackVersion):
-        self.track.get_version(identifier=track_version.name, raise_not_found=True)
         track_tab = self.map.pop(track_version.id)
         if (index := self.tab_box.indexOf(track_tab)) < 0:
             raise ValueError(f"Cannot find {track_tab.track_version.name} tab when deleting")
         self.tab_box.removeTab(index)
-        self.track.delete_track_version(track_version=track_version)
         track_tab.deleteLater()
+
+    def delete_track_version(self, track: Track, track_version: TrackVersion):
+        if self.track == track:
+            self._delete_track_version(track_version=track_version)
 
     def on_double_click(self, _):
         self.mf.menu.actions[MenuAttr.TRACK_VERSION_EDIT].trigger()
@@ -446,6 +462,7 @@ class TrackVersionControl(QWidget):
         menu = QMenu()
         menu.addAction(self.mf.menu.actions[MenuAttr.TRACK_VERSION_NEW])
         menu.addAction(self.mf.menu.actions[MenuAttr.TRACK_VERSION_EDIT])
+        menu.addAction(self.mf.menu.actions[MenuAttr.TRACK_VERSION_REMOVE])
         menu.setDefaultAction(self.mf.menu.actions[MenuAttr.TRACK_VERSION_EDIT])
         menu.exec_(self.tab_box.tabBar().mapToGlobal(position))
         # menu.exec_(e.globalPos())

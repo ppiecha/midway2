@@ -114,9 +114,6 @@ class MainFrame(QMainWindow):
         last_saved_project = Project(**last_saved_dict)
         current = self.project.json(exclude_none=True, exclude_defaults=True, exclude_unset=True)
         last_saved = last_saved_project.json(exclude_none=True, exclude_defaults=True, exclude_unset=True)
-        if current != last_saved:
-            print(current)
-            print(last_saved)
         return current != last_saved
 
     def closeEvent(self, event: QCloseEvent) -> None:

@@ -84,7 +84,7 @@ def new_track(mf: MainFrame):
     track_list = mf.project_control.current_track_list
     project_version = track_list.project_version
     if project_version.get_next_free_channel() is not None:
-        config = GenericConfig(mf=mf, mode=GenericConfigMode.new_track, project_version=project_version)
+        config = GenericConfig(mf=mf, mode=GenericConfigMode.NEW_TRACK, project_version=project_version)
         mf.show_config_dlg(config=config)
     else:
         mf.show_message_box("Cannot add new track. All channels are already reserved")
@@ -112,7 +112,7 @@ def new_track_version(mf: MainFrame):
     if current_project_version.get_next_free_channel() is not None:
         config = GenericConfig(
             mf=mf,
-            mode=GenericConfigMode.new_track_version,
+            mode=GenericConfigMode.NEW_TRACK_VERSION,
             project_version=current_project_version,
             track=mf.current_track,
         )
@@ -124,7 +124,7 @@ def new_track_version(mf: MainFrame):
 def edit_track_version(mf: MainFrame):
     config = GenericConfig(
         mf=mf,
-        mode=GenericConfigMode.edit_track_version,
+        mode=GenericConfigMode.EDIT_TRACK_VERSION,
         project_version=mf.current_project_version,
         track=mf.current_track,
         track_version=mf.current_track_version,
@@ -132,8 +132,12 @@ def edit_track_version(mf: MainFrame):
     mf.show_config_dlg(config=config)
 
 
-def delete_track_version(_: MainFrame):
-    pass
+def delete_track_version(mf: MainFrame):
+    current_project_version_info = mf.get_current_project_version_info()
+    mf.current_project_version.remove_track_version(
+        track=current_project_version_info.track,
+        track_version=current_project_version_info.track_version
+    )
 
 
 def play_track_version(mf: MainFrame):
@@ -147,7 +151,6 @@ def play_track_version(mf: MainFrame):
 
 
 def stop_track_version(mf: MainFrame):
-    print("STOPPED")
     mf.synth.stop()
 
 
@@ -179,6 +182,13 @@ def get_actions(mf: MainFrame) -> Dict[str, Action]:
             caption=MenuAttr.TRACK_VERSION_EDIT,
             slot=edit_track_version,
             icon=QIcon(":/icons/edit.png"),
+        ),
+        MenuAttr.TRACK_VERSION_REMOVE: Action(
+            mf=mf,
+            caption=MenuAttr.TRACK_VERSION_REMOVE,
+            slot=delete_track_version,
+            icon=QIcon(":/icons/delete.png"),
+            shortcut=QKeySequence(Qt.Key_Delete),
         ),
         MenuAttr.TRACK_VERSION_PLAY: Action(
             mf=mf,

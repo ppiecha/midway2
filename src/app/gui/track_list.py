@@ -152,7 +152,7 @@ class TrackList(QListWidget):
         track_list_item: TrackListItem = self.list.itemWidget(item)
         config = GenericConfig(
             mf=self.mf,
-            mode=GenericConfigMode.edit_track,
+            mode=GenericConfigMode.EDIT_TRACK,
             project_version=self.project_version,
             track=track_list_item.track,
         )
@@ -182,10 +182,10 @@ class TrackList(QListWidget):
     def unregister_listener(self, topic):
         pass
 
-    def new_track(self, composition: Composition, track: Track):
-        if self.project_version == composition:
+    def new_track(self, project_version: ProjectVersion, track: Track):
+        if self.project_version == project_version:
             self._new_track(track=track)
-            self.mf.menu.post_refresh_loops(composition=composition)
+            # self.mf.menu.post_refresh_loops(composition=composition)
 
     def rename_track(self, composition: Composition, track: Track, new_name: str):
         pass
