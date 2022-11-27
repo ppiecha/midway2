@@ -28,7 +28,8 @@ from src.app.model.serializer import read_json_file, write_json_file
 from src.app.model.track import Track, TrackVersion
 from src.app.model.types import dict_diff, DictDiff
 from src.app.utils.logger import get_console_logger
-from src.app.utils.properties import IniAttr, AppAttr
+from src.app.utils.notification import register_listener
+from src.app.utils.properties import IniAttr, AppAttr, NotificationMessage
 
 logger = get_console_logger(__name__)
 
@@ -58,11 +59,13 @@ class MainFrame(QMainWindow):
         self.setCentralWidget(self.central_widget)
         self.central_widget.setLayout(self.main_box)
         self.set_geometry()
-        self.set_brand()
+        self.set_brand(project=self.project)
+
+        register_listener(mapping={NotificationMessage.PROJECT_CHANGED: self.update_project_name})
 
     def set_geometry(self):
-        if self.config.value(IniAttr.GEOMETRY, None) is not None:
-            self.restoreGeometry(self.config.value(IniAttr.GEOMETRY))
+        if self.config.value(IniAttr.MAIN_WINDOW_GEOMETRY, None) is not None:
+            self.restoreGeometry(self.config.value(IniAttr.MAIN_WINDOW_GEOMETRY))
         else:
             self.setGeometry(
                 QStyle.alignedRect(
@@ -117,7 +120,7 @@ class MainFrame(QMainWindow):
         return current != last_saved
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        self.config.setValue(IniAttr.GEOMETRY, self.saveGeometry())
+        self.config.setValue(IniAttr.MAIN_WINDOW_GEOMETRY, self.saveGeometry())
         self.config.setValue(IniAttr.PROJECT_FILE, self.project_file)
         if self.has_unsaved_changes():
             resp = QMessageBox.question(
@@ -148,11 +151,15 @@ class MainFrame(QMainWindow):
             message = f"<b>{message}</b><br>{details}"
         QMessageBox.information(self, AppAttr.APP_NAME, message)
 
-    def set_brand(self):
-        self.setWindowTitle(AppAttr.APP_NAME)
+    def set_brand(self, project: Project):
+        self.update_project_name(project=project)
         self.setWindowIcon(QIcon(":/icons/midway.ico"))
-        self.app.setApplicationName(AppAttr.APP_NAME)
-        self.app.setApplicationDisplayName(AppAttr.APP_NAME)
+
+    def update_project_name(self, project: Project):
+        name = f"{AppAttr.APP_NAME} - {project.name}"
+        self.setWindowTitle(name)
+        # self.app.setApplicationName(name)
+        # self.app.setApplicationDisplayName(name)
 
     def show_config_dlg(self, config: GenericConfig):
         self.gen_config_dlg.load_config(config=config)
@@ -184,6 +191,7 @@ class MainFrame(QMainWindow):
 
     def get_current_project_version_info(self) -> CurrentProjectVersionInfo:
         return CurrentProjectVersionInfo(
+            project=self.project,
             project_version=self.current_project_version,
             track_list=self.current_track_list,
             track_list_item=self.current_track_list_item,
@@ -194,6 +202,7 @@ class MainFrame(QMainWindow):
 
 
 class CurrentProjectVersionInfo(NamedTuple):
+    project: Project
     project_version: ProjectVersion
     track_list: TrackList
     track_list_item: TrackListItem

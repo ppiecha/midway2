@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import List, Dict, Tuple, TYPE_CHECKING
+from typing import List, Dict, Tuple, TYPE_CHECKING, Optional
 from uuid import UUID
 from pubsub import pub
 
@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
 from src.app.gui.editor.piano_roll import PianoRoll
 from src.app.model.project_version import ProjectVersion
 from src.app.utils.logger import get_console_logger
+from src.app.utils.notification import register_listener
 from src.app.utils.properties import MenuAttr, NotificationMessage
 from src.app.gui.widgets import Box, FontBox, PresetBox, ChannelBox
 from src.app.backend.midway_synth import MidwaySynth
@@ -110,11 +111,14 @@ class BaseTrackVersionControlTab(TrackVersionControlTab):
 
         self.num_of_bars = self.track_version.num_of_bars()
 
+        if self.mf.synth.is_loaded():
+            self.init_fonts()
+
     def play(self):
         pass
 
-    def create_piano_roll(self) -> PianoRoll:
-        pass
+    def create_piano_roll(self) -> Optional[PianoRoll]:
+        return None
 
     def repeat(self) -> bool:
         pass
@@ -383,9 +387,15 @@ class TrackVersionControl(QWidget):
         self.tab_box.tabBar().setContextMenuPolicy(Qt.CustomContextMenu)
         self.tab_box.tabBar().customContextMenuRequested.connect(self.open_menu)
         self.tab_box.tabBarDoubleClicked.connect(self.on_double_click)
+        self.tab_box.tabBarClicked.connect(self.on_click)
         # self.tab_box.currentChanged.connect(self.on_tab_changed)
 
-        self.register_listeners()
+        register_listener(
+            mapping={
+                NotificationMessage.TRACK_VERSION_ADDED: self.new_track_version,
+                NotificationMessage.TRACK_VERSION_REMOVED: self.delete_track_version,
+            }
+        )
 
     def register_listeners(self):
         if not pub.subscribe(self.new_track_version, NotificationMessage.TRACK_VERSION_ADDED):
@@ -399,6 +409,7 @@ class TrackVersionControl(QWidget):
         pass
 
     def _new_track_version(self, track_version: TrackVersion):
+        logger.debug(f"Added version {track_version}")
         self.map[track_version.id] = TrackVersionDetailControl(
             mf=self.mf,
             parent=self,
@@ -429,6 +440,10 @@ class TrackVersionControl(QWidget):
 
     def on_double_click(self, _):
         self.mf.menu.actions[MenuAttr.TRACK_VERSION_EDIT].trigger()
+
+    def on_click(self, index):
+        if 0 <= index < self.tab_box.tabBar().count():
+            self.tab_box.setCurrentIndex(index)
 
     @property
     def versions(self) -> List[str]:

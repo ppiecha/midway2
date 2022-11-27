@@ -127,11 +127,6 @@ class SequencerBox(QWidget):
         self.main_box.addWidget(self.splitter)
         self.setLayout(self.main_box)
         self.resize(QSize(self.width(), 400))
-        # self.register_listeners()
-
-    # def register_listeners(self):
-    #     if not pub.subscribe(self.reload_tracks, GuiAttr.REFRESH_LOOPS):
-    #         raise Exception(f"Cannot register listener {GuiAttr.REFRESH_LOOPS}")
 
     def reload_tracks(self, composition: Composition):
         if self.project_version == composition:

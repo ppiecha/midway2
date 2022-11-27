@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from src.app.model.composition import Compositions
 from src.app.model.sequence import Sequence
 from src.app.model.track import Track, Tracks, TrackVersion
-from src.app.model.types import Bpm, get_one
+from src.app.model.types import Bpm, get_one, Channel
 from src.app.model.variant import Variant, Variants, VariantType
 from src.app.utils.exceptions import NoDataFound, NoItemSelected, OutOfVariants
 from src.app.utils.notification import notify
@@ -35,12 +35,11 @@ class ProjectVersion(BaseModel):
         notify(message=NotificationMessage.TRACK_VERSION_ADDED, track=modified_track, track_version=track_version)
         return self
 
-    # not tested
     def remove_track(self, track: Track) -> ProjectVersion:
         self.tracks.remove_track(track=track)
         self.variants.remove_track(track=track)
         self.compositions.remove_track(track=track)
-        notify(message=NotificationMessage.TRACK_REMOVED, track=track)
+        notify(message=NotificationMessage.TRACK_REMOVED, project_version=self, track=track)
         return self
 
     def remove_track_version(self, track: Track, track_version: TrackVersion):
@@ -151,7 +150,7 @@ class ProjectVersion(BaseModel):
             )
         return project_version
 
-    def get_next_free_channel(self):
+    def get_next_free_channel(self) -> Optional[Channel]:
         reserved = set()
         for track in self.tracks:
             for track_version in track.versions:
@@ -161,8 +160,9 @@ class ProjectVersion(BaseModel):
                 return channel
         return None
 
-    def get_first_track_version(self):
-        track: Track = get_one(data=list(self.tracks), raise_on_empty=True, raise_on_multiple=False)
+    def get_first_track_version(self, track: Optional[Track]):
+        if track is None:
+            track: Track = get_one(data=list(self.tracks), raise_on_empty=True, raise_on_multiple=False)
         return track.get_default_version(raise_not_found=True)
 
     def track_exists(self, identifier: UUID | str, existing_track: Track = None) -> bool:

@@ -1,11 +1,12 @@
 import os
 from enum import Enum, Flag, auto
 from pathlib import Path
+from typing import List
 
 from PySide6.QtGui import QColor, QPalette, Qt
 
 from src.app.mingus.core import value
-from src.app.model.types import NoteUnit
+from src.app.model.types import NoteUnit, Channel
 
 
 class GridAttr(Flag):
@@ -34,6 +35,9 @@ class NotificationMessage:
     TRACK_VERSION_REMOVED = "TRACK_VERSION_REMOVED"
     TRACK_VERSION_CHANGED = "TRACK_VERSION_CHANGED"
 
+    PROJECT_CHANGED = "PROJECT_CHANGED"
+    PROJECT_VERSION_CHANGED = "PROJECT_VERSION_CHANGED"
+
 
 class AppAttr:
     APP_NAME = "Midway"
@@ -60,7 +64,7 @@ class MidiAttr:
     DEFAULT_PATCH = 0
     DEFAULT_VELOCITY = 100
     DEFAULT_ACCENT_VELOCITY = 127
-    CHANNELS = list(range(MAX_CHANNEL))
+    CHANNELS: List[Channel] = list(range(MAX_CHANNEL))
     DRIVER = "dsound"
     KEY_PLAY_TIME = 0.3
 
@@ -163,11 +167,8 @@ class IniAttr(str, Enum):
     EVENT_WINDOW = "EVENT_WINDOW"
     PROJECT_FILE = "project_file"
     DEFAULT_PROJECT = "default_project.json"
-    MAIN_WIN_SIZE = "main_win_size"
-    MAIN_WIN_POS = "main_win_pos"
-    EVENT_WIN_SIZE = "event_win_size"
-    EVENT_WIN_POS = "event_win_pos"
-    GEOMETRY = "main_window/geometry"
+    MAIN_WINDOW_GEOMETRY = "main_window/geometry"
+    EVENT_WIN_GEOMETRY = "event_window/geometry"
 
 
 class DrumPatch(int, Enum):

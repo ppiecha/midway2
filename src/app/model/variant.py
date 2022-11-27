@@ -38,7 +38,6 @@ class Variant(BaseModel):
         self.items.append(VariantItem(track_id=track.id, version_id=track.get_default_version().id, enabled=enable))
         return self
 
-
     def remove_track(self, track: Track) -> Variant:
         self.items = [item for item in self.items if item.track_id != track.id]
         return self

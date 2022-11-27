@@ -226,7 +226,7 @@ class DeriveTrackVersionBox(QWidget):
 
     def on_track_changed(self, index):
         if index >= 0:
-            project_version = self.mf.project.get_version_by_name(version_name=self.project_version_box.itemText(index))
+            project_version = self.mf.project.get_version_by_name(version_name=self.project_version_box.currentText())
             track = project_version.tracks.get_track(identifier=self.track_box.itemText(index))
             if track:
                 self.load_track_version(track=track)

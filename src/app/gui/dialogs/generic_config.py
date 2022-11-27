@@ -1,10 +1,10 @@
 from __future__ import annotations
-from enum import Enum, auto
+from enum import Enum
 from pathlib import Path
 from typing import Any, NamedTuple, TYPE_CHECKING, Optional
 
-from PySide6.QtCore import QSize
-from PySide6.QtGui import Qt, QIcon, QColor, QPalette
+from PySide6.QtGui import QIcon, QColor, QPalette
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QWidget,
     QDialog,
@@ -20,7 +20,9 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QDialogButtonBox,
     QAbstractButton,
+    QStyle,
 )
+from pydantic import PositiveInt
 
 from src.app.gui.widgets import Box, ChannelBox, DeriveTrackVersionBox, BarBox
 from src.app.gui.editor.keyboard import KeyboardView, PianoKeyboard
@@ -53,6 +55,38 @@ class GenericConfig(NamedTuple):
     track_version: Optional[TrackVersion] = None
     node: Optional[Node] = None
 
+    def track_name(self) -> str:
+        return self.track.name if self.track else ""
+
+    def is_track_name_enabled(self) -> bool:
+        return self.mode in (GenericConfigMode.NEW_TRACK, GenericConfigMode.EDIT_TRACK)
+
+    def get_color(self) -> QColor:
+        return QColor.fromRgba(self.track.default_color) if self.track else Color.NODE_START
+
+    def version_name(self) -> str:
+        return self.track_version.name if self.track_version else GuiAttr.DEFAULT_VERSION_NAME
+
+    def is_version_name_enabled(self) -> bool:
+        return self.mode in (GenericConfigMode.NEW_TRACK_VERSION, GenericConfigMode.EDIT_TRACK_VERSION)
+
+    def channel(self) -> Channel:
+        return (
+            self.project_version.get_first_track_version(track=self.track).channel
+            if self.track
+            else self.project_version.get_next_free_channel()
+        )
+
+    def bars(self) -> PositiveInt:
+        return (
+            self.project_version.get_first_track_version(track=self.track).num_of_bars()
+            if self.track
+            else self.project_version.get_first_track_version(track=self.track).num_of_bars()
+        )
+
+    def is_inheritance_enabled(self) -> bool:
+        return self.mode in (GenericConfigMode.NEW_TRACK, GenericConfigMode.NEW_TRACK_VERSION)
+
 
 class GenericConfigDlg(QDialog):
     def __init__(self, mf: MainFrame):
@@ -78,6 +112,7 @@ class GenericConfigDlg(QDialog):
         self.buttons.clicked.connect(self.button_clicked)
 
     def button_clicked(self, button: QAbstractButton):
+        self.save_geometry()
         if self.buttons.buttonRole(button) == QDialogButtonBox.AcceptRole:
             if self.general.is_valid():
                 self.apply_changes()
@@ -93,6 +128,8 @@ class GenericConfigDlg(QDialog):
                 self.config.project_version.add_track_version(
                     track=self.general.track, track_version=self.general.version
                 )
+        if self.general.project_name != self.config.project.name:
+            self.config.project.modify_project(project=Project(name=self.general.project_name))
 
     @staticmethod
     def get_caption(config: GenericConfig) -> str:
@@ -121,16 +158,23 @@ class GenericConfigDlg(QDialog):
 
     def load_window_geometry(self, config: GenericConfig):
         if not self.isVisible():
-            size = config.mf.config.value(IniAttr.EVENT_WIN_SIZE, QSize(500, 400))
-            pos = config.mf.config.value(IniAttr.EVENT_WIN_POS, None)
-            if pos:
-                self.setGeometry(pos.x(), pos.y(), size.width(), size.height())
-            else:
-                self.resize(size)
+            self.setGeometry(
+                config.mf.config.value(
+                    IniAttr.EVENT_WIN_GEOMETRY,
+                    QStyle.alignedRect(
+                        Qt.LeftToRight,
+                        Qt.AlignCenter,
+                        self.size(),
+                        self.screen().availableGeometry(),
+                    ),
+                )
+            )
+
+    def save_geometry(self):
+        self.config.mf.config.setValue(IniAttr.EVENT_WIN_GEOMETRY, self.geometry())
 
     def closeEvent(self, _):
-        self.config.mf.config.setValue(IniAttr.EVENT_WIN_SIZE, self.size())
-        self.config.mf.config.setValue(IniAttr.EVENT_WIN_POS, self.pos())
+        self.save_geometry()
 
 
 class PresetTab(QWidget):
@@ -335,26 +379,15 @@ class GeneralTab(QWidget):
         self.config = config
         self.project_name_box.setText(config.mf.project.name)
         self.composition_name_box.setText(config.project_version.name)
-        self.track_name_box.setText(config.track.name if config.track else "")
-        self.track_name_box.setEnabled(config.mode in (GenericConfigMode.NEW_TRACK, GenericConfigMode.EDIT_TRACK))
-        self.show_track_color(color=QColor.fromRgba(config.track.default_color) if config.track else Color.NODE_START)
-        self.version_name_box.setText(
-            config.track_version.name if config.track_version else GuiAttr.DEFAULT_VERSION_NAME
-        )
-        self.version_name_box.setEnabled(
-            config.mode in (GenericConfigMode.NEW_TRACK_VERSION, GenericConfigMode.EDIT_TRACK_VERSION)
-        )
-        self.version_channel_box.setCurrentIndex(
-            config.track_version.channel if config.track_version else self.default_channel
-        )
-        self.version_channel_box.setEnabled(False)
-        self.version_bars_box.setValue(
-            config.track_version.num_of_bars() if config.track_version else self.default_num_of_bars
-        )
+        self.track_name_box.setText(config.track_name())
+        self.track_name_box.setEnabled(config.is_track_name_enabled())
+        self.show_track_color(color=config.get_color())
+        self.version_name_box.setText(config.version_name())
+        self.version_name_box.setEnabled(config.is_version_name_enabled())
+        self.version_channel_box.setCurrentIndex(config.channel())
+        self.version_bars_box.setValue(config.bars())
         self.enable_inheritance_box.setChecked(False)
-        self.enable_inheritance_box.setEnabled(
-            config.mode == (GenericConfigMode.NEW_TRACK or GenericConfigMode.NEW_TRACK_VERSION)
-        )
+        self.enable_inheritance_box.setEnabled(config.is_inheritance_enabled())
         self.derive_form_box.load_composition(selected_value=self.config.project_version.name)
         self.enable_in_loops_box.setChecked(not config.track and config.mode == GenericConfigMode.NEW_TRACK)
         self.enable_in_loops_box.setEnabled(config.mode == GenericConfigMode.NEW_TRACK)
@@ -428,16 +461,8 @@ class GeneralTab(QWidget):
         return self.version_channel_box.get_channel()
 
     @property
-    def default_channel(self):
-        return self.config.project_version.get_first_track_version().channel
-
-    @property
-    def bars(self) -> int:
-        return self.version_bars_box.value()
-
-    @property
-    def default_num_of_bars(self) -> int:
-        return self.config.project_version.get_first_track_version().num_of_bars()
+    def bars(self) -> PositiveInt:
+        return PositiveInt(self.version_bars_box.value())
 
     @property
     def version(self) -> TrackVersion:
@@ -447,7 +472,7 @@ class GeneralTab(QWidget):
             sf_name=self.preset.sf_name,
             bank=self.preset.bank,
             patch=self.preset.patch,
-            sequence=self.derive_form_box.get_derived_version()
+            sequence=self.derive_form_box.get_derived_version().sequence
             if self.enable_inheritance_box.isChecked()
             else Sequence.from_num_of_bars(num_of_bars=self.bars),
         )

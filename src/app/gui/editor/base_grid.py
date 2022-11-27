@@ -7,7 +7,6 @@ from typing import Optional, List, Type
 from PySide6.QtCore import QRectF, QPointF
 from PySide6.QtGui import Qt, QMouseEvent
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsSceneMouseEvent, QBoxLayout
-from pubsub import pub
 from pydantic import PositiveInt
 
 from src.app.backend.synth import Synth
@@ -23,6 +22,7 @@ from src.app.model.sequence import Sequence
 from src.app.model.track import TrackVersion
 from src.app.model.types import Channel
 from src.app.utils.logger import get_console_logger
+from src.app.utils.notification import register_listener
 from src.app.utils.properties import GuiAttr, KeyAttr, NotificationMessage, GridAttr, MidiAttr
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
@@ -114,13 +114,12 @@ class BaseGridScene(QGraphicsScene):
         self._num_of_bars = num_of_bars
         self.redraw()
         self.selection = GridSelection(grid=self, grid_attr=BaseGridScene.GRID_ATTR)
-        self.register_listeners()
-
-    def register_listeners(self):
-        if not pub.subscribe(self.add_node, NotificationMessage.EVENT_ADDED):
-            raise Exception(f"Cannot register listener {NotificationMessage.EVENT_ADDED}")
-        if not pub.subscribe(self.remove_node, NotificationMessage.EVENT_REMOVED):
-            raise Exception(f"Cannot register listener {NotificationMessage.EVENT_REMOVED}")
+        register_listener(
+            mapping={
+                NotificationMessage.EVENT_ADDED: self.add_node,
+                NotificationMessage.EVENT_REMOVED: self.remove_node,
+            }
+        )
 
     def ratio(self, x: float) -> float:
         return x / self.bar_width

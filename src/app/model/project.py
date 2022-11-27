@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import List, Iterator
 
 from pydantic import BaseModel
@@ -6,7 +7,8 @@ from src.app.model.project_version import ProjectVersion
 from src.app.model.sequence import Sequence
 from src.app.model.track import TrackVersion, Track, Tracks
 from src.app.model.types import TrackType, get_one
-from src.app.utils.properties import MidiAttr, GuiAttr
+from src.app.utils.notification import notify
+from src.app.utils.properties import MidiAttr, GuiAttr, NotificationMessage
 
 
 class Project(BaseModel):
@@ -27,6 +29,10 @@ class Project(BaseModel):
 
     def delete_project_version(self, project_version: ProjectVersion):
         self.versions.remove(project_version)
+
+    def modify_project(self, project: Project):
+        self.name = project.name
+        notify(message=NotificationMessage.PROJECT_CHANGED, project=project)
 
 
 def empty_project() -> Project:

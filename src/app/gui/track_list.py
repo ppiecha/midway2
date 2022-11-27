@@ -21,7 +21,6 @@ from PySide6.QtWidgets import (
     QFrame,
     QToolBar,
 )
-from pubsub import pub
 
 from src.app.gui.dialogs.generic_config import GenericConfig, GenericConfigMode
 from src.app.gui.track_control import TrackVersionControl, BaseTrackVersionControlTab
@@ -29,6 +28,7 @@ from src.app.gui.widgets import Box
 from src.app.model.composition import Composition
 from src.app.model.project_version import ProjectVersion
 from src.app.model.track import Track, TrackVersion
+from src.app.utils.notification import register_listener
 from src.app.utils.properties import NotificationMessage, MenuAttr
 import src.app.resources  # pylint: disable=unused-import
 
@@ -121,7 +121,13 @@ class TrackList(QListWidget):
         self.list.currentRowChanged.connect(self.display)
         self.list.itemActivated.connect(self.edit_track)
 
-        self.register_listeners()
+        register_listener(
+            mapping={
+                NotificationMessage.TRACK_ADDED: self.new_track,
+                NotificationMessage.TRACK_CHANGED: self.rename_track,
+                NotificationMessage.TRACK_REMOVED: self.delete_track,
+            }
+        )
 
     @property
     def current_track_list_item(self) -> TrackListItem:
@@ -159,8 +165,6 @@ class TrackList(QListWidget):
         self.mf.show_config_dlg(config=config)
 
     def _delete_track(self, track: Track):
-        if not self.project_version.track_exists(identifier=track.id):
-            raise ValueError(f"Track with name {track.id} does not exist in composition {self.project_version.name}")
         track_list_item: TrackListItem = self.map.pop(track.id)
         self.list.removeItemWidget(track_list_item.list_item)
         self.stack.removeWidget(track_list_item)
@@ -168,19 +172,8 @@ class TrackList(QListWidget):
             track_list_item.version_tab._delete_track_version(
                 track_version=track_list_item.track.get_version(identifier=track_version_name)
             )
-        self.project_version.remove_track(track=track)
+        self.list.takeItem(self.list.row(track_list_item.list_item))
         track_list_item.deleteLater()
-
-    def register_listeners(self):
-        if not pub.subscribe(self.new_track, NotificationMessage.TRACK_ADDED):
-            raise Exception(f"Cannot register listener {NotificationMessage.TRACK_ADDED}")
-        if not pub.subscribe(self.rename_track, NotificationMessage.TRACK_CHANGED):
-            raise Exception(f"Cannot register listener {NotificationMessage.TRACK_CHANGED}")
-        if not pub.subscribe(self.delete_track, NotificationMessage.TRACK_REMOVED):
-            raise Exception(f"Cannot register listener {NotificationMessage.TRACK_REMOVED}")
-
-    def unregister_listener(self, topic):
-        pass
 
     def new_track(self, project_version: ProjectVersion, track: Track):
         if self.project_version == project_version:
@@ -216,3 +209,5 @@ class TrackListToolbar(QToolBar):
         self.setToolButtonStyle(Qt.ToolButtonIconOnly)
         self.setIconSize(QSize(16, 16))
         self.addAction(mf.menu.actions[MenuAttr.TRACK_NEW])
+        self.addAction(mf.menu.actions[MenuAttr.TRACK_EDIT])
+        self.addAction(mf.menu.actions[MenuAttr.TRACK_REMOVE])

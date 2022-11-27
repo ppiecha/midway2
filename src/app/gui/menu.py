@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import logging
 from functools import partial
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING, Dict, Callable
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QIcon, QKeySequence
-from PySide6.QtWidgets import QMenuBar, QMenu
+from PySide6.QtWidgets import QMenuBar, QMenu, QMessageBox
 
 from src.app.gui.dialogs.generic_config import GenericConfig, GenericConfigMode
 from src.app.utils.logger import get_console_logger
@@ -41,6 +41,11 @@ class Action(QAction):
         if slot:
             self.triggered.connect(partial(slot, mf=mf))
         mf.addAction(self)
+
+
+def map_config(mf: MainFrame) -> Callable:
+    project_info = mf.get_current_project_version_info()
+    return partial(GenericConfig, mf=mf, project=project_info.project, project_version=project_info.project_version)
 
 
 # Project
@@ -84,24 +89,26 @@ def new_track(mf: MainFrame):
     track_list = mf.project_control.current_track_list
     project_version = track_list.project_version
     if project_version.get_next_free_channel() is not None:
-        config = GenericConfig(mf=mf, mode=GenericConfigMode.NEW_TRACK, project_version=project_version)
-        mf.show_config_dlg(config=config)
+        # config = GenericConfig(mf=mf, mode=GenericConfigMode.NEW_TRACK, project_version=project_version)
+        mf.show_config_dlg(config=map_config(mf)(mode=GenericConfigMode.NEW_TRACK, project_version=project_version))
     else:
         mf.show_message_box("Cannot add new track. All channels are already reserved")
 
 
 def edit_track(mf: MainFrame):
-    track_list = mf.project_control.current_track_list
-    if track_list.currentItem():
-        track_list.edit_track(track_list.currentItem())
+    current_project_version_info = mf.get_current_project_version_info()
+    if current_project_version_info.track_list_item:
+        current_project_version_info.track_list.edit_track(current_project_version_info.track_list_item.list_item)
     else:
         raise ValueError(
-            f"Cannot determine current track in track list in composition {track_list.project_version_box}"
+            f"Cannot determine current track in track list in project version "
+            f"{current_project_version_info.project_version.name}"
         )
 
 
-def delete_track(_: MainFrame):
-    pass
+def delete_track(mf: MainFrame):
+    current_project_version_info = mf.get_current_project_version_info()
+    current_project_version_info.project_version.remove_track(track=current_project_version_info.track)
 
 
 # Track version
@@ -110,34 +117,32 @@ def delete_track(_: MainFrame):
 def new_track_version(mf: MainFrame):
     current_project_version = mf.current_project_version
     if current_project_version.get_next_free_channel() is not None:
-        config = GenericConfig(
-            mf=mf,
-            mode=GenericConfigMode.NEW_TRACK_VERSION,
-            project_version=current_project_version,
-            track=mf.current_track,
-        )
-        mf.show_config_dlg(config=config)
+        mf.show_config_dlg(config=map_config(mf)(mode=GenericConfigMode.NEW_TRACK_VERSION, track=mf.current_track))
     else:
         mf.show_message_box("Cannot add new track. All channels are already reserved")
 
 
 def edit_track_version(mf: MainFrame):
-    config = GenericConfig(
-        mf=mf,
-        mode=GenericConfigMode.EDIT_TRACK_VERSION,
-        project_version=mf.current_project_version,
-        track=mf.current_track,
-        track_version=mf.current_track_version,
+    mf.show_config_dlg(
+        config=map_config(mf)(
+            mode=GenericConfigMode.EDIT_TRACK_VERSION, track=mf.current_track, track_version=mf.current_track_version
+        )
     )
-    mf.show_config_dlg(config=config)
 
 
 def delete_track_version(mf: MainFrame):
     current_project_version_info = mf.get_current_project_version_info()
-    mf.current_project_version.remove_track_version(
-        track=current_project_version_info.track,
-        track_version=current_project_version_info.track_version
+    resp = QMessageBox.question(
+        mf,
+        "",
+        f"This will delete version: {current_project_version_info.track_version.name}<br><b>Are you sure?</b>",
+        QMessageBox.Yes | QMessageBox.Cancel,
+        QMessageBox.Cancel,
     )
+    if resp == QMessageBox.Yes:
+        mf.current_project_version.remove_track_version(
+            track=current_project_version_info.track, track_version=current_project_version_info.track_version
+        )
 
 
 def play_track_version(mf: MainFrame):
@@ -169,6 +174,12 @@ def get_actions(mf: MainFrame) -> Dict[str, Action]:
             caption=MenuAttr.TRACK_EDIT,
             slot=edit_track,
             icon=QIcon(":/icons/edit.png"),
+        ),
+        MenuAttr.TRACK_REMOVE: Action(
+            mf=mf,
+            caption=MenuAttr.TRACK_REMOVE,
+            slot=delete_track,
+            icon=QIcon(":/icons/delete.png"),
         ),
         MenuAttr.TRACK_VERSION_NEW: Action(
             mf=mf,
