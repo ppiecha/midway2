@@ -30,9 +30,10 @@ class Project(BaseModel):
     def delete_project_version(self, project_version: ProjectVersion):
         self.versions.remove(project_version)
 
-    def modify_project(self, project: Project):
+    def modify_project(self, project: Project) -> Project:
         self.name = project.name
         notify(message=NotificationMessage.PROJECT_CHANGED, project=project)
+        return self
 
 
 def empty_project() -> Project:

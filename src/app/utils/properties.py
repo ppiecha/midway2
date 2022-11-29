@@ -89,6 +89,7 @@ class GuiAttr:
 class MenuAttr:
     # Project
     PROJECT_NEW = "New project"
+    PROJECT_CLOSE = "Close project"
     # Project version
     PROJECT_VERSION_NEW = "New project version"
     PROJECT_VERSION_REMOVE = "Remove project version"

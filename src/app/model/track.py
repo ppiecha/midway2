@@ -10,7 +10,7 @@ from pydantic import BaseModel, PositiveInt, Field
 from src.app.model.bar import Bar
 from src.app.model.event import EventType
 from src.app.model.sequence import Sequence
-from src.app.model.types import Channel, MidiValue, MidiBankValue, get_one, TrackType, Preset
+from src.app.model.types import Channel, MidiValue, MidiBankValue, get_one, TrackType, Preset, Id
 from src.app.utils.exceptions import DuplicatedName, NoDataFound
 from src.app.utils.properties import Color, MidiAttr
 
@@ -92,6 +92,15 @@ class Track(BaseModel):
     def __getitem__(self, item):
         return self.versions[item]
 
+    def change_track(self, track: Track) -> Track:
+        self.name = track.name
+        self.type = track.type
+        self.default_color = track.default_color
+        self.default_sf = track.default_sf
+        self.default_bank = track.default_bank
+        self.default_patch = track.default_patch
+        return self
+
     def get_version(self, identifier: UUID | str, raise_not_found: bool = True) -> Optional[TrackVersion]:
         match identifier:
             case UUID() as uuid:
@@ -131,6 +140,12 @@ class Track(BaseModel):
     def track_version_exists(self, identifier: UUID | str, existing_version: TrackVersion = None) -> bool:
         version = self.get_version(identifier=identifier, raise_not_found=False)
         return version and version != existing_version
+
+    def is_new_version_name_valid(self, new_name: str, exclude_id: Optional[UUID] = None) -> bool:
+        version = self.get_version(identifier=new_name, raise_not_found=False)
+        if version and exclude_id:
+            return version.id == exclude_id
+        return version is None
 
     def get_default_version(self, raise_not_found: bool = True) -> Optional[TrackVersion]:
         return get_one(data=self.versions, raise_on_empty=raise_not_found, raise_on_multiple=False)
@@ -176,13 +191,17 @@ class Tracks(BaseModel):
         self.__root__.append(track)
         return self
 
+    def change_track(self, track_id: Id, new_track: Track) -> Tracks:
+        self.get_track(identifier=track_id).change_track(track=new_track)
+        return self
+
     def remove_track(self, track: Track) -> Tracks:
         if not any(t.name == track.name for t in self.__root__):
             raise NoDataFound(f"Cannot remove track {track.name}. Not found")
         self.__root__ = [t for t in self.__root__ if t.name != track.name]
         return self
 
-    def get_track(self, identifier: UUID | str, raise_not_found: bool = True) -> Optional[Track]:
+    def get_track(self, identifier: Id, raise_not_found: bool = True) -> Optional[Track]:
         match identifier:
             case UUID() as uuid:
                 return get_one(

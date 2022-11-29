@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from src.app.model.composition import Compositions
 from src.app.model.sequence import Sequence
 from src.app.model.track import Track, Tracks, TrackVersion
-from src.app.model.types import Bpm, get_one, Channel
+from src.app.model.types import Bpm, get_one, Channel, Id
 from src.app.model.variant import Variant, Variants, VariantType
 from src.app.utils.exceptions import NoDataFound, NoItemSelected, OutOfVariants
 from src.app.utils.notification import notify
@@ -23,6 +23,11 @@ class ProjectVersion(BaseModel):
     variants: Variants = Variants()
     compositions: Compositions = Compositions()
 
+    def modify_project_version(self, project_version: ProjectVersion):
+        notify(message=NotificationMessage.PROJECT_VERSION_CHANGED, old_version=self, new_version=project_version)
+        self.name = project_version.name
+        return self
+
     def add_track(self, track: Track, enable: bool) -> ProjectVersion:
         self.tracks.add_track(track=track)
         self.variants.add_track(track=track, enable=enable)
@@ -30,9 +35,10 @@ class ProjectVersion(BaseModel):
         notify(message=NotificationMessage.TRACK_ADDED, project_version=self, track=track)
         return self
 
-    def add_track_version(self, track: Track, track_version: TrackVersion):
-        modified_track = self.tracks.get_track(identifier=track.name).add_track_version(track_version=track_version)
-        notify(message=NotificationMessage.TRACK_VERSION_ADDED, track=modified_track, track_version=track_version)
+    # not tested
+    def change_track(self, track_id: Id, new_track: Track) -> ProjectVersion:
+        self.tracks.change_track(track_id=track_id, new_track=new_track)
+        notify(message=NotificationMessage.TRACK_CHANGED, track_id=track_id, new_track=new_track)
         return self
 
     def remove_track(self, track: Track) -> ProjectVersion:
@@ -42,17 +48,14 @@ class ProjectVersion(BaseModel):
         notify(message=NotificationMessage.TRACK_REMOVED, project_version=self, track=track)
         return self
 
+    def add_track_version(self, track: Track, track_version: TrackVersion):
+        modified_track = self.tracks.get_track(identifier=track.name).add_track_version(track_version=track_version)
+        notify(message=NotificationMessage.TRACK_VERSION_ADDED, track=modified_track, track_version=track_version)
+        return self
+
     def remove_track_version(self, track: Track, track_version: TrackVersion):
         modified_track = self.tracks.get_track(identifier=track.name).delete_track_version(track_version=track_version)
         notify(message=NotificationMessage.TRACK_VERSION_REMOVED, track=modified_track, track_version=track_version)
-
-    # not tested
-    def change_track(self, track_id: int, new_track: Track) -> ProjectVersion:
-        self.tracks.change_track(track_id=track_id, new_track=new_track)
-        self.variants.change_track(track_id=track_id, new_track=new_track)
-        self.compositions.change_track(track_id=track_id, new_track=new_track)
-        notify(message=NotificationMessage.TRACK_CHANGED, track_id=track_id, new_track=new_track)
-        return self
 
     def _get_variants(self, variant_id: UUID) -> Variants:
         if any(variant.id == variant_id for variant in self.variants):
@@ -165,6 +168,12 @@ class ProjectVersion(BaseModel):
             track: Track = get_one(data=list(self.tracks), raise_on_empty=True, raise_on_multiple=False)
         return track.get_default_version(raise_not_found=True)
 
-    def track_exists(self, identifier: UUID | str, existing_track: Track = None) -> bool:
-        track = self.tracks.get_track(identifier=identifier, raise_not_found=False)
-        return track and track != existing_track
+    # def track_exists(self, identifier: UUID | str, existing_track: Track = None) -> bool:
+    #     track = self.tracks.get_track(identifier=identifier, raise_not_found=False)
+    #     return track and track != existing_track
+
+    def is_new_track_name_valid(self, new_name: str, exclude_id: Optional[UUID] = None) -> bool:
+        track = self.tracks.get_track(identifier=new_name, raise_not_found=False)
+        if track and exclude_id:
+            return track.id == exclude_id
+        return track is None

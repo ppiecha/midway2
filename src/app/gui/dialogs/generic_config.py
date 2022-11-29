@@ -120,16 +120,23 @@ class GenericConfigDlg(QDialog):
         else:
             self.reject()
 
+    def update_project_details(self):
+        if self.general.project_name != self.config.project.name:
+            self.config.project.modify_project(project=Project(name=self.general.project_name))
+        if self.general.project_version_name != self.config.project_version.name:
+            self.config.project_version.modify_project_version(ProjectVersion(name=self.general.project_version_name))
+
     def apply_changes(self):
         match self.config.mode:
             case GenericConfigMode.NEW_TRACK:
                 self.config.project_version.add_track(track=self.general.track, enable=True)
+            case GenericConfigMode.EDIT_TRACK:
+                self.config.project_version.change_track(track_id=self.config.track.id, new_track=self.general.track)
             case GenericConfigMode.NEW_TRACK_VERSION:
                 self.config.project_version.add_track_version(
                     track=self.general.track, track_version=self.general.version
                 )
-        if self.general.project_name != self.config.project.name:
-            self.config.project.modify_project(project=Project(name=self.general.project_name))
+        self.update_project_details()
 
     @staticmethod
     def get_caption(config: GenericConfig) -> str:
@@ -338,7 +345,7 @@ class GeneralTab(QWidget):
         self.form.setContentsMargins(10, 10, 10, 10)
         self.form.setSpacing(5)
         self.project_name_box = QLineEdit()
-        self.composition_name_box = QLineEdit()
+        self.project_version_name_box = QLineEdit()
         self.track_name_box = QLineEdit()
         self.track_color_box = QToolButton()
         self.version_name_box = QLineEdit()
@@ -353,7 +360,7 @@ class GeneralTab(QWidget):
 
         # Form
         self.form.addRow("Project name", self.project_name_box)
-        self.form.addRow("Composition name", self.composition_name_box)
+        self.form.addRow("Composition name", self.project_version_name_box)
         self.form.addRow("Track name", self.track_name_box)
         self.form.addRow("Track color", self.track_color_box)
         self.form.addRow("Version name", self.version_name_box)
@@ -378,7 +385,7 @@ class GeneralTab(QWidget):
     def load_config(self, config: GenericConfig):
         self.config = config
         self.project_name_box.setText(config.mf.project.name)
-        self.composition_name_box.setText(config.project_version.name)
+        self.project_version_name_box.setText(config.project_version.name)
         self.track_name_box.setText(config.track_name())
         self.track_name_box.setEnabled(config.is_track_name_enabled())
         self.show_track_color(color=config.get_color())
@@ -409,40 +416,46 @@ class GeneralTab(QWidget):
     def validate_track_name(self) -> bool:
         valid = self.track_name != ""
         if not valid:
-            self.config.mf.show_message_box("Track name is empty")
+            self.config.mf.show_message_box("<b>Track name</b> is empty")
             return valid
         if self.config.project_version:
-            valid = not self.config.project_version.track_exists(
-                identifier=self.track_name, existing_track=self.config.track
-            )
+            exclude_id = self.config.track.id if self.config.track else None
+            valid = self.config.project_version.is_new_track_name_valid(new_name=self.track_name, exclude_id=exclude_id)
         if not valid:
-            self.config.mf.show_message_box(f"Track name {self.track_name} exists in composition")
+            self.config.mf.show_message_box(
+                f"Track name <b>{self.track_name}</b> exists in project_version "
+                f"<b>{self.config.project_version.name}</b>"
+            )
         return valid
 
     def validate_version_name(self) -> bool:
         valid = self.version_name != ""
         if not valid:
-            self.config.mf.show_message_box("Version name is empty")
+            self.config.mf.show_message_box("<b>Version name</b> is empty")
             return valid
         if self.config.track:
-            valid = not self.config.track.track_version_exists(
-                identifier=self.version_name,
-                existing_version=self.config.track_version,
-            )
+            exclude_id = self.config.track_version.id if self.config.track_version else None
+            valid = self.config.track.is_new_version_name_valid(new_name=self.version_name, exclude_id=exclude_id)
         if not valid:
-            self.config.mf.show_message_box(f"Track name {self.track_name} exists in composition")
+            self.config.mf.show_message_box(
+                f"Track version <b>{self.version_name}</b> exists in track <b>{self.config.track.name}</b>"
+            )
         return valid
 
     def is_valid(self) -> bool:
-        return self.validate_track_name() and self.validate_version_name()
+        if self.config.mode in (GenericConfigMode.NEW_TRACK, GenericConfigMode.EDIT_TRACK):
+            return self.validate_track_name()
+        if self.config.mode in (GenericConfigMode.NEW_TRACK_VERSION, GenericConfigMode.EDIT_TRACK_VERSION):
+            return self.validate_version_name()
+        return True
 
     @property
     def project_name(self) -> str:
         return self.project_name_box.text().strip()
 
     @property
-    def composition_name(self) -> str:
-        return self.composition_name_box.text().strip()
+    def project_version_name(self) -> str:
+        return self.project_version_name_box.text().strip()
 
     @property
     def track_name(self) -> str:

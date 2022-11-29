@@ -5,6 +5,7 @@ from abc import ABC
 from dataclasses import dataclass
 from enum import Enum
 from typing import Union, NewType, Dict, Any, List, NamedTuple
+from uuid import UUID
 
 from PySide6.QtWidgets import QWidget
 from pydantic import PositiveInt, confloat, conint, BaseModel
@@ -33,7 +34,7 @@ MidiBankValue = NewType("MidiValue", conint(ge=Midi.MIN, le=Midi.MAX + 1))
 Bend = conint(ge=0, lt=16384)
 BendNormalized = confloat(ge=-1, le=1)
 BendDurationNormalized = confloat(ge=0, le=1)
-# ListItem = Track | TrackVersion | None
+Id = UUID | str
 
 
 class NoteUnit(float, Enum):

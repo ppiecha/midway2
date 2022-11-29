@@ -13,6 +13,8 @@ from src.app.model.composition import Composition
 from src.app.model.project import Project
 from src.app.model.project_version import ProjectVersion
 from src.app.utils.logger import get_console_logger
+from src.app.utils.notification import register_listener
+from src.app.utils.properties import NotificationMessage
 
 if TYPE_CHECKING:
     from src.app.gui.main_frame import MainFrame
@@ -32,6 +34,12 @@ class ProjectControl(QWidget):
         self.main_box = Box(direction=QBoxLayout.TopToBottom)
         self.main_box.addWidget(self.tab_box)
         self.setLayout(self.main_box)
+
+        register_listener(mapping={NotificationMessage.PROJECT_VERSION_CHANGED: self.change_project_version_name})
+
+    def change_project_version_name(self, old_version: ProjectVersion, new_version: ProjectVersion):
+        index = self.index_by_project_version(project_version=old_version)
+        self.tab_box.setTabText(index, new_version.name)
 
     def new_project_version(self, project_version: ProjectVersion):
         tracks_splitter = QSplitter(Qt.Horizontal)
@@ -56,26 +64,36 @@ class ProjectControl(QWidget):
 
     def delete_project_version(self, project_version: ProjectVersion):
         track_list = self.map.pop(project_version.name)
-        index = self.index_of_track_list(track_list=track_list)
+        index = self.index_by_project_version(project_version=project_version)
         for track_id in list(track_list.map.keys()):
             track_list.delete_track(project_version=project_version, track=track_list[track_id].track)
+        self.tab_box.widget(index).deleteLater()
         self.tab_box.removeTab(index)
-        self.project.delete_project_version(project_version=project_version)
         track_list.deleteLater()
-        # self.tab_box.widget(index).deleteLater()
 
     def delete_all_project_versions(self):
         for project_version in list(self.project.versions):
             self.delete_project_version(project_version=project_version)
 
-    @property
-    def current_track_list(self) -> TrackList:
-        vert_splitter: QSplitter = self.tab_box.currentWidget()
-        tracks_splitter: QSplitter = vert_splitter.widget(0)
+    def index_by_project_version(self, project_version: ProjectVersion) -> int:
+        track_list = self.map.get(project_version.name)
+        if not track_list:
+            raise ValueError(f"Cannot determine track list by project version {project_version.name}")
+        for i in range(self.tab_box.count()):
+            if self.track_list_from_widget(widget=self.tab_box.widget(i)) == track_list:
+                return i
+        raise ValueError(f"Cannot determine index by project_version {project_version.name}")
+
+    def track_list_from_widget(self, widget: QSplitter) -> TrackList:
+        tracks_splitter: QSplitter = widget.widget(0)
         track_list: TrackList = tracks_splitter.widget(0)
         if not track_list:
-            raise ValueError("Cannot determine track list in current composition")
+            raise ValueError("Cannot determine track list in tab widget")
         return track_list
+
+    @property
+    def current_track_list(self) -> TrackList:
+        return self.track_list_from_widget(widget=self.tab_box.currentWidget())
 
     def init_fonts(self):
         for track_list in self.map.values():

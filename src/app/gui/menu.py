@@ -63,22 +63,23 @@ def save_project_as(_: MainFrame):
     pass
 
 
-def delete_project(mf: MainFrame):
-    mf.project_control.delete_all_project_versions()
-
-
-# Composition
-
-
-def add_composition(_: MainFrame):
+def close_project(_: MainFrame):
+    # mf.project_control.delete_all_project_versions()
     pass
 
 
-def rename_composition(_: MainFrame):
+# Project version
+
+
+def add_project_version(_: MainFrame):
     pass
 
 
-def delete_composition(_: MainFrame):
+def rename_project_version(_: MainFrame):
+    pass
+
+
+def delete_project_version(_: MainFrame):
     pass
 
 
@@ -89,21 +90,13 @@ def new_track(mf: MainFrame):
     track_list = mf.project_control.current_track_list
     project_version = track_list.project_version
     if project_version.get_next_free_channel() is not None:
-        # config = GenericConfig(mf=mf, mode=GenericConfigMode.NEW_TRACK, project_version=project_version)
         mf.show_config_dlg(config=map_config(mf)(mode=GenericConfigMode.NEW_TRACK, project_version=project_version))
     else:
         mf.show_message_box("Cannot add new track. All channels are already reserved")
 
 
 def edit_track(mf: MainFrame):
-    current_project_version_info = mf.get_current_project_version_info()
-    if current_project_version_info.track_list_item:
-        current_project_version_info.track_list.edit_track(current_project_version_info.track_list_item.list_item)
-    else:
-        raise ValueError(
-            f"Cannot determine current track in track list in project version "
-            f"{current_project_version_info.project_version.name}"
-        )
+    mf.show_config_dlg(config=map_config(mf)(mode=GenericConfigMode.EDIT_TRACK, track=mf.current_track))
 
 
 def delete_track(mf: MainFrame):
@@ -161,7 +154,20 @@ def stop_track_version(mf: MainFrame):
 
 def get_actions(mf: MainFrame) -> Dict[str, Action]:
     return {
-        MenuAttr.PROJECT_NEW: Action(mf=mf, caption=MenuAttr.PROJECT_NEW, slot=new_project),
+        MenuAttr.PROJECT_NEW: Action(
+            mf=mf,
+            caption=MenuAttr.PROJECT_NEW,
+            slot=new_project,
+            icon=None,
+            shortcut=QKeySequence(Qt.CTRL | Qt.SHIFT | Qt.Key_N),
+        ),
+        MenuAttr.PROJECT_CLOSE: Action(
+            mf=mf,
+            caption=MenuAttr.PROJECT_CLOSE,
+            slot=close_project,
+            icon=None,
+            shortcut=None,
+        ),
         MenuAttr.TRACK_NEW: Action(
             mf=mf,
             caption=MenuAttr.TRACK_NEW,

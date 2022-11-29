@@ -1,6 +1,6 @@
 """
 Module contains track item and list of track items definition.
-It controls adding and deleting tracks in composition
+It controls adding and deleting tracks in project version
 """
 
 from __future__ import annotations
@@ -22,12 +22,11 @@ from PySide6.QtWidgets import (
     QToolBar,
 )
 
-from src.app.gui.dialogs.generic_config import GenericConfig, GenericConfigMode
 from src.app.gui.track_control import TrackVersionControl, BaseTrackVersionControlTab
 from src.app.gui.widgets import Box
-from src.app.model.composition import Composition
 from src.app.model.project_version import ProjectVersion
 from src.app.model.track import Track, TrackVersion
+from src.app.model.types import Id
 from src.app.utils.notification import register_listener
 from src.app.utils.properties import NotificationMessage, MenuAttr
 import src.app.resources  # pylint: disable=unused-import
@@ -119,12 +118,12 @@ class TrackList(QListWidget):
         self.setLayout(self.main_box)
 
         self.list.currentRowChanged.connect(self.display)
-        self.list.itemActivated.connect(self.edit_track)
+        self.list.itemActivated.connect(self.mf.menu.actions[MenuAttr.TRACK_EDIT].trigger)
 
         register_listener(
             mapping={
                 NotificationMessage.TRACK_ADDED: self.new_track,
-                NotificationMessage.TRACK_CHANGED: self.rename_track,
+                NotificationMessage.TRACK_CHANGED: self.change_track,
                 NotificationMessage.TRACK_REMOVED: self.delete_track,
             }
         )
@@ -133,7 +132,9 @@ class TrackList(QListWidget):
     def current_track_list_item(self) -> TrackListItem:
         current_item = self.list.currentItem()
         if not current_item:
-            raise ValueError(f"Cannot determine current item in track list in composition {self.project_version}")
+            raise ValueError(
+                f"Cannot determine current item in track list in project_version {self.project_version.name}"
+            )
         return self.list.itemWidget(current_item)
 
     def select_first_item(self):
@@ -154,15 +155,15 @@ class TrackList(QListWidget):
         self.list.addItem(widget_item)
         self.list.setItemWidget(widget_item, self.map[track.id])
 
-    def edit_track(self, item: QListWidgetItem):
-        track_list_item: TrackListItem = self.list.itemWidget(item)
-        config = GenericConfig(
-            mf=self.mf,
-            mode=GenericConfigMode.EDIT_TRACK,
-            project_version=self.project_version,
-            track=track_list_item.track,
-        )
-        self.mf.show_config_dlg(config=config)
+    # def edit_track(self, item: QListWidgetItem):
+    #     track_list_item: TrackListItem = self.list.itemWidget(item)
+    #     config = GenericConfig(
+    #         mf=self.mf,
+    #         mode=GenericConfigMode.EDIT_TRACK,
+    #         project_version=self.project_version,
+    #         track=track_list_item.track,
+    #     )
+    #     self.mf.show_config_dlg(config=config)
 
     def _delete_track(self, track: Track):
         track_list_item: TrackListItem = self.map.pop(track.id)
@@ -178,10 +179,13 @@ class TrackList(QListWidget):
     def new_track(self, project_version: ProjectVersion, track: Track):
         if self.project_version == project_version:
             self._new_track(track=track)
-            # self.mf.menu.post_refresh_loops(composition=composition)
 
-    def rename_track(self, composition: Composition, track: Track, new_name: str):
-        pass
+    def get_track_list_item(self, track_id: Id) -> TrackListItem:
+        return self.map[track_id]
+
+    def change_track(self, track_id: Id, new_track: Track):
+        list_item = self.get_track_list_item(track_id=track_id)
+        list_item.name.setText(new_track.name)
 
     def delete_track(self, project_version: ProjectVersion, track: Track):
         if self.project_version == project_version:
