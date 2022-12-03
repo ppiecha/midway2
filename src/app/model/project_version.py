@@ -42,20 +42,32 @@ class ProjectVersion(BaseModel):
         return self
 
     def remove_track(self, track: Track) -> ProjectVersion:
+        self.remove_all_track_versions(track=track)
         self.tracks.remove_track(track=track)
         self.variants.remove_track(track=track)
         self.compositions.remove_track(track=track)
         notify(message=NotificationMessage.TRACK_REMOVED, project_version=self, track=track)
         return self
 
-    def add_track_version(self, track: Track, track_version: TrackVersion):
+    def remove_all_tracks(self) -> ProjectVersion:
+        for track in self.tracks:
+            self.remove_track(track=track)
+        return self
+
+    def add_track_version(self, track: Track, track_version: TrackVersion) -> ProjectVersion:
         modified_track = self.tracks.get_track(identifier=track.name).add_track_version(track_version=track_version)
         notify(message=NotificationMessage.TRACK_VERSION_ADDED, track=modified_track, track_version=track_version)
         return self
 
-    def remove_track_version(self, track: Track, track_version: TrackVersion):
+    def remove_track_version(self, track: Track, track_version: TrackVersion) -> ProjectVersion:
         modified_track = self.tracks.get_track(identifier=track.name).delete_track_version(track_version=track_version)
         notify(message=NotificationMessage.TRACK_VERSION_REMOVED, track=modified_track, track_version=track_version)
+        return self
+
+    def remove_all_track_versions(self, track: Track) -> ProjectVersion:
+        for track_version in track.versions:
+            self.remove_track_version(track=track, track_version=track_version)
+        return self
 
     def _get_variants(self, variant_id: UUID) -> Variants:
         if any(variant.id == variant_id for variant in self.variants):

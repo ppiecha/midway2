@@ -1,5 +1,4 @@
 from __future__ import annotations
-import os
 from pathlib import Path
 from typing import Optional, NamedTuple
 
@@ -24,12 +23,13 @@ from src.app.gui.track_list import TrackList, TrackListItem
 from src.app.gui.widgets import Box
 from src.app.model.project import Project, empty_project
 from src.app.model.project_version import ProjectVersion
-from src.app.model.serializer import read_json_file, write_json_file
+from src.app.model.serializer import read_json_file
 from src.app.model.track import Track, TrackVersion
 from src.app.model.types import dict_diff, DictDiff
 from src.app.utils.logger import get_console_logger
 from src.app.utils.notification import register_listener
 from src.app.utils.properties import IniAttr, AppAttr, NotificationMessage
+from src.app.utils.file_system import file_exists
 
 logger = get_console_logger(__name__)
 
@@ -44,14 +44,10 @@ class MainFrame(QMainWindow):
         self.menu = MenuBar(self)
         self.setMenuBar(self.menu)
         self.addToolBar(ToolBar(self))
-        self.project_file = self.config.value(
-            IniAttr.PROJECT_FILE,
-            os.path.join(AppAttr.PATH_APP, IniAttr.DEFAULT_PROJECT),
-        )
-        self.project: Optional[Project] = None
-        self.read_project_file(project_file_name=self.project_file)
+        self.project_control = ProjectControl(mf=self, parent=self)
+        self._project: Optional[Project] = None
+        self.project_file_name = None  # self.get_last_project_file_name()
         self.gen_config_dlg = GenericConfigDlg(mf=self)
-        self.project_control = ProjectControl(mf=self, parent=self, project=self.project)
         self.main_box = Box(direction=QBoxLayout.TopToBottom)
         self.main_box.addWidget(self.project_control)
         self.setLayout(self.main_box)
@@ -62,6 +58,37 @@ class MainFrame(QMainWindow):
         self.set_brand(project=self.project)
 
         register_listener(mapping={NotificationMessage.PROJECT_CHANGED: self.update_project_name})
+
+    @property
+    def project(self) -> Project:
+        return self._project
+
+    @project.setter
+    def project(self, _project: Project):
+        if _project is not None:
+            self.project_control.project = _project
+            self._project = _project
+
+    @property
+    def project_file_name(self):
+        return self.project.file_name
+
+    @project_file_name.setter
+    def project_file_name(self, file_name: str):
+        if (result := file_exists(file_name=file_name)).error:
+            self.show_message_box(message=result.error)
+            self.project = empty_project()
+            return
+        if (result := Project.read_from_file(file_name=file_name)).error:
+            self.show_message_box(message=f"<b>Cannot open project file</b> {file_name}", details=result.error)
+            self.project = empty_project()
+            return
+        project = result.value
+        project.file_name = file_name
+        self.project = project
+
+    def get_last_project_file_name(self) -> str:
+        return self.config.value(IniAttr.PROJECT_FILE, "")
 
     def set_geometry(self):
         if self.config.value(IniAttr.MAIN_WINDOW_GEOMETRY, None) is not None:
@@ -76,31 +103,15 @@ class MainFrame(QMainWindow):
                 )
             )
 
-    def read_project_file(self, project_file_name: str):
-        if project_file_name and Path(project_file_name).exists():
-            self.project = Project(**read_json_file(json_file_name=project_file_name))
-        else:
-            self.show_message_box(
-                message="Wrong last project file name or file doesn't exist", details=f"{project_file_name}"
-            )
-            self.project = empty_project()
-
-    def save_project_file(self, project_file_name: str):
-        write_json_file(
-            json_dict=self.project.json(indent=2, exclude_none=True, exclude_defaults=True, exclude_unset=True),
-            json_file_name=project_file_name,
-        )
-
     def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)
         self.project_control.set_keyboard_position()
 
     def unsaved_changes(self) -> DictDiff:
-        if self.project_file and Path(self.project_file).exists():
-            last_saved_dict = read_json_file(json_file_name=self.project_file)
+        if self.project_file_name and Path(self.project_file_name).exists():
+            last_saved_dict = read_json_file(json_file_name=self.project_file_name)
         else:
             last_saved_dict = {}
-        # last_saved_project = Project(**last_saved_dict)
         diff = (diff for diff in dict_diff(d1=self.project.dict(), d2=last_saved_dict))
         diff_list = list(diff)
         if diff_list:
@@ -110,33 +121,42 @@ class MainFrame(QMainWindow):
         return DictDiff(d1=self.project.dict(), d2=last_saved_dict, diff=diff_list)
 
     def has_unsaved_changes(self) -> bool:
-        if self.project_file and Path(self.project_file).exists():
-            last_saved_dict = read_json_file(json_file_name=self.project_file)
+        if not self.project.versions:
+            return False
+        if self.project_file_name and Path(self.project_file_name).exists():
+            last_saved_dict = read_json_file(json_file_name=self.project_file_name)
         else:
-            last_saved_dict = {"name": "None"}
+            last_saved_dict = {}
         last_saved_project = Project(**last_saved_dict)
         current = self.project.json(exclude_none=True, exclude_defaults=True, exclude_unset=True)
         last_saved = last_saved_project.json(exclude_none=True, exclude_defaults=True, exclude_unset=True)
         return current != last_saved
 
-    def closeEvent(self, event: QCloseEvent) -> None:
+    def save_config(self):
         self.config.setValue(IniAttr.MAIN_WINDOW_GEOMETRY, self.saveGeometry())
-        self.config.setValue(IniAttr.PROJECT_FILE, self.project_file)
+        self.config.setValue(IniAttr.PROJECT_FILE, self.project_file_name)
+
+    def action_not_saved_changes(self) -> QMessageBox.StandardButton:
+        resp = QMessageBox.Ok
         if self.has_unsaved_changes():
-            resp = QMessageBox.question(
-                self,
-                "",
-                "Project has unsaved changes<br><b>Save before exit?</b>",
-                QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
-                QMessageBox.Cancel,
-            )
-            if resp in (QMessageBox.Save, QMessageBox.Discard):
-                if resp == QMessageBox.Save:
-                    self.save_project_file(project_file_name=self.project_file)
-                event.accept()
-            if resp == QMessageBox.Cancel:
-                event.ignore()
-            return
+            if (
+                resp := QMessageBox.question(
+                    self,
+                    "",
+                    "Project has unsaved changes<br><b>Save before exit?</b>",
+                    QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
+                    QMessageBox.Cancel,
+                )
+                == QMessageBox.Save
+            ):
+                self.project.save_to_file(file_name=self.project_file_name)
+        return resp
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        self.save_config()
+        resp = self.action_not_saved_changes()
+        if resp == QMessageBox.Cancel:
+            event.ignore()
         event.accept()
 
     def show_message(self, message: str, timeout: int = 5000):
@@ -156,7 +176,10 @@ class MainFrame(QMainWindow):
         self.setWindowIcon(QIcon(":/icons/midway.ico"))
 
     def update_project_name(self, project: Project):
-        name = f"{AppAttr.APP_NAME} - {project.name}"
+        if project.name:
+            name = f"{AppAttr.APP_NAME} - {project.name}"
+        else:
+            name = AppAttr.APP_NAME
         self.setWindowTitle(name)
         # self.app.setApplicationName(name)
         # self.app.setApplicationDisplayName(name)
@@ -166,23 +189,29 @@ class MainFrame(QMainWindow):
         self.gen_config_dlg.show()
 
     @property
-    def current_track_list(self) -> TrackList:
+    def current_track_list(self) -> Optional[TrackList]:
         return self.project_control.current_track_list
 
     @property
-    def current_project_version(self) -> ProjectVersion:
-        return self.current_track_list.project_version
+    def current_project_version(self) -> Optional[ProjectVersion]:
+        return self.current_track_list.project_version if self.current_track_list else None
 
     @property
-    def current_track_list_item(self) -> TrackListItem:
+    def current_track_list_item(self) -> Optional[TrackListItem]:
+        if not self.current_track_list:
+            return None
         return self.current_track_list.current_track_list_item
 
     @property
-    def current_track(self) -> Track:
-        return self.current_track_list_item.track
+    def current_track(self) -> Optional[Track]:
+        if not self.current_track_list_item:
+            return None
+        return self.current_track_list_item.track if self.current_track_list else None
 
     @property
-    def current_track_version(self) -> TrackVersion:
+    def current_track_version(self) -> Optional[TrackVersion]:
+        if not self.current_track_list_item:
+            return None
         return self.current_track_list_item.current_track_version
 
     @property

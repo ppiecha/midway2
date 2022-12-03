@@ -36,7 +36,9 @@ class NotificationMessage:
     TRACK_VERSION_CHANGED = "TRACK_VERSION_CHANGED"
 
     PROJECT_CHANGED = "PROJECT_CHANGED"
+    PROJECT_VERSION_ADDED = "PROJECT_VERSION_ADDED"
     PROJECT_VERSION_CHANGED = "PROJECT_VERSION_CHANGED"
+    PROJECT_VERSION_REMOVED = "PROJECT_VERSION_REMOVED"
 
 
 class AppAttr:
@@ -87,11 +89,16 @@ class GuiAttr:
 
 
 class MenuAttr:
+    # Window
+    WINDOW_NEW = "New window"
     # Project
-    PROJECT_NEW = "New project"
+    PROJECT_NEW = "New project..."
+    PROJECT_OPEN = "Open project..."
+    PROJECT_SAVE = "Save project"
+    PROJECT_SAVE_AS = "Save project as..."
     PROJECT_CLOSE = "Close project"
     # Project version
-    PROJECT_VERSION_NEW = "New project version"
+    PROJECT_VERSION_NEW = "New project version..."
     PROJECT_VERSION_REMOVE = "Remove project version"
     # Variant
     VARIANT_NEW = "New variant"
@@ -100,12 +107,12 @@ class MenuAttr:
     COMPOSITION_NEW = "New composition"
     COMPOSITION_REMOVE = "Remove composition"
     # Track
-    TRACK_NEW = "New track"
-    TRACK_EDIT = "Edit track"
+    TRACK_NEW = "New track..."
+    TRACK_EDIT = "Edit track..."
     TRACK_REMOVE = "Remove track"
     # Track version
-    TRACK_VERSION_NEW = "New track version"
-    TRACK_VERSION_EDIT = "Edit track version"
+    TRACK_VERSION_NEW = "New track version..."
+    TRACK_VERSION_EDIT = "Edit track version..."
     TRACK_VERSION_REMOVE = "Remove track version"
     TRACK_VERSION_PLAY = "Play track version"
     TRACK_VERSION_STOP = "Stop track version"

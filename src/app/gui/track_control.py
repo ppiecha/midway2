@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from src.app.gui.track_list import TrackListItem
     from src.app.gui.main_frame import MainFrame
 
-logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
+logger = get_console_logger(name=__name__, log_level=logging.INFO)
 
 
 class TrackVersionControlTab(QWidget, ABC, metaclass=ABCWidgetFinalMeta):

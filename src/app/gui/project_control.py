@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, TYPE_CHECKING
+from typing import Dict, TYPE_CHECKING, Optional
 
 from PySide6.QtCore import QSize
 from PySide6.QtGui import Qt, QIcon
@@ -23,19 +23,41 @@ logger = get_console_logger(__name__)
 
 
 class ProjectControl(QWidget):
-    def __init__(self, mf: MainFrame, parent, project: Project):
+    def __init__(self, mf: MainFrame, parent, project: Optional[Project] = None):
         super().__init__(parent=parent)
         self.mf = mf
-        self.project = project
+        self._project: Optional[Project] = None
         self.map: Dict[str, TrackList] = {}
         self.tab_box = QTabWidget(self)
-        for project_version in self.project.versions:
-            self.new_project_version(project_version=project_version)
         self.main_box = Box(direction=QBoxLayout.TopToBottom)
         self.main_box.addWidget(self.tab_box)
         self.setLayout(self.main_box)
 
-        register_listener(mapping={NotificationMessage.PROJECT_VERSION_CHANGED: self.change_project_version_name})
+        self.project = project
+
+        register_listener(
+            mapping={
+                NotificationMessage.PROJECT_VERSION_ADDED: self.new_project_version,
+                NotificationMessage.PROJECT_VERSION_CHANGED: self.change_project_version_name,
+                NotificationMessage.PROJECT_VERSION_REMOVED: self.delete_project_version,
+            }
+        )
+
+    @property
+    def project(self) -> Project:
+        return self._project
+
+    @project.setter
+    def project(self, _project: Project):
+        if _project is not None:
+            if self._project is not None:
+                self.delete_all_project_versions()
+            self._project = _project
+            self.create_project_versions(project=_project)
+
+    def create_project_versions(self, project: Project):
+        for project_version in project.versions:
+            self.new_project_version(project_version=project_version)
 
     def change_project_version_name(self, old_version: ProjectVersion, new_version: ProjectVersion):
         index = self.index_by_project_version(project_version=old_version)
@@ -63,8 +85,8 @@ class ProjectControl(QWidget):
         return self.tab_box.indexOf(track_list)
 
     def delete_project_version(self, project_version: ProjectVersion):
-        track_list = self.map.pop(project_version.name)
         index = self.index_by_project_version(project_version=project_version)
+        track_list = self.map.pop(project_version.name)
         for track_id in list(track_list.map.keys()):
             track_list.delete_track(project_version=project_version, track=track_list[track_id].track)
         self.tab_box.widget(index).deleteLater()
@@ -77,23 +99,24 @@ class ProjectControl(QWidget):
 
     def index_by_project_version(self, project_version: ProjectVersion) -> int:
         track_list = self.map.get(project_version.name)
-        if not track_list:
+        if track_list is None:
             raise ValueError(f"Cannot determine track list by project version {project_version.name}")
         for i in range(self.tab_box.count()):
             if self.track_list_from_widget(widget=self.tab_box.widget(i)) == track_list:
                 return i
         raise ValueError(f"Cannot determine index by project_version {project_version.name}")
 
-    def track_list_from_widget(self, widget: QSplitter) -> TrackList:
+    def track_list_from_widget(self, widget: QSplitter | QWidget) -> TrackList:
         tracks_splitter: QSplitter = widget.widget(0)
         track_list: TrackList = tracks_splitter.widget(0)
-        if not track_list:
+        if track_list is None:
             raise ValueError("Cannot determine track list in tab widget")
         return track_list
 
     @property
-    def current_track_list(self) -> TrackList:
-        return self.track_list_from_widget(widget=self.tab_box.currentWidget())
+    def current_track_list(self) -> Optional[TrackList]:
+        widget = self.tab_box.currentWidget()
+        return self.track_list_from_widget(widget=widget) if widget else None
 
     def init_fonts(self):
         for track_list in self.map.values():

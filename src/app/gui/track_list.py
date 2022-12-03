@@ -5,7 +5,7 @@ It controls adding and deleting tracks in project version
 
 from __future__ import annotations
 
-from typing import Dict
+from typing import Dict, Optional
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -129,12 +129,10 @@ class TrackList(QListWidget):
         )
 
     @property
-    def current_track_list_item(self) -> TrackListItem:
+    def current_track_list_item(self) -> Optional[TrackListItem]:
         current_item = self.list.currentItem()
         if not current_item:
-            raise ValueError(
-                f"Cannot determine current item in track list in project_version {self.project_version.name}"
-            )
+            return None
         return self.list.itemWidget(current_item)
 
     def select_first_item(self):
@@ -169,10 +167,10 @@ class TrackList(QListWidget):
         track_list_item: TrackListItem = self.map.pop(track.id)
         self.list.removeItemWidget(track_list_item.list_item)
         self.stack.removeWidget(track_list_item)
-        for track_version_name in list(track_list_item.version_tab.map.keys()):
-            track_list_item.version_tab._delete_track_version(
-                track_version=track_list_item.track.get_version(identifier=track_version_name)
-            )
+        # for track_version_name in list(track_list_item.version_tab.map.keys()):
+        #     track_list_item.version_tab._delete_track_version(
+        #         track_version=track_list_item.track.get_version(identifier=track_version_name)
+        #     )
         self.list.takeItem(self.list.row(track_list_item.list_item))
         track_list_item.deleteLater()
 

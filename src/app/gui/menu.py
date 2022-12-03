@@ -48,10 +48,19 @@ def map_config(mf: MainFrame) -> Callable:
     return partial(GenericConfig, mf=mf, project=project_info.project, project_version=project_info.project_version)
 
 
+def new_window(_: MainFrame):
+    pass
+
+
 # Project
 
 
-def new_project(_: MainFrame):
+def new_project(mf: MainFrame):
+    track_list = mf.project_control.current_track_list
+    print(track_list)
+
+
+def open_project(_: MainFrame):
     pass
 
 
@@ -63,9 +72,9 @@ def save_project_as(_: MainFrame):
     pass
 
 
-def close_project(_: MainFrame):
-    # mf.project_control.delete_all_project_versions()
-    pass
+def close_project(mf: MainFrame):
+    mf.project.close_project()
+    mf.project = None
 
 
 # Project version
@@ -159,7 +168,42 @@ def get_actions(mf: MainFrame) -> Dict[str, Action]:
             caption=MenuAttr.PROJECT_NEW,
             slot=new_project,
             icon=None,
+            shortcut=None,
+        ),
+        MenuAttr.PROJECT_VERSION_NEW: Action(
+            mf=mf,
+            caption=MenuAttr.PROJECT_VERSION_NEW,
+            slot=add_project_version,
+            icon=None,
             shortcut=QKeySequence(Qt.CTRL | Qt.SHIFT | Qt.Key_N),
+        ),
+        MenuAttr.PROJECT_OPEN: Action(
+            mf=mf,
+            caption=MenuAttr.PROJECT_OPEN,
+            slot=open_project,
+            icon=None,
+            shortcut=QKeySequence(Qt.CTRL | Qt.Key_O),
+        ),
+        MenuAttr.WINDOW_NEW: Action(
+            mf=mf,
+            caption=MenuAttr.WINDOW_NEW,
+            slot=new_window,
+            icon=None,
+            shortcut=None,
+        ),
+        MenuAttr.PROJECT_SAVE: Action(
+            mf=mf,
+            caption=MenuAttr.PROJECT_SAVE,
+            slot=save_project,
+            icon=None,
+            shortcut=QKeySequence(Qt.CTRL | Qt.Key_S),
+        ),
+        MenuAttr.PROJECT_SAVE_AS: Action(
+            mf=mf,
+            caption=MenuAttr.PROJECT_SAVE_AS,
+            slot=save_project_as,
+            icon=None,
+            shortcut=QKeySequence(Qt.CTRL | Qt.SHIFT | Qt.Key_S),
         ),
         MenuAttr.PROJECT_CLOSE: Action(
             mf=mf,
@@ -234,14 +278,18 @@ class MenuBar(QMenuBar):
         file_menu = QMenu("&File", self)
         self.addMenu(file_menu)
         self.actions = get_actions(mf=main_form)
+
+        # File
         file_menu.addAction(self.actions[MenuAttr.PROJECT_NEW])
+        file_menu.addAction(self.actions[MenuAttr.PROJECT_OPEN])
+        file_menu.addAction(self.actions[MenuAttr.WINDOW_NEW])
+        file_menu.addSeparator()
+        file_menu.addAction(self.actions[MenuAttr.PROJECT_SAVE])
+        file_menu.addAction(self.actions[MenuAttr.PROJECT_SAVE_AS])
+        file_menu.addSeparator()
+        file_menu.addAction(self.actions[MenuAttr.PROJECT_CLOSE])
 
-    # Notifications
-
-    # @staticmethod
-    # def post_new_track(composition: Composition, track: Track):
-    #     pub.sendMessage(topicName=GuiAttr.NEW_TRACK, composition=composition, track=track)
-    #
-    # @staticmethod
-    # def post_refresh_loops(composition: Composition):
-    #     pub.sendMessage(topicName=GuiAttr.REFRESH_LOOPS, composition=composition)
+        # Track
+        track_menu = QMenu("&Track", self)
+        self.addMenu(track_menu)
+        track_menu.addAction(self.actions[MenuAttr.TRACK_NEW])

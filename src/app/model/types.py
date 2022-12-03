@@ -1,17 +1,16 @@
 from __future__ import annotations
 
-import typing
 from abc import ABC
 from dataclasses import dataclass
 from enum import Enum
-from typing import Union, NewType, Dict, Any, List, NamedTuple
+from typing import Union, NewType, Dict, Any, List, NamedTuple, TYPE_CHECKING, Optional, TypeVar, Generic
 from uuid import UUID
 
 from PySide6.QtWidgets import QWidget
 from pydantic import PositiveInt, confloat, conint, BaseModel
 from src.app.utils.exceptions import NoDataFound, TooMany
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from src.app.model.event import Event
 
 
@@ -51,7 +50,7 @@ class NoteUnit(float, Enum):
 Json = Dict[str, Any]
 
 
-@dataclass
+@dataclass(frozen=True, match_args=True, kw_only=True, slots=True)
 class DictDiff:
     d1: Dict
     d2: Dict
@@ -96,3 +95,25 @@ class Preset(BaseModel):
 
 class ABCWidgetFinalMeta(type(QWidget), type(ABC)):
     pass
+
+
+T = TypeVar("T")
+
+
+@dataclass
+class Result(Generic[T]):
+    error: Optional[str] = None
+    value: Optional[T] = None
+
+    def bind(self, x, f) -> Result:
+        match x:
+            case Result(error=error) as err if error is not None:
+                return err
+            case _:
+                f(x)
+
+
+def chain_functions(funcs: List, x: Result):
+    for func in funcs:
+        if (result := func(x)).error:
+            return result
