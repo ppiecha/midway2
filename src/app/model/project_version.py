@@ -9,8 +9,9 @@ from pydantic import BaseModel
 from src.app.model.composition import Compositions
 from src.app.model.sequence import Sequence
 from src.app.model.track import Track, Tracks, TrackVersion
-from src.app.model.types import Bpm, get_one, Channel, Id
+from src.app.model.types import Bpm, get_one, Channel, Id, NumOfBars
 from src.app.model.variant import Variant, Variants, VariantType
+from src.app.utils.decorators import all_args_not_none
 from src.app.utils.exceptions import NoDataFound, NoItemSelected, OutOfVariants
 from src.app.utils.notification import notify
 from src.app.utils.properties import NotificationMessage, GuiAttr, MidiAttr
@@ -166,14 +167,7 @@ class ProjectVersion(BaseModel):
         return project_version
 
     def get_next_free_channel(self) -> Optional[Channel]:
-        reserved = set()
-        for track in self.tracks:
-            for track_version in track.versions:
-                reserved.add(track_version.channel)
-        for channel in MidiAttr.CHANNELS:
-            if channel not in reserved:
-                return channel
-        return None
+        return get_next_free_channel(project_version=self)
 
     def get_first_track_version(self, track: Optional[Track]):
         if track is None:
@@ -189,3 +183,26 @@ class ProjectVersion(BaseModel):
         if track and exclude_id:
             return track.id == exclude_id
         return track is None
+
+
+@all_args_not_none
+def has_tracks(project_version: ProjectVersion) -> bool:
+    return len(project_version.tracks) > 0
+
+
+def get_next_free_channel(project_version: ProjectVersion) -> Channel:
+    if project_version:
+        reserved = {track_version.channel for track in project_version.tracks for track_version in track.versions}
+        for channel in MidiAttr.CHANNELS:
+            if channel not in reserved:
+                return channel
+        return None
+    return get_one(data=MidiAttr.CHANNELS, raise_on_multiple=False)
+
+
+def get_num_of_bars(project_version: Optional[ProjectVersion]) -> NumOfBars:
+    if project_version is None:
+        return GuiAttr.DEFAULT_NUM_OF_BARS
+    if not has_tracks(project_version=project_version):
+        return GuiAttr.DEFAULT_NUM_OF_BARS
+    return project_version.get_first_track_version(track=None).num_of_bars()

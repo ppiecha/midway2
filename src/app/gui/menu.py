@@ -9,6 +9,7 @@ from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import QMenuBar, QMenu, QMessageBox
 
 from src.app.gui.dialogs.generic_config import GenericConfig, GenericConfigMode
+from src.app.model.project import reset_project, is_project_empty
 from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import MenuAttr
 import src.app.resources  # pylint: disable=unused-import
@@ -48,117 +49,26 @@ def map_config(mf: MainFrame) -> Callable:
     return partial(GenericConfig, mf=mf, project=project_info.project, project_version=project_info.project_version)
 
 
-def new_window(_: MainFrame):
-    pass
+def config_by_mode(mf: MainFrame, config_mode: GenericConfigMode) -> GenericConfig:
+    project_info = mf.get_current_project_version_info()
+    config_creator = partial(GenericConfig, mf=mf, project=project_info.project)
+    match config_mode:
+        case GenericConfigMode.NEW_PROJECT | GenericConfigMode.NEW_PROJECT_VERSION as mode:
+            config_creator = partial(config_creator, mode=mode)
+    return config_creator()
 
 
-# Project
-
-
-def new_project(mf: MainFrame):
-    track_list = mf.project_control.current_track_list
-    print(track_list)
-
-
-def open_project(_: MainFrame):
-    pass
-
-
-def save_project(_: MainFrame):
-    pass
-
-
-def save_project_as(_: MainFrame):
-    pass
-
-
-def close_project(mf: MainFrame):
-    mf.project.close_project()
-    mf.project = None
-
-
-# Project version
-
-
-def add_project_version(_: MainFrame):
-    pass
-
-
-def rename_project_version(_: MainFrame):
-    pass
-
-
-def delete_project_version(_: MainFrame):
-    pass
-
-
-# Track
-
-
-def new_track(mf: MainFrame):
-    track_list = mf.project_control.current_track_list
-    project_version = track_list.project_version
-    if project_version.get_next_free_channel() is not None:
-        mf.show_config_dlg(config=map_config(mf)(mode=GenericConfigMode.NEW_TRACK, project_version=project_version))
-    else:
-        mf.show_message_box("Cannot add new track. All channels are already reserved")
-
-
-def edit_track(mf: MainFrame):
-    mf.show_config_dlg(config=map_config(mf)(mode=GenericConfigMode.EDIT_TRACK, track=mf.current_track))
-
-
-def delete_track(mf: MainFrame):
-    current_project_version_info = mf.get_current_project_version_info()
-    current_project_version_info.project_version.remove_track(track=current_project_version_info.track)
-
-
-# Track version
-
-
-def new_track_version(mf: MainFrame):
-    current_project_version = mf.current_project_version
-    if current_project_version.get_next_free_channel() is not None:
-        mf.show_config_dlg(config=map_config(mf)(mode=GenericConfigMode.NEW_TRACK_VERSION, track=mf.current_track))
-    else:
-        mf.show_message_box("Cannot add new track. All channels are already reserved")
-
-
-def edit_track_version(mf: MainFrame):
-    mf.show_config_dlg(
-        config=map_config(mf)(
-            mode=GenericConfigMode.EDIT_TRACK_VERSION, track=mf.current_track, track_version=mf.current_track_version
-        )
-    )
-
-
-def delete_track_version(mf: MainFrame):
-    current_project_version_info = mf.get_current_project_version_info()
-    resp = QMessageBox.question(
-        mf,
-        "",
-        f"This will delete version: {current_project_version_info.track_version.name}<br><b>Are you sure?</b>",
-        QMessageBox.Yes | QMessageBox.Cancel,
-        QMessageBox.Cancel,
-    )
-    if resp == QMessageBox.Yes:
-        mf.current_project_version.remove_track_version(
-            track=current_project_version_info.track, track_version=current_project_version_info.track_version
-        )
-
-
-def play_track_version(mf: MainFrame):
-    current_project_version_info = mf.get_current_project_version_info()
-    mf.synth.play_track_version(
-        track=current_project_version_info.track,
-        track_version=current_project_version_info.track_version,
-        bpm=current_project_version_info.project_version.bpm,
-        repeat=current_project_version_info.track_version_control_tab.repeat(),
-    )
-
-
-def stop_track_version(mf: MainFrame):
-    mf.synth.stop()
+def slot_by_mode(mf: MainFrame, config_mode: GenericConfigMode) -> None:
+    config = config_by_mode(mf=mf, config_mode=config_mode)
+    match config_mode:
+        case GenericConfigMode.NEW_PROJECT:
+            if not is_project_empty(project=config.project):
+                if mf.action_not_saved_changes() == QMessageBox.Cancel:
+                    return
+                mf.project = reset_project(project=config.project)
+                mf.show_config_dlg(config=config)
+        case GenericConfigMode.NEW_PROJECT_VERSION:
+            pass
 
 
 def get_actions(mf: MainFrame) -> Dict[str, Action]:
@@ -166,7 +76,28 @@ def get_actions(mf: MainFrame) -> Dict[str, Action]:
         MenuAttr.PROJECT_NEW: Action(
             mf=mf,
             caption=MenuAttr.PROJECT_NEW,
-            slot=new_project,
+            slot=partial(slot_by_mode, config_mode=GenericConfigMode.NEW_PROJECT),
+            icon=None,
+            shortcut=None,
+        ),
+        MenuAttr.PROJECT_SAVE: Action(
+            mf=mf,
+            caption=MenuAttr.PROJECT_SAVE,
+            slot=save_project,
+            icon=None,
+            shortcut=QKeySequence(Qt.CTRL | Qt.Key_S),
+        ),
+        MenuAttr.PROJECT_SAVE_AS: Action(
+            mf=mf,
+            caption=MenuAttr.PROJECT_SAVE_AS,
+            slot=save_project_as,
+            icon=None,
+            shortcut=QKeySequence(Qt.CTRL | Qt.SHIFT | Qt.Key_S),
+        ),
+        MenuAttr.PROJECT_CLOSE: Action(
+            mf=mf,
+            caption=MenuAttr.PROJECT_CLOSE,
+            slot=partial(slot_by_mode, config_mode=GenericConfigMode.CLOSE_PROJECT),
             icon=None,
             shortcut=None,
         ),
@@ -188,27 +119,6 @@ def get_actions(mf: MainFrame) -> Dict[str, Action]:
             mf=mf,
             caption=MenuAttr.WINDOW_NEW,
             slot=new_window,
-            icon=None,
-            shortcut=None,
-        ),
-        MenuAttr.PROJECT_SAVE: Action(
-            mf=mf,
-            caption=MenuAttr.PROJECT_SAVE,
-            slot=save_project,
-            icon=None,
-            shortcut=QKeySequence(Qt.CTRL | Qt.Key_S),
-        ),
-        MenuAttr.PROJECT_SAVE_AS: Action(
-            mf=mf,
-            caption=MenuAttr.PROJECT_SAVE_AS,
-            slot=save_project_as,
-            icon=None,
-            shortcut=QKeySequence(Qt.CTRL | Qt.SHIFT | Qt.Key_S),
-        ),
-        MenuAttr.PROJECT_CLOSE: Action(
-            mf=mf,
-            caption=MenuAttr.PROJECT_CLOSE,
-            slot=close_project,
             icon=None,
             shortcut=None,
         ),
@@ -293,3 +203,110 @@ class MenuBar(QMenuBar):
         track_menu = QMenu("&Track", self)
         self.addMenu(track_menu)
         track_menu.addAction(self.actions[MenuAttr.TRACK_NEW])
+
+
+def new_window(_: MainFrame):
+    pass
+
+
+# Project
+
+
+def new_project(mf: MainFrame):
+    mf.show_config_dlg(config=map_config(mf)(mode=GenericConfigMode.NEW_PROJECT_VERSION))
+
+
+def open_project(_: MainFrame):
+    pass
+
+
+def save_project(_: MainFrame):
+    pass
+
+
+def save_project_as(_: MainFrame):
+    pass
+
+
+# Project version
+
+
+def add_project_version(_: MainFrame):
+    pass
+
+
+def rename_project_version(_: MainFrame):
+    pass
+
+
+def delete_project_version(_: MainFrame):
+    pass
+
+
+# Track
+
+
+def new_track(mf: MainFrame):
+    track_list = mf.project_control.current_track_list
+    project_version = track_list.project_version
+    if project_version.get_next_free_channel() is not None:
+        mf.show_config_dlg(config=map_config(mf)(mode=GenericConfigMode.NEW_TRACK, project_version=project_version))
+    else:
+        mf.show_message_box("Cannot add new track. All channels are already reserved")
+
+
+def edit_track(mf: MainFrame):
+    mf.show_config_dlg(config=map_config(mf)(mode=GenericConfigMode.EDIT_TRACK, track=mf.current_track))
+
+
+def delete_track(mf: MainFrame):
+    current_project_version_info = mf.get_current_project_version_info()
+    current_project_version_info.project_version.remove_track(track=current_project_version_info.track)
+
+
+# Track version
+
+
+def new_track_version(mf: MainFrame):
+    current_project_version = mf.current_project_version
+    if current_project_version.get_next_free_channel() is not None:
+        mf.show_config_dlg(config=map_config(mf)(mode=GenericConfigMode.NEW_TRACK_VERSION, track=mf.current_track))
+    else:
+        mf.show_message_box("Cannot add new track. All channels are already reserved")
+
+
+def edit_track_version(mf: MainFrame):
+    mf.show_config_dlg(
+        config=map_config(mf)(
+            mode=GenericConfigMode.EDIT_TRACK_VERSION, track=mf.current_track, track_version=mf.current_track_version
+        )
+    )
+
+
+def delete_track_version(mf: MainFrame):
+    current_project_version_info = mf.get_current_project_version_info()
+    resp = QMessageBox.question(
+        mf,
+        "",
+        f"This will delete version: {current_project_version_info.track_version.name}<br><b>Are you sure?</b>",
+        QMessageBox.Yes | QMessageBox.Cancel,
+        QMessageBox.Cancel,
+    )
+    if resp == QMessageBox.Yes:
+        mf.current_project_version.remove_track_version(
+            track=current_project_version_info.track, track_version=current_project_version_info.track_version
+        )
+
+
+def play_track_version(mf: MainFrame):
+    current_project_version_info = mf.get_current_project_version_info()
+    mf.synth.play_track_version(
+        track=current_project_version_info.track,
+        track_version=current_project_version_info.track_version,
+        bpm=current_project_version_info.project_version.bpm,
+        repeat=current_project_version_info.track_version_control_tab.repeat(),
+    )
+
+
+def stop_track_version(mf: MainFrame):
+    mf.synth.stop()

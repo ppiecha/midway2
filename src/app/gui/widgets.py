@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QSpinBox,
 )
 
+from src.app.model.project import Project
 from src.app.model.project_version import ProjectVersion
 from src.app.model.variant import Variant
 from src.app.model.variant_item import VariantItem
@@ -193,7 +194,7 @@ class DeriveTrackVersionBox(QWidget):
         self.form.setContentsMargins(10, 10, 10, 10)
         self.form.setSpacing(5)
         self.form.setAlignment(Qt.AlignLeft)
-        self.form.addRow("Composition", self.project_version_box)
+        self.form.addRow("Project version", self.project_version_box)
         self.form.addRow("Track", self.track_box)
         self.form.addRow("Track version", self.track_version_box)
         self.form.addRow("", self.derive_ctrl_events)
@@ -222,7 +223,7 @@ class DeriveTrackVersionBox(QWidget):
         if index >= 0:
             project_version = self.mf.project.get_version_by_name(version_name=self.project_version_box.itemText(index))
             if project_version:
-                self.load_track(project_version=project_version)
+                self.load_tracks(project_version=project_version)
 
     def on_track_changed(self, index):
         if index >= 0:
@@ -233,20 +234,23 @@ class DeriveTrackVersionBox(QWidget):
             else:
                 raise ValueError("Track not found")
 
-    def load_composition(self, selected_value: str = None):
+    def load_project_versions(self, project: Optional[Project], project_version: Optional[ProjectVersion]):
         self.project_version_box.clear()
-        self.project_version_box.addItems([composition.name for composition in self.mf.project.versions])
-        if selected_value:
-            self.project_version_box.setCurrentText(selected_value)
+        if project is not None:
+            self.project_version_box.addItems([version.name for version in project.versions])
+            if project_version is not None:
+                self.project_version_box.setCurrentText(project_version.name)
 
-    def load_track(self, project_version: ProjectVersion, selected_value: str = None):
+    def load_tracks(self, project_version: Optional[ProjectVersion], track: Optional[Track]):
         self.track_box.clear()
-        self.track_box.addItems([track.name for track in project_version.tracks])
-        if selected_value:
-            self.track_box.setCurrentText(selected_value)
+        if project_version is not None:
+            self.track_box.addItems([track.name for track in project_version.tracks])
+            if track is not None:
+                self.track_box.setCurrentText(track.name)
 
-    def load_track_version(self, track: Track, selected_value: str = None):
+    def load_track_version(self, track: Optional[Track], track_version: Optional[TrackVersion]):
         self.track_version_box.clear()
-        self.track_version_box.addItems([version.name for version in track.versions])
-        if selected_value:
-            self.track_version_box.setCurrentText(selected_value)
+        if track is not None:
+            self.track_version_box.addItems([version.name for version in track.versions])
+            if track_version is not None:
+                self.track_version_box.setCurrentText(track_version.name)

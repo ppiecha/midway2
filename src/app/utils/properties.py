@@ -44,13 +44,19 @@ class NotificationMessage:
 class AppAttr:
     APP_NAME = "Midway"
     CONFIG_FILE = "config.ini"
-    SF2_DIR = "sf2"
+    FOLDER_SF2 = "sf2"
+    FOLDER_PROJECT = "projects"
+    FOLDER_MIDI = "midi"
+    FOLDER_AUDIO = "audio"
     PATH_UTILS = os.path.dirname(os.path.abspath(__file__))
     PATH_APP = str(Path(PATH_UTILS).parent)
     PATH_SRC = str(Path(PATH_APP).parent)
     PATH_ROOT = str(Path(PATH_SRC).parent)
-    PATH_SF2 = os.path.join(PATH_ROOT, SF2_DIR)
+    PATH_SF2 = os.path.join(PATH_ROOT, FOLDER_SF2)
     PATH_FS = os.path.join(PATH_ROOT, os.path.join("ext", os.path.join("fluidsynth-2.1.2-win64", "bin")))
+    PATH_PROJECT = os.path.join(PATH_ROOT, FOLDER_PROJECT)
+    PATH_MIDI = os.path.join(PATH_ROOT, FOLDER_MIDI)
+    PATH_AUDIO = os.path.join(PATH_ROOT, FOLDER_AUDIO)
     os.environ["PATH"] += PATH_FS + ";"
 
 
@@ -117,6 +123,10 @@ class MenuAttr:
     TRACK_VERSION_PLAY = "Play track version"
     TRACK_VERSION_STOP = "Stop track version"
     TRACK_VERSION_STOP_ALL_NOTES = "Stop all notes"
+
+
+class FileFilterAttr(str, Enum):
+    PROJECT = "Project files (*.json)"
 
 
 class KeyAttr:

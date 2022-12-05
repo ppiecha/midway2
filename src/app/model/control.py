@@ -45,7 +45,7 @@ class PitchBendChain(BaseModel):
         timeline_norm = [tick / max_tick for tick in timeline]
         logger.debug(f"timeline_norm {timeline_norm}")
         bend_values_norm = [bend_fun(t) for t in timeline_norm]
-        bend_value_max = max([abs(value) for value in bend_values_norm])
+        bend_value_max = max(abs(value) for value in bend_values_norm)
         logger.debug(f"bend_value_max {bend_value_max}")
         if bend_value_max > 0:
             bend_values_norm = [val / bend_value_max for val in bend_values_norm]

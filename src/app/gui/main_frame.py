@@ -28,8 +28,8 @@ from src.app.model.track import Track, TrackVersion
 from src.app.model.types import dict_diff, DictDiff
 from src.app.utils.logger import get_console_logger
 from src.app.utils.notification import register_listener
-from src.app.utils.properties import IniAttr, AppAttr, NotificationMessage
-from src.app.utils.file_system import file_exists
+from src.app.utils.properties import IniAttr, AppAttr, NotificationMessage, FileFilterAttr
+from src.app.utils.file_system import file_exists, save_file_dialog
 
 logger = get_console_logger(__name__)
 
@@ -46,7 +46,7 @@ class MainFrame(QMainWindow):
         self.addToolBar(ToolBar(self))
         self.project_control = ProjectControl(mf=self, parent=self)
         self._project: Optional[Project] = None
-        self.project_file_name = None  # self.get_last_project_file_name()
+        self.project_file_name = None
         self.gen_config_dlg = GenericConfigDlg(mf=self)
         self.main_box = Box(direction=QBoxLayout.TopToBottom)
         self.main_box.addWidget(self.project_control)
@@ -75,6 +75,9 @@ class MainFrame(QMainWindow):
 
     @project_file_name.setter
     def project_file_name(self, file_name: str):
+        if file_name is None:
+            self.project = empty_project()
+            return
         if (result := file_exists(file_name=file_name)).error:
             self.show_message_box(message=result.error)
             self.project = empty_project()
@@ -149,14 +152,24 @@ class MainFrame(QMainWindow):
                 )
                 == QMessageBox.Save
             ):
-                self.project.save_to_file(file_name=self.project_file_name)
+                if not self.project_file_name:
+                    if (
+                        file_name := save_file_dialog(
+                            parent=self, dir_=AppAttr.PATH_PROJECT, filter_=FileFilterAttr.PROJECT
+                        )
+                    ) != "":
+                        if (error := self.project.save_to_file(file_name=file_name)) is not None:
+                            self.show_message_box(message=error)
+                            resp = QMessageBox.Cancel
+                    else:
+                        resp = QMessageBox.Cancel
         return resp
 
     def closeEvent(self, event: QCloseEvent) -> None:
         self.save_config()
-        resp = self.action_not_saved_changes()
-        if resp == QMessageBox.Cancel:
+        if self.action_not_saved_changes() == QMessageBox.Cancel:
             event.ignore()
+            return
         event.accept()
 
     def show_message(self, message: str, timeout: int = 5000):
@@ -215,8 +228,10 @@ class MainFrame(QMainWindow):
         return self.current_track_list_item.current_track_version
 
     @property
-    def current_track_version_control_tab(self) -> BaseTrackVersionControlTab:
-        return self.current_track_list.current_track_list_item.current_track_version_control_tab
+    def current_track_version_control_tab(self) -> Optional[BaseTrackVersionControlTab]:
+        if self.current_track_list and self.current_track_list_item:
+            return self.current_track_list.current_track_list_item.current_track_version_control_tab
+        return None
 
     def get_current_project_version_info(self) -> CurrentProjectVersionInfo:
         return CurrentProjectVersionInfo(

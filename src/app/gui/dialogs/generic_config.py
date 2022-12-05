@@ -26,8 +26,9 @@ from pydantic import PositiveInt
 
 from src.app.gui.widgets import Box, ChannelBox, DeriveTrackVersionBox, BarBox
 from src.app.gui.editor.keyboard import KeyboardView, PianoKeyboard
-from src.app.model.project_version import ProjectVersion
+from src.app.model.project_version import ProjectVersion, get_next_free_channel, get_num_of_bars, has_tracks
 from src.app.model.sequence import Sequence
+from src.app.utils.decorators import all_args_not_none
 from src.app.utils.properties import Color, GuiAttr, IniAttr, MidiAttr
 from src.app.model.types import Channel, Preset
 from src.app.model.project import Project
@@ -40,6 +41,9 @@ if TYPE_CHECKING:
 
 
 class GenericConfigMode(str, Enum):
+    NEW_PROJECT = "New project"
+    CLOSE_PROJECT = "Close project"
+    NEW_PROJECT_VERSION = "New project version"
     NEW_TRACK = "New track"
     EDIT_TRACK = "Edit track"
     NEW_TRACK_VERSION = "New track version"
@@ -54,6 +58,12 @@ class GenericConfig(NamedTuple):
     track: Optional[Track] = None
     track_version: Optional[TrackVersion] = None
     node: Optional[Node] = None
+
+    def project_name(self) -> str:
+        return self.project.name if self.project else ""
+
+    def project_version_name(self) -> str:
+        return self.project_version.name if self.project_version else ""
 
     def track_name(self) -> str:
         return self.track.name if self.track else ""
@@ -74,18 +84,18 @@ class GenericConfig(NamedTuple):
         return (
             self.project_version.get_first_track_version(track=self.track).channel
             if self.track
-            else self.project_version.get_next_free_channel()
+            else get_next_free_channel(project_version=self.project_version)
         )
 
     def bars(self) -> PositiveInt:
-        return (
-            self.project_version.get_first_track_version(track=self.track).num_of_bars()
-            if self.track
-            else self.project_version.get_first_track_version(track=self.track).num_of_bars()
-        )
+        return get_num_of_bars(project_version=self.project_version)
 
     def is_inheritance_enabled(self) -> bool:
-        return self.mode in (GenericConfigMode.NEW_TRACK, GenericConfigMode.NEW_TRACK_VERSION)
+        return (
+            self.mode in (GenericConfigMode.NEW_TRACK, GenericConfigMode.NEW_TRACK_VERSION)
+            and self.project.versions
+            and any(has_tracks(project_version=version) for version in self.project.versions)
+        )
 
 
 class GenericConfigDlg(QDialog):
@@ -123,20 +133,25 @@ class GenericConfigDlg(QDialog):
     def update_project_details(self):
         if self.general.project_name != self.config.project.name:
             self.config.project.modify_project(project=Project(name=self.general.project_name))
-        if self.general.project_version_name != self.config.project_version.name:
-            self.config.project_version.modify_project_version(ProjectVersion(name=self.general.project_version_name))
+        if self.config.project_version is not None:
+            if self.general.project_version_name != self.config.project_version.name:
+                self.config.project_version.modify_project_version(
+                    ProjectVersion(name=self.general.project_version_name)
+                )
 
     def apply_changes(self):
+        self.update_project_details()
         match self.config.mode:
+            case GenericConfigMode.NEW_PROJECT | GenericConfigMode.NEW_PROJECT_VERSION:
+                self.config.project.add_project_version(project_version=self.general.project_version)
             case GenericConfigMode.NEW_TRACK:
                 self.config.project_version.add_track(track=self.general.track, enable=True)
             case GenericConfigMode.EDIT_TRACK:
                 self.config.project_version.change_track(track_id=self.config.track.id, new_track=self.general.track)
             case GenericConfigMode.NEW_TRACK_VERSION:
                 self.config.project_version.add_track_version(
-                    track=self.general.track, track_version=self.general.version
+                    track=self.general.track, track_version=self.general.track_version
                 )
-        self.update_project_details()
 
     @staticmethod
     def get_caption(config: GenericConfig) -> str:
@@ -375,6 +390,24 @@ class GeneralTab(QWidget):
         self.track_color_box.clicked.connect(self.get_track_color)
         self.enable_inheritance_box.stateChanged.connect(self.on_enable_inheritance)
 
+    def widget_to_highlight(self) -> QWidget:
+        match self.config.mode:
+            case GenericConfigMode.NEW_PROJECT:
+                return self.project_name_box
+            case GenericConfigMode.NEW_PROJECT_VERSION:
+                return self.project_version_name_box
+            case GenericConfigMode.NEW_TRACK | GenericConfigMode.EDIT_TRACK:
+                return self.track_name_box
+            case GenericConfigMode.NEW_TRACK_VERSION | GenericConfigMode.EDIT_TRACK_VERSION:
+                return self.version_name_box
+            case _:
+                raise ValueError(f"No default widget to focus in mode {self.config.mode}")
+
+    @all_args_not_none
+    def highlight_widget(self, widget: QWidget):
+        if not widget.hasFocus():
+            widget.setFocus()
+
     @property
     def preset(self) -> Preset:
         return self.gen_conf_dlg.preset.current_preset
@@ -384,8 +417,8 @@ class GeneralTab(QWidget):
 
     def load_config(self, config: GenericConfig):
         self.config = config
-        self.project_name_box.setText(config.mf.project.name)
-        self.project_version_name_box.setText(config.project_version.name)
+        self.project_name_box.setText(config.project_name())
+        self.project_version_name_box.setText(config.project_version_name())
         self.track_name_box.setText(config.track_name())
         self.track_name_box.setEnabled(config.is_track_name_enabled())
         self.show_track_color(color=config.get_color())
@@ -395,9 +428,13 @@ class GeneralTab(QWidget):
         self.version_bars_box.setValue(config.bars())
         self.enable_inheritance_box.setChecked(False)
         self.enable_inheritance_box.setEnabled(config.is_inheritance_enabled())
-        self.derive_form_box.load_composition(selected_value=self.config.project_version.name)
+        self.derive_form_box.load_project_versions(
+            project=self.config.project, project_version=self.config.project_version
+        )
         self.enable_in_loops_box.setChecked(not config.track and config.mode == GenericConfigMode.NEW_TRACK)
         self.enable_in_loops_box.setEnabled(config.mode == GenericConfigMode.NEW_TRACK)
+
+        self.highlight_widget(widget=self.widget_to_highlight())
 
     def get_track_color(self):
         color = QColorDialog.getColor(
@@ -429,16 +466,16 @@ class GeneralTab(QWidget):
         return valid
 
     def validate_version_name(self) -> bool:
-        valid = self.version_name != ""
+        valid = self.track_version_name != ""
         if not valid:
             self.config.mf.show_message_box("<b>Version name</b> is empty")
             return valid
         if self.config.track:
             exclude_id = self.config.track_version.id if self.config.track_version else None
-            valid = self.config.track.is_new_version_name_valid(new_name=self.version_name, exclude_id=exclude_id)
+            valid = self.config.track.is_new_version_name_valid(new_name=self.track_version_name, exclude_id=exclude_id)
         if not valid:
             self.config.mf.show_message_box(
-                f"Track version <b>{self.version_name}</b> exists in track <b>{self.config.track.name}</b>"
+                f"Track version <b>{self.track_version_name}</b> exists in track <b>{self.config.track.name}</b>"
             )
         return valid
 
@@ -466,7 +503,7 @@ class GeneralTab(QWidget):
         return self.track_color_box.palette().color(QPalette.Button).rgba()
 
     @property
-    def version_name(self) -> str:
+    def track_version_name(self) -> str:
         return self.version_name_box.text().strip()
 
     @property
@@ -478,10 +515,10 @@ class GeneralTab(QWidget):
         return PositiveInt(self.version_bars_box.value())
 
     @property
-    def version(self) -> TrackVersion:
+    def track_version(self) -> TrackVersion:
         return TrackVersion(
             channel=self.channel,
-            name=self.version_name,
+            name=self.track_version_name,
             sf_name=self.preset.sf_name,
             bank=self.preset.bank,
             patch=self.preset.patch,
@@ -494,9 +531,13 @@ class GeneralTab(QWidget):
     def track(self) -> Track:
         return Track(
             name=self.track_name,
-            versions=[self.version],
+            versions=[self.track_version],
             default_color=self.track_color,
             default_sf=self.preset.sf_name,
             default_bank=self.preset.bank,
             default_patch=self.preset.patch,
         )
+
+    @property
+    def project_version(self) -> ProjectVersion:
+        return ProjectVersion(name=self.project_version_name, tracks=[self.track])

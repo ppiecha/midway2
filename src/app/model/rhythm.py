@@ -75,7 +75,7 @@ class Pattern(BaseModel):
         return pattern
 
     def validate_pattern(self, version: PatternVersion):
-        length = sum([(1.0 / elem.value) * elem.repeat for elem in version.elements])
+        length = sum((1.0 / elem.value) * elem.repeat for elem in version.elements)
         if length != self.meter.length():
             raise ValueError(
                 f"Sum of pattern elements duration {length} is not equal " f"to bar length {self.meter.length()}"

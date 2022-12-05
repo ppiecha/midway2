@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from dataclasses import dataclass
 from enum import Enum
-from typing import Union, NewType, Dict, Any, List, NamedTuple, TYPE_CHECKING, Optional, TypeVar, Generic
+from typing import NewType, Dict, Any, List, NamedTuple, TYPE_CHECKING, Optional, TypeVar, Generic
 from uuid import UUID
 
 from PySide6.QtWidgets import QWidget
@@ -21,8 +21,6 @@ class Midi:
     MAX_B9 = 119
 
 
-Int = Union[int, type(None)]
-Float = Union[float, type(None)]
 Bpm = PositiveInt
 Unit = confloat(ge=0)
 Channel = conint(ge=0, le=255)
@@ -33,6 +31,7 @@ MidiBankValue = NewType("MidiValue", conint(ge=Midi.MIN, le=Midi.MAX + 1))
 Bend = conint(ge=0, lt=16384)
 BendNormalized = confloat(ge=-1, le=1)
 BendDurationNormalized = confloat(ge=0, le=1)
+NumOfBars = PositiveInt
 Id = UUID | str
 
 
@@ -50,7 +49,7 @@ class NoteUnit(float, Enum):
 Json = Dict[str, Any]
 
 
-@dataclass(frozen=True, match_args=True, kw_only=True, slots=True)
+@dataclass
 class DictDiff:
     d1: Dict
     d2: Dict
@@ -100,7 +99,7 @@ class ABCWidgetFinalMeta(type(QWidget), type(ABC)):
 T = TypeVar("T")
 
 
-@dataclass
+@dataclass(eq=True, frozen=True, match_args=True, kw_only=True, slots=True)
 class Result(Generic[T]):
     error: Optional[str] = None
     value: Optional[T] = None
@@ -113,7 +112,7 @@ class Result(Generic[T]):
                 f(x)
 
 
-def chain_functions(funcs: List, x: Result):
-    for func in funcs:
-        if (result := func(x)).error:
-            return result
+# def chain_functions(funcs: List, x: Result):
+#     for func in funcs:
+#         if (result := func(x)).error:
+#             return result

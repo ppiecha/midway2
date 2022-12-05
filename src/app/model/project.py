@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from src.app.model.project_version import ProjectVersion
 from src.app.model.serializer import write_json_file, read_json_file
 from src.app.model.types import get_one, Result
+from src.app.utils.decorators import all_args_not_none
 from src.app.utils.notification import notify
 from src.app.utils.properties import NotificationMessage
 
@@ -76,9 +77,16 @@ class Project(BaseModel):
             return Result(error=str(e))
 
 
+@all_args_not_none
+def reset_project(project: Project) -> Project:
+    project.close_project()
+    return empty_project()
+
+
 def empty_project() -> Project:
     return Project()
 
 
-def new_project() -> Project:
-    return Project(name="New project")
+@all_args_not_none
+def is_project_empty(project: Project):
+    return project == empty_project()
