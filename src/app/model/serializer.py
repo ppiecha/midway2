@@ -13,8 +13,8 @@ def read_json_file(json_file_name: str) -> Result[Json]:
 
 
 def write_json_file(json_dict: Json | str, json_file_name: str) -> Result[str]:
-    with open(json_file_name, "w", encoding=DEFAULT_ENCODING) as json_file:
-        try:
+    try:
+        with open(json_file_name, "w", encoding=DEFAULT_ENCODING) as json_file:
             match json_dict:
                 case dict():
                     json.dump(json_dict, json_file, ensure_ascii=False, indent=2)
@@ -24,8 +24,8 @@ def write_json_file(json_dict: Json | str, json_file_name: str) -> Result[str]:
                     return Result()
                 case _ as value:
                     return Result(error=f"Bad input type {type(value)}")
-        except (json.JSONDecodeError, IOError) as e:
-            return Result(error=str(e))
+    except (json.JSONDecodeError, IOError) as e:
+        return Result(error=str(e))
 
 
 def test(a):

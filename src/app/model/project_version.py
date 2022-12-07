@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import copy
 from typing import Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from src.app.model.composition import Compositions
 from src.app.model.sequence import Sequence
@@ -18,6 +18,7 @@ from src.app.utils.properties import NotificationMessage, GuiAttr, MidiAttr
 
 
 class ProjectVersion(BaseModel):
+    id: UUID = Field(default_factory=uuid4, exclude=True)
     name: str
     bpm: Bpm = GuiAttr.DEFAULT_BPM
     tracks: Tracks = Tracks()

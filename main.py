@@ -4,7 +4,7 @@ import sys
 
 from PySide6.QtWidgets import QApplication
 
-from src.app.gui.main_frame import MainFrame, CurrentProjectVersionInfo
+from src.app.gui.main_frame import MainFrame
 from src.app import config
 from src.app.utils.properties import get_app_palette
 

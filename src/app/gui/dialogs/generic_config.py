@@ -1,7 +1,7 @@
 from __future__ import annotations
 from enum import Enum
 from pathlib import Path
-from typing import Any, NamedTuple, TYPE_CHECKING, Optional
+from typing import Any, NamedTuple, TYPE_CHECKING, Optional, List
 
 from PySide6.QtGui import QIcon, QColor, QPalette
 from PySide6.QtCore import Qt
@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
 )
 from pydantic import PositiveInt
 
-from src.app.gui.widgets import Box, ChannelBox, DeriveTrackVersionBox, BarBox
+from src.app.gui.widgets import Box, ChannelBox, DeriveTrackVersionBox, BarBox, EditBox
 from src.app.gui.editor.keyboard import KeyboardView, PianoKeyboard
 from src.app.model.project_version import ProjectVersion, get_next_free_channel, get_num_of_bars, has_tracks
 from src.app.model.sequence import Sequence
@@ -60,16 +60,16 @@ class GenericConfig(NamedTuple):
     node: Optional[Node] = None
 
     def project_name(self) -> str:
-        return self.project.name if self.project else ""
+        return self.project.name if self.project else "Project name"
 
     def project_version_name(self) -> str:
-        return self.project_version.name if self.project_version else ""
+        return self.project_version.name if self.project_version else "Project version name"
 
     def track_name(self) -> str:
-        return self.track.name if self.track else ""
+        return self.track.name if self.track else "Track name"
 
     def is_track_name_enabled(self) -> bool:
-        return self.mode in (GenericConfigMode.NEW_TRACK, GenericConfigMode.EDIT_TRACK)
+        return self.mode != GenericConfigMode.EDIT_TRACK_VERSION
 
     def get_color(self) -> QColor:
         return QColor.fromRgba(self.track.default_color) if self.track else Color.NODE_START
@@ -78,7 +78,7 @@ class GenericConfig(NamedTuple):
         return self.track_version.name if self.track_version else GuiAttr.DEFAULT_VERSION_NAME
 
     def is_version_name_enabled(self) -> bool:
-        return self.mode in (GenericConfigMode.NEW_TRACK_VERSION, GenericConfigMode.EDIT_TRACK_VERSION)
+        return self.mode != GenericConfigMode.EDIT_TRACK
 
     def channel(self) -> Channel:
         return (
@@ -375,7 +375,7 @@ class GeneralTab(QWidget):
 
         # Form
         self.form.addRow("Project name", self.project_name_box)
-        self.form.addRow("Composition name", self.project_version_name_box)
+        self.form.addRow("Project version name", self.project_version_name_box)
         self.form.addRow("Track name", self.track_name_box)
         self.form.addRow("Track color", self.track_color_box)
         self.form.addRow("Version name", self.version_name_box)
@@ -450,41 +450,62 @@ class GeneralTab(QWidget):
         pal.setColor(QPalette.Button, color)
         self.track_color_box.setPalette(pal)
 
-    def validate_track_name(self) -> bool:
+    def validate_project_name(self) -> List[str]:
+        valid = self.project_name != ""
+        if not valid:
+            return ["<b>Project name</b> is empty"]
+        return []
+
+    def validate_project_version_name(self) -> List[str]:
+        valid = self.project_version_name != ""
+        if not valid:
+            return ["<b>Project version name</b> is empty"]
+        if self.config.project:
+            exclude_id = self.config.project_version.id if self.config.project_version else None
+            valid = self.config.project.is_new_project_version_valid(new_name=self.track_name, exclude_id=exclude_id)
+        if not valid:
+            return [
+                f"Project version <b>{self.project_version_name}</b> exists in project "
+                f"<b>{self.config.project.name}</b>"
+            ]
+        return []
+
+    def validate_track_name(self) -> List[str]:
         valid = self.track_name != ""
         if not valid:
-            self.config.mf.show_message_box("<b>Track name</b> is empty")
-            return valid
+            return ["<b>Track name</b> is empty"]
         if self.config.project_version:
             exclude_id = self.config.track.id if self.config.track else None
             valid = self.config.project_version.is_new_track_name_valid(new_name=self.track_name, exclude_id=exclude_id)
         if not valid:
-            self.config.mf.show_message_box(
+            return [
                 f"Track name <b>{self.track_name}</b> exists in project_version "
                 f"<b>{self.config.project_version.name}</b>"
-            )
-        return valid
+            ]
+        return []
 
-    def validate_version_name(self) -> bool:
+    def validate_version_name(self) -> List[str]:
         valid = self.track_version_name != ""
         if not valid:
-            self.config.mf.show_message_box("<b>Version name</b> is empty")
-            return valid
+            return ["<b>Version name</b> is empty"]
         if self.config.track:
             exclude_id = self.config.track_version.id if self.config.track_version else None
             valid = self.config.track.is_new_version_name_valid(new_name=self.track_version_name, exclude_id=exclude_id)
         if not valid:
-            self.config.mf.show_message_box(
-                f"Track version <b>{self.track_version_name}</b> exists in track <b>{self.config.track.name}</b>"
-            )
-        return valid
+            return [f"Track version <b>{self.track_version_name}</b> exists in track <b>{self.config.track.name}</b>"]
+        return []
 
     def is_valid(self) -> bool:
-        if self.config.mode in (GenericConfigMode.NEW_TRACK, GenericConfigMode.EDIT_TRACK):
-            return self.validate_track_name()
-        if self.config.mode in (GenericConfigMode.NEW_TRACK_VERSION, GenericConfigMode.EDIT_TRACK_VERSION):
-            return self.validate_version_name()
-        return True
+        errors = []
+        errors.extend(self.validate_project_name())
+        errors.extend(self.validate_project_version_name())
+        if self.config.mode != GenericConfigMode.EDIT_TRACK_VERSION:
+            errors.extend(self.validate_track_name())
+        if self.config.mode != GenericConfigMode.EDIT_TRACK:
+            errors.extend(self.validate_version_name())
+        if errors:
+            self.config.mf.show_message_box(message="<br>".join(errors))
+        return len(errors) == 0
 
     @property
     def project_name(self) -> str:

@@ -27,8 +27,10 @@ class Project(BaseModel):
     def __len__(self):
         return len(self.versions)
 
-    def get_version_by_name(self, version_name: str) -> ProjectVersion:
-        return get_one(data=[version for version in self if version.name == version_name], raise_on_empty=True)
+    def get_version_by_name(self, version_name: str, raise_on_empty: bool = True) -> ProjectVersion:
+        return get_one(
+            data=[version for version in self if version.name == version_name], raise_on_empty=raise_on_empty
+        )
 
     def add_project_version(self, project_version: ProjectVersion) -> Project:
         self.versions.append(project_version)
@@ -47,7 +49,10 @@ class Project(BaseModel):
         return self
 
     def is_new_project_version_valid(self, new_name: str, exclude_id: Optional[UUID] = None) -> bool:
-        pass
+        version = self.get_version_by_name(version_name=new_name, raise_on_empty=False)
+        if version and exclude_id:
+            return version.id == exclude_id
+        return version is None
 
     def modify_project(self, project: Project) -> Project:
         self.name = project.name
@@ -57,7 +62,7 @@ class Project(BaseModel):
     def save_to_file(self, file_name: str) -> Optional[str]:
         if (
             result := write_json_file(
-                json_dict=self.json(indent=2, exclude_none=True, exclude_defaults=True, exclude_unset=True),
+                json_dict=self.json(indent=2, exclude_none=True, exclude_defaults=True),
                 json_file_name=file_name,
             )
         ).error:

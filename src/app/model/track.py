@@ -17,7 +17,7 @@ from src.app.utils.properties import Color, MidiAttr
 
 class TrackVersion(BaseModel):
     channel: Channel
-    id: UUID = Field(default_factory=uuid4)
+    id: UUID = Field(default_factory=uuid4, exclude=True)
     name: str
     sf_name: str
     bank: MidiBankValue = MidiAttr.DEFAULT_BANK
@@ -77,7 +77,7 @@ class RhythmTrackVersion(TrackVersion):
 
 
 class Track(BaseModel):
-    id: UUID = Field(default_factory=uuid4)
+    id: UUID = Field(default_factory=uuid4, exclude=True)
     name: str
     type: TrackType = TrackType.VOICE
     versions: List[TrackVersion] = []

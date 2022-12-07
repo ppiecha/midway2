@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import gc
+import logging
 import weakref
-from logging import DEBUG
 from time import sleep
 from typing import List, Optional, Callable
 from uuid import UUID
@@ -26,7 +26,7 @@ from src.app.utils.units import (
     bar_length2sec,
 )
 
-logger = get_console_logger(name=__name__, log_level=DEBUG)
+logger = get_console_logger(name=__name__, log_level=logging.INFO)
 
 
 class FontLoader(QThread):

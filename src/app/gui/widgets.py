@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QComboBox,
     QFormLayout,
     QSpinBox,
+    QLineEdit,
 )
 
 from src.app.model.project import Project
@@ -254,3 +255,9 @@ class DeriveTrackVersionBox(QWidget):
             self.track_version_box.addItems([version.name for version in track.versions])
             if track_version is not None:
                 self.track_version_box.setCurrentText(track_version.name)
+
+
+class EditBox(QLineEdit):
+    def __init__(self, default: Optional[str] = ""):
+        super().__init__()
+        self.setText(default)

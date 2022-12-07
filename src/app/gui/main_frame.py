@@ -25,7 +25,7 @@ from src.app.model.project import Project, empty_project
 from src.app.model.project_version import ProjectVersion
 from src.app.model.serializer import read_json_file
 from src.app.model.track import Track, TrackVersion
-from src.app.model.types import dict_diff, DictDiff
+from src.app.model.types import dict_diff, DictDiff, Result
 from src.app.utils.logger import get_console_logger
 from src.app.utils.notification import register_listener
 from src.app.utils.properties import IniAttr, AppAttr, NotificationMessage, FileFilterAttr
@@ -58,6 +58,8 @@ class MainFrame(QMainWindow):
         self.set_brand(project=self.project)
 
         register_listener(mapping={NotificationMessage.PROJECT_CHANGED: self.update_project_name})
+
+        self.load_last_project()
 
     @property
     def project(self) -> Project:
@@ -93,6 +95,10 @@ class MainFrame(QMainWindow):
     def get_last_project_file_name(self) -> str:
         return self.config.value(IniAttr.PROJECT_FILE, "")
 
+    def load_last_project(self):
+        if (file_name := self.get_last_project_file_name()) != "":
+            self.project_file_name = file_name
+
     def set_geometry(self):
         if self.config.value(IniAttr.MAIN_WINDOW_GEOMETRY, None) is not None:
             self.restoreGeometry(self.config.value(IniAttr.MAIN_WINDOW_GEOMETRY))
@@ -126,50 +132,60 @@ class MainFrame(QMainWindow):
     def has_unsaved_changes(self) -> bool:
         if not self.project.versions:
             return False
-        if self.project_file_name and Path(self.project_file_name).exists():
-            last_saved_dict = read_json_file(json_file_name=self.project_file_name)
+        if (
+            self.project_file_name
+            and Path(self.project_file_name).exists()
+            and not (result := read_json_file(json_file_name=self.project_file_name)).error
+        ):
+            last_saved_dict = result.value
         else:
             last_saved_dict = {}
         last_saved_project = Project(**last_saved_dict)
-        current = self.project.json(exclude_none=True, exclude_defaults=True, exclude_unset=True)
-        last_saved = last_saved_project.json(exclude_none=True, exclude_defaults=True, exclude_unset=True)
+        current = self.project.json(exclude_none=True, exclude_defaults=True)
+        last_saved = last_saved_project.json(exclude_none=True, exclude_defaults=True)
         return current != last_saved
 
     def save_config(self):
         self.config.setValue(IniAttr.MAIN_WINDOW_GEOMETRY, self.saveGeometry())
         self.config.setValue(IniAttr.PROJECT_FILE, self.project_file_name)
 
+    def ask_about_changes(self) -> QMessageBox.StandardButton:
+        return QMessageBox.question(
+            self,
+            "",
+            "Project has unsaved changes<br><b>Save before exit?</b>",
+            QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
+            QMessageBox.Cancel,
+        )
+
+    def get_save_file_name(self):
+        return save_file_dialog(parent=self, dir_=AppAttr.PATH_PROJECT, filter_=FileFilterAttr.PROJECT)
+
+    def save_project(self, file_name: str) -> QMessageBox.StandardButton:
+        resp = QMessageBox.Ok
+        if (error := self.project.save_to_file(file_name=file_name)) is not None:
+            self.show_message_box(message=error)
+            resp = QMessageBox.Cancel
+        return resp
+
     def action_not_saved_changes(self) -> QMessageBox.StandardButton:
         resp = QMessageBox.Ok
         if self.has_unsaved_changes():
-            if (
-                resp := QMessageBox.question(
-                    self,
-                    "",
-                    "Project has unsaved changes<br><b>Save before exit?</b>",
-                    QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
-                    QMessageBox.Cancel,
-                )
-                == QMessageBox.Save
-            ):
+            if (resp := self.ask_about_changes()) == QMessageBox.Save:
                 if not self.project_file_name:
-                    if (
-                        file_name := save_file_dialog(
-                            parent=self, dir_=AppAttr.PATH_PROJECT, filter_=FileFilterAttr.PROJECT
-                        )
-                    ) != "":
-                        if (error := self.project.save_to_file(file_name=file_name)) is not None:
-                            self.show_message_box(message=error)
-                            resp = QMessageBox.Cancel
+                    if (file_name := self.get_save_file_name()) != "":
+                        resp = self.save_project(file_name=file_name)
                     else:
                         resp = QMessageBox.Cancel
+                else:
+                    resp = self.save_project(file_name=self.project_file_name)
         return resp
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        self.save_config()
         if self.action_not_saved_changes() == QMessageBox.Cancel:
             event.ignore()
             return
+        self.save_config()
         event.accept()
 
     def show_message(self, message: str, timeout: int = 5000):
