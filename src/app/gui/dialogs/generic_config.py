@@ -66,6 +66,8 @@ class GenericConfig(NamedTuple):
         return self.project_version.name if self.project_version else "Project version name"
 
     def track_name(self) -> str:
+        if self.mode == GenericConfigMode.NEW_TRACK:
+            return ""
         return self.track.name if self.track else "Track name"
 
     def is_track_name_enabled(self) -> bool:
@@ -75,6 +77,8 @@ class GenericConfig(NamedTuple):
         return QColor.fromRgba(self.track.default_color) if self.track else Color.NODE_START
 
     def version_name(self) -> str:
+        if self.mode == GenericConfigMode.NEW_TRACK_VERSION:
+            return ""
         return self.track_version.name if self.track_version else GuiAttr.DEFAULT_VERSION_NAME
 
     def is_version_name_enabled(self) -> bool:
@@ -92,7 +96,7 @@ class GenericConfig(NamedTuple):
 
     def is_inheritance_enabled(self) -> bool:
         return (
-            self.mode in (GenericConfigMode.NEW_TRACK, GenericConfigMode.NEW_TRACK_VERSION)
+            self.mode not in (GenericConfigMode.EDIT_TRACK, GenericConfigMode.EDIT_TRACK_VERSION)
             and self.project.versions
             and any(has_tracks(project_version=version) for version in self.project.versions)
         )
@@ -357,6 +361,7 @@ class GeneralTab(QWidget):
         self.gen_conf_dlg = gen_conf_dlg
         self.config: Optional[GenericConfig] = None
         self.form = QFormLayout()
+        self.form.setLabelAlignment(Qt.AlignRight)
         self.form.setContentsMargins(10, 10, 10, 10)
         self.form.setSpacing(5)
         self.project_name_box = QLineEdit()
@@ -371,7 +376,7 @@ class GeneralTab(QWidget):
         self.inheritance_box.addWidget(self.enable_inheritance_box)
         self.derive_form_box = DeriveTrackVersionBox(parent=self, mf=gen_conf_dlg.mf)
         self.derive_form_box.frame.hide()
-        self.enable_in_loops_box = QCheckBox("Enable track in loops")
+        self.enable_in_compositions = QCheckBox("Enable track in compositions")
 
         # Form
         self.form.addRow("Project name", self.project_name_box)
@@ -383,7 +388,7 @@ class GeneralTab(QWidget):
         self.form.addRow("Number of bars", self.version_bars_box)
         self.form.addRow("Derive from track", self.inheritance_box)
         self.form.addRow("", self.derive_form_box)
-        self.form.addRow("", self.enable_in_loops_box)
+        self.form.addRow("", self.enable_in_compositions)
 
         self.setLayout(self.form)
 
@@ -429,10 +434,13 @@ class GeneralTab(QWidget):
         self.enable_inheritance_box.setChecked(False)
         self.enable_inheritance_box.setEnabled(config.is_inheritance_enabled())
         self.derive_form_box.load_project_versions(
-            project=self.config.project, project_version=self.config.project_version
+            project=self.config.project,
+            init_project_version=self.config.project_version,
+            init_track=self.config.track,
+            init_track_version=self.config.track_version,
         )
-        self.enable_in_loops_box.setChecked(not config.track and config.mode == GenericConfigMode.NEW_TRACK)
-        self.enable_in_loops_box.setEnabled(config.mode == GenericConfigMode.NEW_TRACK)
+        self.enable_in_compositions.setChecked(not config.track and config.mode == GenericConfigMode.NEW_TRACK)
+        self.enable_in_compositions.setEnabled(config.mode == GenericConfigMode.NEW_TRACK)
 
         self.highlight_widget(widget=self.widget_to_highlight())
 

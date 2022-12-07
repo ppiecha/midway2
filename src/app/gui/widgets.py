@@ -187,11 +187,15 @@ class DeriveTrackVersionBox(QWidget):
         super().__init__(parent)
         self.mf = mf
         self.form = QFormLayout()
+        self.init_project_version: Optional[ProjectVersion] = None
+        self.init_track: Optional[Track] = None
+        self.init_track_version: Optional[TrackVersion] = None
         self.project_version_box = QComboBox()
         self.track_box = QComboBox()
         self.track_version_box = QComboBox()
         self.derive_ctrl_events = QCheckBox("Derive control events")
         self.form = QFormLayout()
+        self.form.setLabelAlignment(Qt.AlignRight)
         self.form.setContentsMargins(10, 10, 10, 10)
         self.form.setSpacing(5)
         self.form.setAlignment(Qt.AlignLeft)
@@ -224,23 +228,32 @@ class DeriveTrackVersionBox(QWidget):
         if index >= 0:
             project_version = self.mf.project.get_version_by_name(version_name=self.project_version_box.itemText(index))
             if project_version:
-                self.load_tracks(project_version=project_version)
+                self.load_tracks(project_version=project_version, track=self.init_track)
 
     def on_track_changed(self, index):
         if index >= 0:
             project_version = self.mf.project.get_version_by_name(version_name=self.project_version_box.currentText())
             track = project_version.tracks.get_track(identifier=self.track_box.itemText(index))
             if track:
-                self.load_track_version(track=track)
+                self.load_track_version(track=track, track_version=self.init_track_version)
             else:
                 raise ValueError("Track not found")
 
-    def load_project_versions(self, project: Optional[Project], project_version: Optional[ProjectVersion]):
+    def load_project_versions(
+        self,
+        project: Optional[Project],
+        init_project_version: Optional[ProjectVersion],
+        init_track: Optional[Track],
+        init_track_version: Optional[TrackVersion],
+    ):
+        self.init_project_version = init_project_version
+        self.init_track = init_track
+        self.init_track_version = init_track_version
         self.project_version_box.clear()
         if project is not None:
             self.project_version_box.addItems([version.name for version in project.versions])
-            if project_version is not None:
-                self.project_version_box.setCurrentText(project_version.name)
+            if init_project_version is not None:
+                self.project_version_box.setCurrentText(init_project_version.name)
 
     def load_tracks(self, project_version: Optional[ProjectVersion], track: Optional[Track]):
         self.track_box.clear()

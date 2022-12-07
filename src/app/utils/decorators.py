@@ -8,6 +8,6 @@ def all_args_not_none(func: Callable) -> Callable:
                 f"Found not defined args {args}. "
                 f"Not defined kwargs {[(k, v) for k, v in kwargs.items() if v is None]}"
             )
-        func(*args, **kwargs)
+        return func(*args, **kwargs)
 
     return wrapper
