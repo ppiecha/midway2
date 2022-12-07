@@ -1,1 +1,0 @@
-pytest -vv -k "test and not test_play"
