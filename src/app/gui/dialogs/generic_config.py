@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
 )
 from pydantic import PositiveInt
 
-from src.app.gui.widgets import Box, ChannelBox, DeriveTrackVersionBox, BarBox, EditBox
+from src.app.gui.widgets import Box, ChannelBox, DeriveTrackVersionBox, BarBox
 from src.app.gui.editor.keyboard import KeyboardView, PianoKeyboard
 from src.app.model.project_version import ProjectVersion, get_next_free_channel, get_num_of_bars, has_tracks
 from src.app.model.sequence import Sequence

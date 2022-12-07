@@ -98,7 +98,7 @@ def bar_length2sec(bar: Bar, bpm: Bpm) -> float:
 
 
 def beat2tick(beat: Beat, bpm: Bpm) -> int:
-    qn_length = 60.0 / bpm
+    qn_length = 60.0 / float(bpm)
     second = 4 * qn_length * invert(beat)
     tick = round(
         second2tick(

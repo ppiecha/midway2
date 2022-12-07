@@ -198,7 +198,6 @@ class Sequence(BaseModel):
                     setattr(event, attr, value)
 
     def get_changed_event(self, old_event: Event, diff: Diff) -> Optional[Event]:
-        # TODO split to small testable functions
         # pylint: disable=too-many-return-statements, too-many-branches)
         meter = self.meter()
         event = old_event.copy(deep=True)

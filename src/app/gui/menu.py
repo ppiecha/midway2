@@ -308,5 +308,8 @@ def play_track_version(mf: MainFrame):
     )
 
 
+#TODO play current composition
+
+
 def stop_track_version(mf: MainFrame):
     mf.synth.stop()

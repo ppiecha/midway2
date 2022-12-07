@@ -25,7 +25,7 @@ from src.app.model.project import Project, empty_project
 from src.app.model.project_version import ProjectVersion
 from src.app.model.serializer import read_json_file
 from src.app.model.track import Track, TrackVersion
-from src.app.model.types import dict_diff, DictDiff, Result
+from src.app.model.types import dict_diff, DictDiff
 from src.app.utils.logger import get_console_logger
 from src.app.utils.notification import register_listener
 from src.app.utils.properties import IniAttr, AppAttr, NotificationMessage, FileFilterAttr

@@ -144,7 +144,6 @@ class Note(object):
 
     def empty(self):
         """Remove the data in the instance."""
-        # TODO: Review these two. This seems to leave the object in an invalid state
         self.name = ""
         self.octave = 0
 

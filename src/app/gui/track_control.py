@@ -121,7 +121,7 @@ class BaseTrackVersionControlTab(TrackVersionControlTab):
         return None
 
     def repeat(self) -> bool:
-        pass
+        return True
 
     def init_fonts(self):
         self.populate_font_combo()
@@ -242,7 +242,6 @@ class BaseTrackVersionControlTab(TrackVersionControlTab):
     @version_name.setter
     def version_name(self, name: str) -> None:
         self.track_version.name = name
-        # TODO call list refresh and update tab name
 
     def set_keyboard_position(self):
         piano_keyboard = self.piano_roll.grid_view.keyboard_view

@@ -81,10 +81,10 @@ class GuiAttr:
     DEFAULT_VERSION_NAME = "Default"
     DEFAULT_COMPOSITION = "Default composition"
     DEFAULT_NUM_OF_BARS = 8
-    DEFAULT_BPM = 90
+    DEFAULT_BPM = 80
     # Grid
     RULER_HEIGHT = 20
-    GRID_DIV_UNIT = NoteUnit.EIGHTH
+    GRID_DIV_UNIT = NoteUnit.SIXTEENTH
     GRID_MIN_UNIT = value.thirty_second
     # Single variant
     DEFAULT = "Default"
