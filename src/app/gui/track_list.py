@@ -181,9 +181,10 @@ class TrackList(QListWidget):
     def get_track_list_item(self, track_id: Id) -> TrackListItem:
         return self.map[track_id]
 
-    def change_track(self, track_id: Id, new_track: Track):
-        list_item = self.get_track_list_item(track_id=track_id)
-        list_item.name.setText(new_track.name)
+    def change_track(self, project_version: ProjectVersion, track_id: Id, new_track: Track):
+        if self.project_version == project_version:
+            list_item = self.get_track_list_item(track_id=track_id)
+            list_item.name.setText(new_track.name)
 
     def delete_track(self, project_version: ProjectVersion, track: Track):
         if self.project_version == project_version:

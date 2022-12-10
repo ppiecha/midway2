@@ -19,8 +19,6 @@ from PySide6.QtWidgets import (
 
 from src.app.model.project import Project
 from src.app.model.project_version import ProjectVersion
-from src.app.model.variant import Variant
-from src.app.model.variant_item import VariantItem
 from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import MidiAttr
 from src.app.backend.midway_synth import MidwaySynth
@@ -80,55 +78,6 @@ class GraphicsView(QGraphicsView):
         if not show_scrollbars:
             self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
             self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-
-
-class TrackVersionBox(QWidget):
-    def __init__(
-        self,
-        parent,
-        project_version: ProjectVersion,
-        variant: Variant,
-        variant_item: Optional[VariantItem],
-        show_check_box: bool,
-        show_combo: bool,
-    ):
-        super().__init__(parent)
-        self.project_version = project_version
-        self.variant = variant
-        self.variant_item = variant_item
-        self.is_variant_selector = not show_combo
-        self.enabled = QCheckBox(self)
-        self.enabled.setVisible(show_check_box)
-        self.version = QComboBox(self)
-        self.version.setVisible(show_combo)
-        self.main_box = Box(direction=QBoxLayout.LeftToRight)
-        self.main_box.setContentsMargins(5, 0, 0, 0)
-        self.main_box.setSpacing(5)
-        if not show_combo:
-            self.main_box.setAlignment(Qt.AlignCenter)
-        else:
-            self.main_box.setAlignment(Qt.AlignLeft)
-        self.main_box.addWidget(self.enabled)
-        self.main_box.addWidget(self.version)
-        self.setLayout(self.main_box)
-
-        if show_combo:
-            self.reload_versions()
-
-        # self.enabled.stateChanged.connect(self.on_enable_changed)
-
-    def reload_versions(self, current_version: str = None):
-        self.version.clear()
-        versions = self.project_version.tracks.get_track(identifier=self.variant_item.track_id).versions
-        self.version.addItems([version.name for version in versions])
-        if current_version:
-            self.version.setCurrentText(current_version)
-
-    # def on_enable_changed(self):
-    #     if self.is_variant_selector:
-    #         self.project_version.get_loops(loop_type=LoopType.custom).set_checked_loop(self.variant)
-    #     else:
-    #         self.variant_item.loop_track_enabled = self.enabled.isChecked()
 
 
 class BarBox(QSpinBox):

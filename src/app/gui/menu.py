@@ -66,7 +66,7 @@ def slot_by_mode(mf: MainFrame, config_mode: GenericConfigMode) -> None:
                 if mf.action_not_saved_changes() == QMessageBox.Cancel:
                     return
                 mf.project = reset_project(project=config.project)
-                mf.show_config_dlg(config=config)
+            mf.show_config_dlg(config=config)
         case GenericConfigMode.NEW_PROJECT_VERSION:
             pass
 
@@ -178,6 +178,12 @@ def get_actions(mf: MainFrame) -> Dict[str, Action]:
             caption=MenuAttr.TRACK_VERSION_STOP_ALL_NOTES,
             slot=None,
             icon=QIcon(":/icons/stop_all.png"),
+        ),
+        MenuAttr.SINGLE_VARIANT_NEW: Action(
+            mf=mf,
+            caption=MenuAttr.SINGLE_VARIANT_NEW,
+            slot=add_single_variant,
+            icon=QIcon(":/icons/add.png"),
         ),
     }
 
@@ -308,8 +314,16 @@ def play_track_version(mf: MainFrame):
     )
 
 
-#TODO play current composition
-
-
 def stop_track_version(mf: MainFrame):
     mf.synth.stop()
+
+
+# Single variant
+
+
+def add_single_variant(mf: MainFrame):
+    current_project_version_info = mf.get_current_project_version_info()
+    current_project_version_info.project_version.add_single_variant(name="test1", selected=True, enable_all_tracks=True)
+
+
+# TODO play current composition

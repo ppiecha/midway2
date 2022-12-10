@@ -1,20 +1,3 @@
-from uuid import UUID
-
-from pydantic import BaseModel
-
-
-class VariantItem(BaseModel):
-    track_id: UUID
-    version_id: UUID
-    enabled: bool
-
-    # def get_track_version(self) -> TrackVersion:
-    #     return self.loop_track.get_version(version_name=self.loop_track_version)
-    #
-    # def get_track_version_sequence(self) -> Sequence:
-    #     return self.get_track_version().sequence
-
-
 # class Loop(BaseModel):
 #     name: str
 #     tracks: List[TrackLoopItem]

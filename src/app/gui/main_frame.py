@@ -14,12 +14,13 @@ from PySide6.QtWidgets import (
 )
 
 from src.app.backend.midway_synth import MidwaySynth
-from src.app.gui.project_control import ProjectControl
+from src.app.gui.project_control import ProjectControl, SequencerBox
 from src.app.gui.dialogs.generic_config import GenericConfigDlg, GenericConfig
 from src.app.gui.menu import MenuBar
 from src.app.gui.toolbar import ToolBar
 from src.app.gui.track_control import BaseTrackVersionControlTab
 from src.app.gui.track_list import TrackList, TrackListItem
+from src.app.gui.variant_grid import VariantGrid
 from src.app.gui.widgets import Box
 from src.app.model.project import Project, empty_project
 from src.app.model.project_version import ProjectVersion
@@ -249,6 +250,18 @@ class MainFrame(QMainWindow):
             return self.current_track_list.current_track_list_item.current_track_version_control_tab
         return None
 
+    @property
+    def current_grid_box(self) -> Optional[SequencerBox]:
+        return self.project_control.current_grid_box
+
+    @property
+    def current_single_variant_grid(self) -> VariantGrid:
+        return (
+            current_grid_box.single_variant_box.grid
+            if (current_grid_box := self.current_grid_box) is not None
+            else None
+        )
+
     def get_current_project_version_info(self) -> CurrentProjectVersionInfo:
         return CurrentProjectVersionInfo(
             project=self.project,
@@ -258,6 +271,7 @@ class MainFrame(QMainWindow):
             track=self.current_track,
             track_version=self.current_track_version,
             track_version_control_tab=self.current_track_version_control_tab,
+            single_variant_grid=self.current_single_variant_grid,
         )
 
 
@@ -269,3 +283,4 @@ class CurrentProjectVersionInfo(NamedTuple):
     track: Track
     track_version: TrackVersion
     track_version_control_tab: BaseTrackVersionControlTab
+    single_variant_grid: VariantGrid

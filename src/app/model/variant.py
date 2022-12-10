@@ -9,13 +9,18 @@ from pydantic import BaseModel, Field
 
 from src.app.model.track import Track, Tracks, TrackVersion
 from src.app.model.types import get_one
-from src.app.model.variant_item import VariantItem
 from src.app.utils.exceptions import NoDataFound
 
 
 class VariantType(str, Enum):
     SINGLE = "single"
     COMPOSITION = "composition"
+
+
+class VariantItem(BaseModel):
+    track_id: UUID
+    version_id: UUID
+    enabled: bool
 
 
 class Variant(BaseModel):

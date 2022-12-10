@@ -17,7 +17,7 @@ from src.app.utils.properties import Color, MidiAttr
 
 class TrackVersion(BaseModel):
     channel: Channel
-    id: UUID = Field(default_factory=uuid4, exclude=True)
+    id: UUID = Field(default_factory=uuid4)
     name: str
     sf_name: str
     bank: MidiBankValue = MidiAttr.DEFAULT_BANK
@@ -77,7 +77,7 @@ class RhythmTrackVersion(TrackVersion):
 
 
 class Track(BaseModel):
-    id: UUID = Field(default_factory=uuid4, exclude=True)
+    id: UUID = Field(default_factory=uuid4)
     name: str
     type: TrackType = TrackType.VOICE
     versions: List[TrackVersion] = []
@@ -149,6 +149,17 @@ class Track(BaseModel):
 
     def get_default_version(self, raise_not_found: bool = True) -> Optional[TrackVersion]:
         return get_one(data=self.versions, raise_on_empty=raise_not_found, raise_on_multiple=False)
+
+    def get_default_version_index(self) -> Optional[int]:
+        version = self.get_default_version(raise_not_found=False)
+        if version:
+            return self.versions.index(version)
+        return None
+
+    def get_version_by_version_index(self, index: int) -> TrackVersion:
+        if 0 <= index <= len(self.versions):
+            return self.versions[index]
+        raise ValueError(f"Index out of bound {index} list length {len(self.versions)}")
 
     @classmethod
     def from_sequence(

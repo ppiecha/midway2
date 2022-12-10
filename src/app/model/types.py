@@ -103,16 +103,3 @@ T = TypeVar("T")
 class Result(Generic[T]):
     error: Optional[str] = None
     value: Optional[T] = None
-
-    def bind(self, x, f) -> Result:
-        match x:
-            case Result(error=error) as err if error is not None:
-                return err
-            case _:
-                f(x)
-
-
-# def chain_functions(funcs: List, x: Result):
-#     for func in funcs:
-#         if (result := func(x)).error:
-#             return result

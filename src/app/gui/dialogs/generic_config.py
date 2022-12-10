@@ -97,7 +97,7 @@ class GenericConfig(NamedTuple):
     def is_inheritance_enabled(self) -> bool:
         return (
             self.mode not in (GenericConfigMode.EDIT_TRACK, GenericConfigMode.EDIT_TRACK_VERSION)
-            and self.project.versions
+            and self.project.versions is not None
             and any(has_tracks(project_version=version) for version in self.project.versions)
         )
 

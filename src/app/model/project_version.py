@@ -18,14 +18,14 @@ from src.app.utils.properties import NotificationMessage, GuiAttr, MidiAttr
 
 
 class ProjectVersion(BaseModel):
-    id: UUID = Field(default_factory=uuid4, exclude=True)
+    id: UUID = Field(default_factory=uuid4)
     name: str
     bpm: Bpm = GuiAttr.DEFAULT_BPM
     tracks: Tracks = Tracks()
     variants: Variants = Variants()
     compositions: Compositions = Compositions()
 
-    def modify_project_version(self, project_version: ProjectVersion):
+    def modify_project_version(self, project_version: ProjectVersion) -> ProjectVersion:
         notify(message=NotificationMessage.PROJECT_VERSION_CHANGED, old_version=self, new_version=project_version)
         self.name = project_version.name
         return self
@@ -38,9 +38,14 @@ class ProjectVersion(BaseModel):
         return self
 
     # not tested
-    def change_track(self, track_id: Id, new_track: Track) -> ProjectVersion:
+    def change_track(self, project_version: ProjectVersion, track_id: Id, new_track: Track) -> ProjectVersion:
         self.tracks.change_track(track_id=track_id, new_track=new_track)
-        notify(message=NotificationMessage.TRACK_CHANGED, track_id=track_id, new_track=new_track)
+        notify(
+            message=NotificationMessage.TRACK_CHANGED,
+            project_version=project_version,
+            track_id=track_id,
+            new_track=new_track,
+        )
         return self
 
     def remove_track(self, track: Track) -> ProjectVersion:
@@ -141,6 +146,7 @@ class ProjectVersion(BaseModel):
             enable_all_tracks=enable_all_tracks,
         )
         self.variants.add_variant(variant=variant)
+        notify(message=NotificationMessage.SINGLE_VARIANT_ADDED, project_version=self, variant=variant)
         return variant
 
     def add_composition_variant(

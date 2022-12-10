@@ -1,5 +1,4 @@
-from src.app.model.variant import Variants, Variant, VariantType
-from src.app.model.variant_item import VariantItem
+from src.app.model.variant import Variants, Variant, VariantType, VariantItem
 
 
 class TestVariant:

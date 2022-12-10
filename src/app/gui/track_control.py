@@ -5,7 +5,6 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, Dict, Tuple, TYPE_CHECKING, Optional
 from uuid import UUID
-from pubsub import pub
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
@@ -395,17 +394,6 @@ class TrackVersionControl(QWidget):
                 NotificationMessage.TRACK_VERSION_REMOVED: self.delete_track_version,
             }
         )
-
-    def register_listeners(self):
-        if not pub.subscribe(self.new_track_version, NotificationMessage.TRACK_VERSION_ADDED):
-            raise Exception(f"Cannot register listener {NotificationMessage.TRACK_VERSION_ADDED}")
-        # if not pub.subscribe(self.rename_track, NotificationMessage.TRACK_CHANGED):
-        #     raise Exception(f"Cannot register listener {NotificationMessage.TRACK_CHANGED}")
-        if not pub.subscribe(self.delete_track_version, NotificationMessage.TRACK_VERSION_REMOVED):
-            raise Exception(f"Cannot register listener {NotificationMessage.TRACK_VERSION_REMOVED}")
-
-    def unregister_listener(self, topic):
-        pass
 
     def _new_track_version(self, track_version: TrackVersion):
         logger.debug(f"Added version {track_version}")

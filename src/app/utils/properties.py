@@ -40,6 +40,9 @@ class NotificationMessage:
     PROJECT_VERSION_CHANGED = "PROJECT_VERSION_CHANGED"
     PROJECT_VERSION_REMOVED = "PROJECT_VERSION_REMOVED"
 
+    SINGLE_VARIANT_ADDED = "SINGLE_VARIANT_ADDED"
+    SINGLE_VARIANT_REMOVED = "SINGLE_VARIANT_REMOVED"
+
 
 class AppAttr:
     APP_NAME = "Midway"
@@ -106,9 +109,12 @@ class MenuAttr:
     # Project version
     PROJECT_VERSION_NEW = "New project version..."
     PROJECT_VERSION_REMOVE = "Remove project version"
-    # Variant
-    VARIANT_NEW = "New variant"
-    VARIANT_REMOVE = "Remove variant"
+    # Single variant
+    SINGLE_VARIANT_NEW = "New single variant"
+    SINGLE_VARIANT_REMOVE = "Remove single variant"
+    # Composition variant
+    COMPOSITION_VARIANT_NEW = "New composition variant"
+    COMPOSITION_VARIANT_REMOVE = "Remove composition variant"
     # Composition
     COMPOSITION_NEW = "New composition"
     COMPOSITION_REMOVE = "Remove composition"
@@ -187,6 +193,12 @@ class IniAttr(str, Enum):
     DEFAULT_PROJECT = "default_project.json"
     MAIN_WINDOW_GEOMETRY = "main_window/geometry"
     EVENT_WIN_GEOMETRY = "event_window/geometry"
+
+
+class VariantGridRowIndex(int, Enum):
+    SELECTOR = 0
+    PLAY = 1
+    TRACK_OFFSET = 2
 
 
 class DrumPatch(int, Enum):

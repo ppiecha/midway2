@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, TYPE_CHECKING, Optional
+from typing import Dict, TYPE_CHECKING, Optional, NamedTuple
 
 from PySide6.QtCore import QSize
 from PySide6.QtGui import Qt, QIcon
@@ -20,6 +20,11 @@ if TYPE_CHECKING:
     from src.app.gui.main_frame import MainFrame
 
 logger = get_console_logger(__name__)
+
+
+class ProjectVersionComponents(NamedTuple):
+    track_list: TrackList
+    grid_box: SequencerBox
 
 
 class ProjectControl(QWidget):
@@ -102,21 +107,29 @@ class ProjectControl(QWidget):
         if track_list is None:
             raise ValueError(f"Cannot determine track list by project version {project_version.name}")
         for i in range(self.tab_box.count()):
-            if self.track_list_from_widget(widget=self.tab_box.widget(i)) == track_list:
+            if self.components_from_widget(widget=self.tab_box.widget(i)).track_list == track_list:
                 return i
         raise ValueError(f"Cannot determine index by project_version {project_version.name}")
 
-    def track_list_from_widget(self, widget: QSplitter | QWidget) -> TrackList:
+    def components_from_widget(self, widget: QSplitter | QWidget) -> ProjectVersionComponents:
         tracks_splitter: QSplitter = widget.widget(0)
+        seq_box = widget.widget(1)
         track_list: TrackList = tracks_splitter.widget(0)
         if track_list is None:
             raise ValueError("Cannot determine track list in tab widget")
-        return track_list
+        return ProjectVersionComponents(track_list=track_list, grid_box=seq_box)
+
+    def current_components(self) -> Optional[ProjectVersionComponents]:
+        widget = self.tab_box.currentWidget()
+        return self.components_from_widget(widget=widget) if widget else None
 
     @property
     def current_track_list(self) -> Optional[TrackList]:
-        widget = self.tab_box.currentWidget()
-        return self.track_list_from_widget(widget=widget) if widget else None
+        return components.track_list if (components := self.current_components()) is not None else None
+
+    @property
+    def current_grid_box(self) -> Optional[SequencerBox]:
+        return components.grid_box if (components := self.current_components()) is not None else None
 
     def init_fonts(self):
         for track_list in self.map.values():
@@ -171,16 +184,16 @@ class SequencerBox(QWidget):
 
     def reload_tracks(self, composition: Composition):
         if self.project_version == composition:
-            self.single_variant_box.custom_loop_grid.load_loops()
-            self.composition_variant_box.composition_loop_grid.load_loops()
+            self.single_variant_box.grid.load_items()
+            self.composition_variant_box.grid.load_items()
 
 
 class SingleVariantBox(QWidget):
     def __init__(self, mf, parent, project_version: ProjectVersion):
         super().__init__(parent=parent)
         self.main_box = Box(direction=QBoxLayout.LeftToRight)
-        self.custom_loop_grid = SingleVariantGrid(parent=self, mf=mf, project_version=project_version)
-        self.main_box.addWidget(self.custom_loop_grid, stretch=1)
+        self.grid = SingleVariantGrid(parent=self, mf=mf, project_version=project_version)
+        self.main_box.addWidget(self.grid, stretch=1)
         self.setLayout(self.main_box)
 
 
@@ -188,6 +201,6 @@ class CompositionVariantBox(QWidget):
     def __init__(self, mf, parent, project_version: ProjectVersion):
         super().__init__(parent=parent)
         self.main_box = Box(direction=QBoxLayout.TopToBottom)
-        self.composition_loop_grid = CompositionVariantGrid(parent=self, mf=mf, project_version=project_version)
-        self.main_box.addWidget(self.composition_loop_grid)
+        self.grid = CompositionVariantGrid(parent=self, mf=mf, project_version=project_version)
+        self.main_box.addWidget(self.grid)
         self.setLayout(self.main_box)
