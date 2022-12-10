@@ -1645,7 +1645,6 @@ class Sequencer:
         self.client_callbacks.clear()
         if self.sequencer:
             self.delete()
-            print(type(self.synth))
 
     # -----------------------------------------------------------------------------------------------
     # Added by me

@@ -85,7 +85,7 @@ class Project(BaseModel):
     def get_reserved_channels(self) -> Set[Channel]:
         result = set()
         for version in self.versions:
-            result.union(version.get_reserved_channels())
+            result = result.union(version.get_reserved_channels())
         return result
 
 

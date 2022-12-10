@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import copy
-from typing import Optional, List, Set
+import logging
+from typing import Optional, Set
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
@@ -13,8 +14,11 @@ from src.app.model.types import Bpm, get_one, Channel, Id, NumOfBars
 from src.app.model.variant import Variant, Variants, VariantType
 from src.app.utils.decorators import all_args_not_none
 from src.app.utils.exceptions import NoDataFound, NoItemSelected, OutOfVariants
+from src.app.utils.logger import get_console_logger
 from src.app.utils.notification import notify
 from src.app.utils.properties import NotificationMessage, GuiAttr, MidiAttr
+
+logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
 
 class ProjectVersion(BaseModel):

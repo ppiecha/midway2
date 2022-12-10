@@ -15,6 +15,7 @@ from src.app.mingus.containers import Note
 from src.app.model.bar import Bar
 
 from src.app.model.project_version import ProjectVersion
+from src.app.model.sequence import Sequence
 from src.app.model.track import Track, TrackVersion, Tracks
 from src.app.model.types import Channel, Bpm, TimedEvent, Preset
 from src.app.utils.logger import get_console_logger
@@ -25,6 +26,7 @@ from src.app.utils.units import (
     beat2tick,
     bar_length2sec,
 )
+
 if TYPE_CHECKING:
     from src.app.gui.main_frame import MainFrame
 
@@ -98,12 +100,12 @@ class MidwaySynth(Synth):
         if self.player:
             self.player.stop()
 
-    def all_notes_off(self, channel: Optional[Channel] = None):
+    def all_notes_off(self, chan: Optional[Channel] = None):
         channels = self.mf.project.get_reserved_channels()
-        if channel:
-            channels = [channel]
+        if chan:
+            channels = [chan]
         for channel in channels:
-            self.synth.all_notes_off(channel)
+            super().all_notes_off(chan=channel)
 
     @staticmethod
     def play_bar(
@@ -179,10 +181,7 @@ class EventProvider:
         self.bar_num = start_bar_num
         self.repeat = repeat
         logger.debug(f"EventProvider variant id {self.variant_id}")
-        self.sequence = project_version.get_compiled_sequence(
-            variant_id=self.variant_id, single_track=self.track, include_preset=True
-        )
-        self.bar_length = self.sequence.bars[start_bar_num].length()
+        self.bar_length = self.sequence().bars[start_bar_num].length()
         self.bar_duration = unit2tick(unit=self.bar_length, bpm=self.bpm)
         self._sequencer = Sequencer(
             synth=synth,
@@ -197,41 +196,49 @@ class EventProvider:
         )
         self.skip_time = self.stop_time - int(self.bar_duration / 2)
 
+    def sequence(self) -> Sequence:
+        if self.variant_id is None:
+            return Sequence()
+        return self.project_version.get_compiled_sequence(
+            variant_id=self.variant_id,
+            single_track=self.track,
+            include_preset=True,
+        )
+
     def events(self) -> List[TimedEvent]:
-        if self.sequence is None:
+        sequence = self.sequence()
+        if sequence.is_empty():
             return []
         return [
             TimedEvent(
                 time=self.tick + beat2tick(beat=event.beat, bpm=self.bpm),
                 event=event,
             )
-            for event in self.sequence.bars[self.bar_num].events()
+            for event in sequence.bars[self.bar_num].events()
         ]
 
+    def has_next_variant(self):
+        return (
+            not self.project_version.is_last_variant(variant_id=self.variant_id, repeat=self.repeat)
+            and self.variant_id != self.last_variant_id
+        )
+
     def move_to_next_bar(self):
-        if not self.sequence or self.bar_num + 1 not in self.sequence.bars.keys():
+        if self.variant_id is None or self.bar_num + 1 not in self.sequence().bars.keys():
             self.bar_num = 0
         else:
             self.bar_num += 1
         logger.debug(f"next bar is {self.bar_num}")
         if self.bar_num == 0:
-            if (
-                not self.project_version.is_last_variant(variant_id=self.variant_id, repeat=self.repeat)
-                and self.variant_id != self.last_variant_id
-            ):
-                next_variant = self.project_version.get_next_variant(self.variant_id, repeat=self.repeat)
-                logger.debug(f"Found next next_variant {next_variant.name}")
-                self.sequence = self.project_version.get_compiled_sequence(
-                    variant_id=next_variant.id, single_track=self.track, include_preset=True
-                )
-                self.variant_id = next_variant.id
-            else:
-                logger.debug("No next loop")
-                self.sequence = None
+            self.variant_id = (
+                self.project_version.get_next_variant(self.variant_id, repeat=self.repeat).id
+                if self.has_next_variant()
+                else None
+            )
         self.tick = self.tick + self.bar_duration
 
     def next_callback_time(self) -> int:
-        return int(self.tick + self.bar_duration / 2)
+        return int(self.tick + (self.bar_duration - (self.bar_duration / 8)))
 
 
 class Player:
@@ -271,7 +278,6 @@ class Player:
             self.event_provider()._sequencer = None
         if self.event_provider():
             self._event_provider = None
-        self.synth.system_reset()
         gc.collect()
         if self.event_provider() is None:
             logger.debug("stopped and disposed")
@@ -297,6 +303,7 @@ class Player:
                 logger.debug("stop detected. Stopping...")
                 self.stop()
             elif not skip_next_bar():
+                self.event_provider().move_to_next_bar()
                 self.schedule_next_bar()
         else:
             logger.debug(f"time {time} in callbacks {self.callbacks}")
@@ -314,6 +321,8 @@ class Player:
         self.schedule_callback(time=self.event_provider().stop_time)
 
     def schedule_next_bar(self):
+        # e = [(event.event.bar_num, event.event.beat, event.event.pitch) for event in self.event_provider().events()]
+        # logger.info(f"schedule_next_bar bar {self.event_provider().bar_num} events {e}")
         for timed_event in self.event_provider().events():
             self.event_provider().sequencer().send_event(
                 time=timed_event.time,
@@ -322,4 +331,3 @@ class Player:
                 synth_seq_id=self.event_provider().sequencer().synth_seq_id,
             )
         self.schedule_next_callback()
-        self.event_provider().move_to_next_bar()
