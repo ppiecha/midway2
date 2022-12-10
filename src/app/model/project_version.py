@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import copy
-from typing import Optional
+from typing import Optional, List, Set
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
@@ -176,6 +176,9 @@ class ProjectVersion(BaseModel):
     def get_next_free_channel(self) -> Optional[Channel]:
         return get_next_free_channel(project_version=self)
 
+    def get_reserved_channels(self) -> Set[Channel]:
+        return get_reserved_channels(project_version=self)
+
     def get_first_track_version(self, track: Optional[Track]):
         if track is None:
             track: Track = get_one(data=list(self.tracks), raise_on_empty=True, raise_on_multiple=False)
@@ -197,9 +200,14 @@ def has_tracks(project_version: ProjectVersion) -> bool:
     return len(project_version.tracks) > 0
 
 
+@all_args_not_none
+def get_reserved_channels(project_version: ProjectVersion) -> Set[Channel]:
+    return {track_version.channel for track in project_version.tracks for track_version in track.versions}
+
+
 def get_next_free_channel(project_version: ProjectVersion) -> Channel:
     if project_version:
-        reserved = {track_version.channel for track in project_version.tracks for track_version in track.versions}
+        reserved = get_reserved_channels(project_version=project_version)
         for channel in MidiAttr.CHANNELS:
             if channel not in reserved:
                 return channel

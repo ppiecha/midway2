@@ -4,7 +4,7 @@ import gc
 import logging
 import weakref
 from time import sleep
-from typing import List, Optional, Callable
+from typing import List, Optional, Callable, TYPE_CHECKING
 from uuid import UUID
 
 from PySide6.QtCore import QThread
@@ -25,6 +25,8 @@ from src.app.utils.units import (
     beat2tick,
     bar_length2sec,
 )
+if TYPE_CHECKING:
+    from src.app.gui.main_frame import MainFrame
 
 logger = get_console_logger(name=__name__, log_level=logging.INFO)
 
@@ -40,7 +42,7 @@ class FontLoader(QThread):
 
 
 class MidwaySynth(Synth):
-    def __init__(self, mf=None, sf2_path: str = AppAttr.PATH_SF2):
+    def __init__(self, mf: Optional[MainFrame] = None, sf2_path: str = AppAttr.PATH_SF2):
         super().__init__()
         self.mf = mf
         self.sf2_path = sf2_path
@@ -95,6 +97,13 @@ class MidwaySynth(Synth):
     def stop(self):
         if self.player:
             self.player.stop()
+
+    def all_notes_off(self, channel: Optional[Channel] = None):
+        channels = self.mf.project.get_reserved_channels()
+        if channel:
+            channels = [channel]
+        for channel in channels:
+            self.synth.all_notes_off(channel)
 
     @staticmethod
     def play_bar(
@@ -257,11 +266,12 @@ class Player:
         self.schedule_next_bar()
 
     def stop(self):
+        self.synth.all_notes_off()
         if self.event_provider() and self.event_provider().sequencer():
             self.event_provider()._sequencer = None
         if self.event_provider():
             self._event_provider = None
-        # self.synth.system_reset()
+        self.synth.system_reset()
         gc.collect()
         if self.event_provider() is None:
             logger.debug("stopped and disposed")

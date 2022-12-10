@@ -1644,7 +1644,8 @@ class Sequencer:
             self.unregister_client(client_id=self.client_id)
         self.client_callbacks.clear()
         if self.sequencer:
-            del self.sequencer
+            self.delete()
+            print(type(self.synth))
 
     # -----------------------------------------------------------------------------------------------
     # Added by me

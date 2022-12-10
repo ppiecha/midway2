@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import List, Iterator, Optional
+from typing import List, Iterator, Optional, Set
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
 from src.app.model.project_version import ProjectVersion
 from src.app.model.serializer import write_json_file, read_json_file
-from src.app.model.types import get_one, Result
+from src.app.model.types import get_one, Result, Channel
 from src.app.utils.decorators import all_args_not_none
 from src.app.utils.notification import notify
 from src.app.utils.properties import NotificationMessage
@@ -80,6 +80,13 @@ class Project(BaseModel):
             return Result(value=project)
         except IOError as e:
             return Result(error=str(e))
+
+    @all_args_not_none
+    def get_reserved_channels(self) -> Set[Channel]:
+        result = set()
+        for version in self.versions:
+            result.union(version.get_reserved_channels())
+        return result
 
 
 @all_args_not_none
