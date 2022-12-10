@@ -15,12 +15,15 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QSpinBox,
     QLineEdit,
+    QToolButton,
 )
+
 
 from src.app.model.project import Project
 from src.app.model.project_version import ProjectVersion
 from src.app.utils.logger import get_console_logger
-from src.app.utils.properties import MidiAttr
+from src.app.utils.notification import register_listener
+from src.app.utils.properties import MidiAttr, NotificationMessage
 from src.app.backend.midway_synth import MidwaySynth
 from src.app.model.types import Preset
 from src.app.model.track import Track, TrackVersion
@@ -29,6 +32,8 @@ from src.app.model.track import Track, TrackVersion
 
 if TYPE_CHECKING:
     from src.app.gui.main_frame import MainFrame
+    from src.app.model.project_version import ProjectVersion
+    from src.app.gui.menu import Action
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
@@ -223,3 +228,15 @@ class EditBox(QLineEdit):
     def __init__(self, default: Optional[str] = ""):
         super().__init__()
         self.setText(default)
+
+
+class PlayButton(QToolButton):
+    def __init__(self, parent: QWidget, mf: MainFrame, project_version: ProjectVersion):
+        super().__init__(parent)
+        self.mf = mf
+        self.project_version = project_version
+
+        # register_listener(mapping={NotificationMessage.PLAY: None, NotificationMessage.STOP: None})
+
+    def play_action(self, project_version: ProjectVersion) -> Action:
+        pass

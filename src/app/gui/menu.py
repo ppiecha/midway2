@@ -11,7 +11,7 @@ from PySide6.QtWidgets import QMenuBar, QMenu, QMessageBox
 from src.app.gui.dialogs.generic_config import GenericConfig, GenericConfigMode
 from src.app.model.project import reset_project, is_project_empty
 from src.app.utils.logger import get_console_logger
-from src.app.utils.properties import MenuAttr
+from src.app.utils.properties import MenuAttr, PlayOptions
 import src.app.resources  # pylint: disable=unused-import
 
 if TYPE_CHECKING:
@@ -309,8 +309,10 @@ def play_track_version(mf: MainFrame):
     mf.synth.play_track_version(
         track=current_project_version_info.track,
         track_version=current_project_version_info.track_version,
-        bpm=current_project_version_info.project_version.bpm,
-        repeat=current_project_version_info.track_version_control_tab.repeat(),
+        options=PlayOptions(
+            bpm=current_project_version_info.project_version.bpm,
+            repeat=current_project_version_info.track_version_control_tab.repeat(),
+        )
     )
 
 

@@ -4,7 +4,7 @@ import gc
 import logging
 import weakref
 from time import sleep
-from typing import List, Optional, Callable, TYPE_CHECKING
+from typing import List, Optional, Callable, TYPE_CHECKING, Any
 from uuid import UUID
 
 from PySide6.QtCore import QThread
@@ -13,13 +13,15 @@ from src.app import AppAttr
 from src.app.backend.synth import Sequencer, Synth
 from src.app.mingus.containers import Note
 from src.app.model.bar import Bar
+from src.app.model.composition import Composition
 
 from src.app.model.project_version import ProjectVersion
 from src.app.model.sequence import Sequence
 from src.app.model.track import Track, TrackVersion, Tracks
 from src.app.model.types import Channel, Bpm, TimedEvent, Preset
+from src.app.model.variant import Variant
 from src.app.utils.logger import get_console_logger
-from src.app.utils.properties import MidiAttr
+from src.app.utils.properties import MidiAttr, PlayOptions
 from src.app.utils.units import (
     unit2tick,
     bpm2time_scale,
@@ -130,29 +132,39 @@ class MidwaySynth(Synth):
         start_variant_id: UUID,
         last_variant_id: UUID = None,
         track: Track = None,
-        bpm: Bpm = None,
-        start_bar_num: int = 0,
-        repeat: bool = False,
+        options=PlayOptions(),
     ):
         if self.player:
             self.player.stop()
         self.player = Player(synth=self, project_version=project_version)
         self.player.play(
-            bpm=bpm,
             start_variant_id=start_variant_id,
             last_variant_id=last_variant_id,
             track=track,
-            start_bar_num=start_bar_num,
-            repeat=repeat,
+            options=options,
         )
 
-    def play_track_version(self, track: Track, track_version: TrackVersion, bpm: Bpm = None, repeat: bool = False):
+    def play_object(self, project_version: ProjectVersion, obj: Any, options=PlayOptions()):
+        match obj:
+            case TrackVersion() as track_version:
+                track = project_version.get_track_by_track_version(track_version=track_version)
+                self.play_track_version(track=track, track_version=track_version, options=options)
+                return
+            case Variant() as variant:
+                self.play(project_version=project_version, start_variant_id=variant.id, options=options)
+            case Composition() as composition:
+                variant = composition.variants.get_first_variant()
+                self.play(project_version=project_version, start_variant_id=variant.id, options=options)
+            case _:
+                raise ValueError(f"Not supported type {type(obj)}")
+
+    def play_track_version(self, track: Track, track_version: TrackVersion, options=PlayOptions()):
         project_version = ProjectVersion.init_from_tracks(
-            "single_track_variant", bpm=bpm, tracks=Tracks.from_tracks(tracks=[track]), add_to_composition=False
+            "single_track_variant", bpm=options.bpm, tracks=Tracks.from_tracks(tracks=[track]), add_to_composition=False
         )
         variant = project_version.variants.get_first_variant()
         variant.set_track_version(track=track, version=track_version)
-        self.play(project_version=project_version, start_variant_id=variant.id, repeat=repeat)
+        self.play(project_version=project_version, start_variant_id=variant.id, options=options)
 
     def wait_to_the_end(self):
         while self.is_playing():
@@ -164,24 +176,22 @@ class EventProvider:
         self,
         synth: MidwaySynth,
         project_version: ProjectVersion,
-        bpm: Bpm,
         start_variant_id: UUID,
         last_variant_id: UUID,
         track: Track,
-        start_bar_num: int,
         callback: Callable,
-        repeat: bool,
+        options: PlayOptions
     ):
         self.synth = synth
         self.project_version = project_version
-        self.bpm = bpm or project_version.bpm
+        self.bpm = options.bpm or project_version.bpm
         self.variant_id = start_variant_id
         self.last_variant_id = last_variant_id
         self.track = track
-        self.bar_num = start_bar_num
-        self.repeat = repeat
+        self.bar_num = options.start_bar_num
+        self.repeat = options.repeat
         logger.debug(f"EventProvider variant id {self.variant_id}")
-        self.bar_length = self.sequence().bars[start_bar_num].length()
+        self.bar_length = self.sequence().bars[options.start_bar_num].length()
         self.bar_duration = unit2tick(unit=self.bar_length, bpm=self.bpm)
         self._sequencer = Sequencer(
             synth=synth,
@@ -252,21 +262,17 @@ class Player:
     def is_playing(self) -> bool:
         return self.event_provider() is not None
 
-    def play(
-        self, bpm: Bpm, start_variant_id: UUID, last_variant_id: UUID, track: Track, start_bar_num: int, repeat: bool
-    ):
+    def play(self, start_variant_id: UUID, last_variant_id: UUID, track: Track, options: PlayOptions):
         self.synth.system_reset()
         self.callbacks = set()
         self._event_provider = EventProvider(
             synth=self.synth,
             project_version=self.project_version,
-            bpm=bpm,
             start_variant_id=start_variant_id,
             last_variant_id=last_variant_id,
             track=track,
-            start_bar_num=start_bar_num,
             callback=self.seq_callback,
-            repeat=repeat,
+            options=options,
         )
         self.event_provider = weakref.ref(self._event_provider)
         self.schedule_stop_callback()

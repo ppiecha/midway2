@@ -1,12 +1,15 @@
 import os
+from dataclasses import dataclass
 from enum import Enum, Flag, auto
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
+import pydantic
 from PySide6.QtGui import QColor, QPalette, Qt
+from pydantic import NonNegativeInt
 
 from src.app.mingus.core import value
-from src.app.model.types import NoteUnit, Channel
+from src.app.model.types import NoteUnit, Channel, Bpm
 
 
 class GridAttr(Flag):
@@ -42,6 +45,9 @@ class NotificationMessage:
 
     SINGLE_VARIANT_ADDED = "SINGLE_VARIANT_ADDED"
     SINGLE_VARIANT_REMOVED = "SINGLE_VARIANT_REMOVED"
+
+    PLAY = "Play"
+    STOP = "Stop"
 
 
 class AppAttr:
@@ -133,6 +139,13 @@ class MenuAttr:
 
 class FileFilterAttr(str, Enum):
     PROJECT = "Project files (*.json)"
+
+
+@dataclass(eq=True, frozen=True, match_args=True, kw_only=True, slots=True)
+class PlayOptions:
+    bpm: Optional[Bpm] = None
+    start_bar_num: NonNegativeInt = 0
+    repeat: bool = False
 
 
 class KeyAttr:

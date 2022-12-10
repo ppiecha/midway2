@@ -188,15 +188,15 @@ class ProjectVersion(BaseModel):
             track: Track = get_one(data=list(self.tracks), raise_on_empty=True, raise_on_multiple=False)
         return track.get_default_version(raise_not_found=True)
 
-    # def track_exists(self, identifier: UUID | str, existing_track: Track = None) -> bool:
-    #     track = self.tracks.get_track(identifier=identifier, raise_not_found=False)
-    #     return track and track != existing_track
-
     def is_new_track_name_valid(self, new_name: str, exclude_id: Optional[UUID] = None) -> bool:
         track = self.tracks.get_track(identifier=new_name, raise_not_found=False)
         if track and exclude_id:
             return track.id == exclude_id
         return track is None
+
+    def get_track_by_track_version(self, track_version: TrackVersion) -> Track:
+        lookup = [track for track in self.tracks for version in track.versions if version == track_version]
+        return get_one(lookup, raise_on_empty=True, raise_on_multiple=True)
 
 
 @all_args_not_none
