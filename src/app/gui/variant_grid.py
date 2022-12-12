@@ -19,10 +19,9 @@ from PySide6.QtWidgets import (
     QToolButton,
 )
 
-from src.app.gui.menu import Action
-from src.app.gui.widgets import Box
+from src.app.gui.widgets import Box, PlayButton
 from src.app.model.project_version import ProjectVersion
-from src.app.model.track import Track
+from src.app.model.track import Track, TrackVersion
 from src.app.model.types import ABCWidgetFinalMeta
 from src.app.model.variant import Variant, VariantType, VariantItem
 from src.app.utils.notification import register_listener
@@ -84,23 +83,15 @@ class GridCell(QWidget):
         self.setLayout(self.main_box)
 
     @abstractmethod
-    def play_action(self) -> Action:
-        def play_slot():
-            self.mf.synth.play(project_version=self.project_version, start_variant_id=self.variant.id)
-
-        return Action(
-            mf=self.mf,
-            caption="Play variant",
-            slot=play_slot,
-            icon=QIcon(":/icons/play.png"),
-            shortcut=None,
-        )
+    def obj_func(self):
+        return self.variant
 
     @abstractmethod
     def set_components(self):
         self.enabled = QCheckBox(self)
-        self.play_button = QToolButton(self)
-        self.play_button.setDefaultAction(self.play_action())
+        self.play_button = PlayButton(
+            parent=self, mf=self.mf, project_version=self.project_version, obj_func=self.obj_func
+        )
         self.enabled.setVisible(CellMode.SELECTOR in self.cell_mode)
         self.play_button.setVisible(CellMode.PLAY in self.cell_mode)
         self.main_box.addWidget(self.enabled)
@@ -133,28 +124,15 @@ class VersionGridCell(GridCell):
     def version_changed(self, index):
         if index >= 0:
             self.variant_item.version_id = self.track.get_version_by_version_index(index=index).id
-            print(self.variant_item.version_id)
+
+    def selected_track_version(self) -> TrackVersion:
+        return self.track.get_version_by_version_index(index=self.version.currentIndex())
 
     def on_enable_changed(self):
         self.variant_item.enabled = self.enabled.isChecked()
 
-    def play_action(self) -> Action:
-        def play_slot(_):
-            track_version = self.track.get_version(identifier=self.variant_item.version_id)
-            self.mf.synth.play_track_version(
-                track=self.track,
-                track_version=track_version,
-                bpm=self.project_version.bpm,
-                repeat=False,
-            )
-
-        return Action(
-            mf=self.mf,
-            caption="Play track version",
-            slot=play_slot,
-            icon=QIcon(":/icons/play.png"),
-            shortcut=None,
-        )
+    def obj_func(self):
+        return self.selected_track_version()
 
 
 def cell_factory(

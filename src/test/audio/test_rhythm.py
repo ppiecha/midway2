@@ -1,7 +1,7 @@
-def test_play_drums_composition(drums_composition, synth):
-    print(drums_composition)
-    synth.play_custom_loop(composition=drums_composition, bpm=100, repeat=False)
-    synth.wait_to_the_end()
+# def test_play_drums_composition(drums_composition, synth):
+#     print(drums_composition)
+#     synth.play_custom_loop(composition=drums_composition, bpm=100, repeat=False)
+#     synth.wait_to_the_end()
 
 
 def test_play_rhythm_pattern():

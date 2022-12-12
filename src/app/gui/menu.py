@@ -5,43 +5,20 @@ from functools import partial
 from typing import TYPE_CHECKING, Dict, Callable
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QAction, QIcon, QKeySequence
+from PySide6.QtGui import QIcon, QKeySequence
 from PySide6.QtWidgets import QMenuBar, QMenu, QMessageBox
 
 from src.app.gui.dialogs.generic_config import GenericConfig, GenericConfigMode
+from src.app.gui.widgets import Action
 from src.app.model.project import reset_project, is_project_empty
 from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import MenuAttr, PlayOptions
-import src.app.resources  # pylint: disable=unused-import
 
 if TYPE_CHECKING:
     from src.app.gui.main_frame import MainFrame
 
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
-
-
-class Action(QAction):
-    def __init__(
-        self,
-        mf: MainFrame,
-        caption: str = None,
-        icon: QIcon = None,
-        shortcut=None,
-        slot=None,
-        tip=None,
-        status_tip=None,
-    ):
-        super().__init__(caption, mf)
-        if icon:
-            self.setIcon(icon)
-        if shortcut:
-            self.setShortcut(shortcut)
-        self.setToolTip(tip or caption)
-        self.setStatusTip(status_tip or caption)
-        if slot:
-            self.triggered.connect(partial(slot, mf=mf))
-        mf.addAction(self)
 
 
 def map_config(mf: MainFrame) -> Callable:
@@ -312,7 +289,7 @@ def play_track_version(mf: MainFrame):
         options=PlayOptions(
             bpm=current_project_version_info.project_version.bpm,
             repeat=current_project_version_info.track_version_control_tab.repeat(),
-        )
+        ),
     )
 
 

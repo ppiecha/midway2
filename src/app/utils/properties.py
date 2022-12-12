@@ -4,7 +4,6 @@ from enum import Enum, Flag, auto
 from pathlib import Path
 from typing import List, Optional
 
-import pydantic
 from PySide6.QtGui import QColor, QPalette, Qt
 from pydantic import NonNegativeInt
 

@@ -1,10 +1,12 @@
 from __future__ import annotations
 import logging
 import threading
+from enum import Enum, auto
+from functools import partial
 from pathlib import Path
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, Callable
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QPainter
+from PySide6.QtGui import QPainter, QIcon, QAction
 from PySide6.QtWidgets import (
     QWidget,
     QBoxLayout,
@@ -20,20 +22,16 @@ from PySide6.QtWidgets import (
 
 
 from src.app.model.project import Project
-from src.app.model.project_version import ProjectVersion
 from src.app.utils.logger import get_console_logger
 from src.app.utils.notification import register_listener
-from src.app.utils.properties import MidiAttr, NotificationMessage
+from src.app.utils.properties import MidiAttr, NotificationMessage, PlayOptions
 from src.app.backend.midway_synth import MidwaySynth
 from src.app.model.types import Preset
 from src.app.model.track import Track, TrackVersion
 
-# from src.app.model.variant_item import Loop, VariantItem, LoopType
-
 if TYPE_CHECKING:
     from src.app.gui.main_frame import MainFrame
     from src.app.model.project_version import ProjectVersion
-    from src.app.gui.menu import Action
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
@@ -231,12 +229,102 @@ class EditBox(QLineEdit):
 
 
 class PlayButton(QToolButton):
-    def __init__(self, parent: QWidget, mf: MainFrame, project_version: ProjectVersion):
+    class Mode(Enum):
+        PLAY = auto()
+        STOP = auto()
+
+    def __init__(
+        self, parent: QWidget, mf: MainFrame, project_version: ProjectVersion, obj_func: Callable, caption="Play"
+    ):
         super().__init__(parent)
+        self.ICON_PLAY = QIcon(":/icons/play.png")
+        self.ICON_STOP = QIcon(":/icons/stop.png")
         self.mf = mf
         self.project_version = project_version
+        self.obj_func = obj_func
+        self.caption = caption
+        self.mode: Optional[PlayButton.Mode] = None
+        self.action = self.play_action()
+        self.setDefaultAction(self.action)
 
-        # register_listener(mapping={NotificationMessage.PLAY: None, NotificationMessage.STOP: None})
+        register_listener(mapping={NotificationMessage.STOP: self.set_action})
 
-    def play_action(self, project_version: ProjectVersion) -> Action:
-        pass
+    def set_action(self):
+        is_playing = self.mf.synth.is_playing()
+        mode = PlayButton.Mode.STOP if is_playing else PlayButton.Mode.PLAY
+        if self.mode != mode:
+            self.mode = mode
+            self.action.setIcon(self.ICON_STOP if is_playing else self.ICON_PLAY)
+            caption = "Stop" if is_playing else f"Play {self.obj_func().name}"
+            self.action.setToolTip(caption)
+            self.action.setStatusTip(caption)
+            if is_playing:
+                self.action.triggered.disconnect()
+                self.action.triggered.connect(self.stop_slot)
+            else:
+                self.action.triggered.disconnect()
+                self.action.triggered.connect(self.play_slot)
+
+    # fixme stop notification must be called in thread safe mode
+
+    def play_slot(self):
+        self.mf.synth.play_object(
+            project_version=self.project_version,
+            obj=self.obj_func(),
+            options=PlayOptions(bpm=self.project_version.bpm, repeat=False),
+        )
+        self.set_action()
+
+    # pylint: disable=unused-argument
+    def play_slot_wrapper(self, mf: MainFrame):
+        self.play_slot()
+
+    def play_action(self) -> Action:
+        self.mode = PlayButton.Mode.PLAY
+        return Action(
+            mf=self.mf,
+            caption=self.caption,
+            slot=self.play_slot_wrapper,
+            icon=self.ICON_PLAY,
+            shortcut=None,
+            attach=False,
+        )
+
+    def stop_slot(self):
+        self.mf.synth.stop()
+
+    # def stop_action(self) -> Action:
+    #     self.mode = PlayButton.Mode.STOP
+    #     return Action(
+    #         mf=self.mf,
+    #         caption="Stop",
+    #         slot=self.stop_slot(),
+    #         icon=PlayButton.ICON_STOP,
+    #         shortcut=None,
+    #         attach=False,
+    #     )
+
+
+class Action(QAction):
+    def __init__(
+        self,
+        mf: MainFrame,
+        caption: str = None,
+        icon: QIcon = None,
+        shortcut=None,
+        slot=None,
+        tip=None,
+        status_tip=None,
+        attach: bool = True,
+    ):
+        super().__init__(caption, mf)
+        if icon:
+            self.setIcon(icon)
+        if shortcut:
+            self.setShortcut(shortcut)
+        self.setToolTip(tip or caption)
+        self.setStatusTip(status_tip or caption)
+        if slot:
+            self.triggered.connect(partial(slot, mf=mf))
+        if attach:
+            mf.addAction(self)

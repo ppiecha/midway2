@@ -13,8 +13,7 @@ from src.app.backend.midway_synth import MidwaySynth
 from src.app.gui.editor.base_grid import BaseGridView, KeyboardGridBox
 from src.app.gui.editor.grid import GridScene
 from src.app.gui.editor.ruler import HeaderView, RulerScene
-from src.app.gui.menu import Action
-from src.app.gui.widgets import Box
+from src.app.gui.widgets import Box, Action
 from src.app.model.project_version import ProjectVersion
 from src.app.model.sequence import Sequence
 from src.app.model.track import TrackVersion, Track

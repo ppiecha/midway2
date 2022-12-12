@@ -187,6 +187,7 @@ class MainFrame(QMainWindow):
             event.ignore()
             return
         self.save_config()
+        self.synth.stop()
         event.accept()
 
     def show_message(self, message: str, timeout: int = 5000):

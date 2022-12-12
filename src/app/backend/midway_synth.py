@@ -21,7 +21,8 @@ from src.app.model.track import Track, TrackVersion, Tracks
 from src.app.model.types import Channel, Bpm, TimedEvent, Preset
 from src.app.model.variant import Variant
 from src.app.utils.logger import get_console_logger
-from src.app.utils.properties import MidiAttr, PlayOptions
+from src.app.utils.notification import notify
+from src.app.utils.properties import MidiAttr, PlayOptions, NotificationMessage
 from src.app.utils.units import (
     unit2tick,
     bpm2time_scale,
@@ -65,7 +66,7 @@ class MidwaySynth(Synth):
         return self.thread.isFinished()
 
     def is_playing(self) -> bool:
-        return self.player and self.player.event_provider() and self.player.event_provider().sequencer() is not None
+        return self.player and self.player.is_playing()
 
     def load_sound_fonts(self):
         for file_name in self.get_sf_files(path=self.sf2_path):
@@ -98,9 +99,14 @@ class MidwaySynth(Synth):
         logger.debug(f"Playing {str(Note().from_int(pitch))} on channel {channel} using preset {preset}")
         self.noteon(chan=channel, key=pitch, vel=velocity)
 
+    def wait_to_the_end(self):
+        while self.is_playing():
+            sleep(0.01)
+
     def stop(self):
-        if self.player:
+        if self.player and self.player.is_playing():
             self.player.stop()
+            self.wait_to_the_end()
 
     def all_notes_off(self, chan: Optional[Channel] = None):
         channels = self.mf.project.get_reserved_channels()
@@ -134,8 +140,7 @@ class MidwaySynth(Synth):
         track: Track = None,
         options=PlayOptions(),
     ):
-        if self.player:
-            self.player.stop()
+        self.stop()
         self.player = Player(synth=self, project_version=project_version)
         self.player.play(
             start_variant_id=start_variant_id,
@@ -166,10 +171,6 @@ class MidwaySynth(Synth):
         variant.set_track_version(track=track, version=track_version)
         self.play(project_version=project_version, start_variant_id=variant.id, options=options)
 
-    def wait_to_the_end(self):
-        while self.is_playing():
-            sleep(0.1)
-
 
 class EventProvider:
     def __init__(
@@ -180,7 +181,7 @@ class EventProvider:
         last_variant_id: UUID,
         track: Track,
         callback: Callable,
-        options: PlayOptions
+        options: PlayOptions,
     ):
         self.synth = synth
         self.project_version = project_version
@@ -287,6 +288,7 @@ class Player:
         gc.collect()
         if self.event_provider() is None:
             logger.debug("stopped and disposed")
+        notify(message=NotificationMessage.STOP)
 
     def seq_callback(self, time, event, seq, data):
         def should_stop() -> bool:

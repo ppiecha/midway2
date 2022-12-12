@@ -1570,7 +1570,6 @@ class Sequencer:
 
     def unregister_client(self, client_id: int):
         fluid_sequencer_unregister_client(self.sequencer, client_id)
-        logger.debug(f"client unregistered {client_id}")
 
     def note(self, time, channel, key, unit, bpm, velocity, source=-1, dest=-1, absolute=True):
         if any(map(lambda x: x is None, [time, channel, key, unit, bpm, velocity])):
