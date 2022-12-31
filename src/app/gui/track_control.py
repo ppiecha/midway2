@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from src.app.gui.track_list import TrackListItem
     from src.app.gui.main_frame import MainFrame
 
-logger = get_console_logger(name=__name__, log_level=logging.INFO)
+logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
 
 class TrackVersionControlTab(QWidget, ABC, metaclass=ABCWidgetFinalMeta):
@@ -159,6 +159,7 @@ class BaseTrackVersionControlTab(TrackVersionControlTab):
         if index >= 0:
             preset = self._preset.itemData(index)
             self.bank_patch = preset.bank, preset.patch
+            logger.debug(f"Preset changed to {preset.bank} {preset.patch}")
 
     @property
     def channel(self) -> int:
@@ -200,6 +201,7 @@ class BaseTrackVersionControlTab(TrackVersionControlTab):
         self.track_version.bank = preset.bank
         self.track_version.patch = preset.patch
         self.synth.preset_change(channel=self.channel, preset=preset)
+        logger.debug(f"Preset changed {self.track_version.bank}")
 
     @staticmethod
     def find_preset(cmb: QComboBox, preset: Preset) -> int:
@@ -391,6 +393,7 @@ class TrackVersionControl(QWidget):
         register_listener(
             mapping={
                 NotificationMessage.TRACK_VERSION_ADDED: self.new_track_version,
+                NotificationMessage.TRACK_VERSION_CHANGED: self.change_track_version,
                 NotificationMessage.TRACK_VERSION_REMOVED: self.delete_track_version,
             }
         )
@@ -413,6 +416,17 @@ class TrackVersionControl(QWidget):
     def new_track_version(self, track: Track, track_version: TrackVersion):
         if self.track == track:
             self._new_track_version(track_version=track_version)
+
+    def change_track_version(
+            self, project_version: ProjectVersion, track_id: Id, track_version_id: Id, new_track_version: TrackVersion
+    ):
+        if self.project_version == project_version and self.track.id == track_id:
+            track_version = self.track.get_version(identifier=track_version_id)
+            self.tab_box.setTabText(self.track_version_tab_id(track_version=track_version), new_track_version.name)
+            tab = self.track_version_control_tab(track_version=track_version)
+            tab.channel = new_track_version.channel
+            tab.sf_name = new_track_version.sf_name
+            tab.bank_patch = new_track_version.bank, new_track_version.patch
 
     def _delete_track_version(self, track_version: TrackVersion):
         track_tab = self.map.pop(track_version.id)
@@ -448,18 +462,6 @@ class TrackVersionControl(QWidget):
     def __len__(self):
         return len(self.map)
 
-    # def rename_version(self, old_version: str, new_version: str):
-    #     index = self.tab_box.indexOf(self.map[old_version])
-    #     self.tab_box.setTabText(index, new_version)
-    #     if new_version in self.versions:
-    #         raise ValueError(f'Version {new_version} already exists in track {self.track}')
-    #     else:
-    #         self.map[new_version] = self.map[old_version]
-    #         self.map.pop(old_version)
-    #         self.track.versions[new_version] = self.track.versions[old_version]
-    #         self.track.versions.pop(old_version)
-    #         # pub.sendMessage(cn.CN_TOPIC_DIR_CHG, dir_name=self.dir_name, added=added, deleted=deleted)
-
     def open_menu(self, position):
         menu = QMenu()
         menu.addAction(self.mf.menu.actions[MenuAttr.TRACK_VERSION_NEW])
@@ -468,6 +470,15 @@ class TrackVersionControl(QWidget):
         menu.setDefaultAction(self.mf.menu.actions[MenuAttr.TRACK_VERSION_EDIT])
         menu.exec_(self.tab_box.tabBar().mapToGlobal(position))
         # menu.exec_(e.globalPos())
+
+    def track_version_detail_control(self, track_version: TrackVersion) -> TrackVersionDetailControl:
+        return self.map[track_version.id]
+
+    def track_version_tab_id(self, track_version: TrackVersion) -> int:
+        return self.tab_box.indexOf(self.track_version_detail_control(track_version=track_version))
+
+    def track_version_control_tab(self, track_version: TrackVersion) -> BaseTrackVersionControlTab:
+        return self.track_version_detail_control(track_version=track_version).track_version_control_tab
 
     @property
     def current_track_version_detail_control(self) -> TrackVersionDetailControl:

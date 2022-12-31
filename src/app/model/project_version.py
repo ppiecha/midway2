@@ -41,7 +41,6 @@ class ProjectVersion(BaseModel):
         notify(message=NotificationMessage.TRACK_ADDED, project_version=self, track=track)
         return self
 
-    # not tested
     def change_track(self, project_version: ProjectVersion, track_id: Id, new_track: Track) -> ProjectVersion:
         self.tracks.change_track(track_id=track_id, new_track=new_track)
         notify(
@@ -68,6 +67,20 @@ class ProjectVersion(BaseModel):
     def add_track_version(self, track: Track, track_version: TrackVersion) -> ProjectVersion:
         modified_track = self.tracks.get_track(identifier=track.name).add_track_version(track_version=track_version)
         notify(message=NotificationMessage.TRACK_VERSION_ADDED, track=modified_track, track_version=track_version)
+        return self
+
+    def change_track_version(
+        self, project_version: ProjectVersion, track_id: Id, track_version_id: Id, new_track_version: TrackVersion
+    ) -> ProjectVersion:
+        modified_track = self.tracks.get_track(identifier=track_id)
+        modified_track.change_track_version(track_version_id=track_version_id, new_track_version=new_track_version)
+        notify(
+            message=NotificationMessage.TRACK_VERSION_CHANGED,
+            project_version=project_version,
+            track_id=track_id,
+            track_version_id=track_version_id,
+            new_track_version=new_track_version,
+        )
         return self
 
     def remove_track_version(self, track: Track, track_version: TrackVersion) -> ProjectVersion:

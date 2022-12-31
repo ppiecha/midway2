@@ -130,6 +130,15 @@ class Track(BaseModel):
         self.versions.append(track_version)
         return self
 
+    def change_track_version(self, track_version_id: Id, new_track_version: TrackVersion) -> Track:
+        old_track_version = self.get_version(identifier=track_version_id)
+        old_track_version.channel = new_track_version.channel
+        old_track_version.name = new_track_version.name
+        old_track_version.sf_name = new_track_version.sf_name
+        old_track_version.bank = new_track_version.bank
+        old_track_version.patch = new_track_version.patch
+        return self
+
     def delete_track_version(self, track_version: TrackVersion, raise_not_exists: bool = True) -> Track:
         if self.track_version_exists(identifier=track_version.name):
             self.versions.remove(track_version)

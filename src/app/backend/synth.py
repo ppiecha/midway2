@@ -1242,7 +1242,7 @@ class Synth:
             dic[keys[-1]] = value
 
         sfid = self.sfload(filename=file_name)
-        for bank in range(MidiAttr.MAX_MIDI):
+        for bank in range(MidiAttr.MAX_MIDI + 1):
             for patch in range(MidiAttr.MAX_MIDI):
                 preset = (sfid, bank, patch)
                 preset_name = self.sfpreset_name(sfid, bank, patch)

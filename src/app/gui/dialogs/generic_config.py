@@ -151,10 +151,21 @@ class GenericConfigDlg(QDialog):
             case GenericConfigMode.NEW_TRACK:
                 self.config.project_version.add_track(track=self.general.track, enable=True)
             case GenericConfigMode.EDIT_TRACK:
-                self.config.project_version.change_track(track_id=self.config.track.id, new_track=self.general.track)
+                self.config.project_version.change_track(
+                    project_version=self.general.project_version,
+                    track_id=self.config.track.id,
+                    new_track=self.general.track
+                )
             case GenericConfigMode.NEW_TRACK_VERSION:
                 self.config.project_version.add_track_version(
                     track=self.general.track, track_version=self.general.track_version
+                )
+            case GenericConfigMode.EDIT_TRACK_VERSION:
+                self.config.project_version.change_track_version(
+                    project_version=self.general.project_version,
+                    track_id=self.config.track.id,
+                    track_version_id=self.config.track_version.id,
+                    new_track_version=self.general.track_version
                 )
 
     @staticmethod
@@ -254,11 +265,13 @@ class PresetTab(QWidget):
         self.select_data(lst=self.sf_list, data=init_sf_name)
         items = self.bank_list.findItems(str(init_bank), Qt.MatchExactly)
         if items:
-            bank = self.bank_list.indexFromItem(items[0]).row()
+            bank = items[0].data(Qt.UserRole)  # self.bank_list.indexFromItem(items[0]).row()
+            bank_row = self.bank_list.indexFromItem(items[0]).row()
         else:
             bank = 0
+            bank_row = 0
         if self.bank_list.count():
-            self.bank_list.setCurrentRow(bank)
+            self.bank_list.setCurrentRow(bank_row)
             self.bank_list.scrollToItem(self.bank_list.currentItem())
             if self.prog_list.count():
                 self.select_data(
@@ -337,6 +350,7 @@ class PresetTab(QWidget):
             self.bank_list.clear()
             for bank in self.config.mf.synth.preset_map[sfid].keys():
                 item = QListWidgetItem(str(bank), self.bank_list)
+                item.setData(Qt.UserRole, bank)
                 item.setIcon(QIcon(":/icons/bank.png"))
                 self.bank_list.addItem(item)
         self.bank_list.itemSelectionChanged.connect(self.on_bank_change)
