@@ -29,7 +29,7 @@ from src.app.model.track import Track, TrackVersion
 from src.app.model.types import dict_diff, DictDiff
 from src.app.utils.logger import get_console_logger
 from src.app.utils.notification import register_listener
-from src.app.utils.properties import IniAttr, AppAttr, NotificationMessage, FileFilterAttr
+from src.app.utils.properties import IniAttr, AppAttr, NotificationMessage, FileFilterAttr, StatusMessage
 from src.app.utils.file_system import file_exists, save_file_dialog
 
 logger = get_console_logger(__name__)
@@ -167,6 +167,7 @@ class MainFrame(QMainWindow):
         if (error := self.project.save_to_file(file_name=file_name)) is not None:
             self.show_message_box(message=error)
             resp = QMessageBox.Cancel
+        self.show_message(StatusMessage.PROJECT_SAVED)
         return resp
 
     def action_not_saved_changes(self) -> QMessageBox.StandardButton:

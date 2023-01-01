@@ -25,7 +25,7 @@ from src.app.utils.logger import get_console_logger
 from src.app.utils.notification import register_listener
 from src.app.utils.properties import GuiAttr, KeyAttr, NotificationMessage, GridAttr, MidiAttr
 
-logger = get_console_logger(name=__name__, log_level=logging.INFO)
+logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
 
 class KeyboardGridBox(Box):

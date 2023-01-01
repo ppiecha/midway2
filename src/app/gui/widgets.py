@@ -247,7 +247,8 @@ class PlayButton(QToolButton):
         self.action = self.play_action()
         self.setDefaultAction(self.action)
 
-        register_listener(mapping={NotificationMessage.STOP: self.set_action})
+        # register_listener(mapping={NotificationMessage.STOP: self.set_action})
+        self.mf.synth.stopped.connect(self.set_action)
 
     def set_action(self):
         is_playing = self.mf.synth.is_playing()

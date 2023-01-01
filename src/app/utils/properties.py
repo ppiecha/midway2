@@ -92,7 +92,7 @@ class GuiAttr:
     DEFAULT_BPM = 80
     # Grid
     RULER_HEIGHT = 20
-    GRID_DIV_UNIT = NoteUnit.SIXTEENTH
+    GRID_DIV_UNIT = NoteUnit.EIGHTH
     GRID_MIN_UNIT = value.thirty_second
     # Single variant
     DEFAULT = "Default"
@@ -322,3 +322,10 @@ DRUM_PATCH_TO_NAME = {patch: name for name, patch in DRUM_NAME_TO_PATCH.items()}
 # print(f"class DrumPatch(int, Enum):")
 # for name, patch in DRUM_NAME_TO_PATCH.items():
 #     print(name.translate({32: "_", 45: "_"}).upper(), "=", patch)
+
+
+class StatusMessage:
+    PROJECT_SAVED = "Project saved"
+
+    SF_LOADING = "Loading soundfont"
+    SF_LOADED = "Soundfonts loaded"

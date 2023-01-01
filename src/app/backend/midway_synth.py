@@ -7,7 +7,7 @@ from time import sleep
 from typing import List, Optional, Callable, TYPE_CHECKING, Any
 from uuid import UUID
 
-from PySide6.QtCore import QThread
+from PySide6.QtCore import QThread, Signal, QObject
 
 from src.app import AppAttr
 from src.app.backend.synth import Sequencer, Synth
@@ -22,7 +22,7 @@ from src.app.model.types import Channel, Bpm, TimedEvent, Preset
 from src.app.model.variant import Variant
 from src.app.utils.logger import get_console_logger
 from src.app.utils.notification import notify
-from src.app.utils.properties import MidiAttr, PlayOptions, NotificationMessage
+from src.app.utils.properties import MidiAttr, PlayOptions, NotificationMessage, StatusMessage
 from src.app.utils.units import (
     unit2tick,
     bpm2time_scale,
@@ -33,7 +33,7 @@ from src.app.utils.units import (
 if TYPE_CHECKING:
     from src.app.gui.main_frame import MainFrame
 
-logger = get_console_logger(name=__name__, log_level=logging.INFO)
+logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
 
 class FontLoader(QThread):
@@ -46,9 +46,12 @@ class FontLoader(QThread):
         self.synth.load_sound_fonts()
 
 
-class MidwaySynth(Synth):
+class MidwaySynth(Synth, QObject):
+    stopped = Signal()
+
     def __init__(self, mf: Optional[MainFrame] = None, sf2_path: str = AppAttr.PATH_SF2):
-        super().__init__()
+        Synth.__init__(self)
+        QObject.__init__(self)
         self.mf = mf
         self.sf2_path = sf2_path
         self.player: Optional[Player] = None
@@ -71,10 +74,10 @@ class MidwaySynth(Synth):
     def load_sound_fonts(self):
         for file_name in self.get_sf_files(path=self.sf2_path):
             if self.mf:
-                self.mf.show_message(f"Loading soundfont {file_name}")
+                self.mf.show_message(f"{StatusMessage.SF_LOADING} {file_name}")
             self.load_sf(file_name=file_name)
         if self.mf:
-            self.mf.show_message(message="Fonts loaded")
+            self.mf.show_message(message=StatusMessage.SF_LOADED)
             while not hasattr(self.mf, "project_control"):
                 sleep(0.01)
             self.mf.project_control.init_fonts()
@@ -288,7 +291,8 @@ class Player:
         gc.collect()
         if self.event_provider() is None:
             logger.debug("stopped and disposed")
-        notify(message=NotificationMessage.STOP)
+        # notify(message=NotificationMessage.STOP)
+        self.synth.stopped.emit()
 
     def seq_callback(self, time, event, seq, data):
         def should_stop() -> bool:

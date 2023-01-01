@@ -203,8 +203,8 @@ def open_project(_: MainFrame):
     pass
 
 
-def save_project(_: MainFrame):
-    pass
+def save_project(mf: MainFrame):
+    mf.save_project(file_name=mf.project_file_name)
 
 
 def save_project_as(_: MainFrame):
