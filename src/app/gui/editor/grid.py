@@ -34,6 +34,7 @@ class GridScene(BaseGridScene):
         numerator: int = 4,
         denominator: int = 4,
         grid_divider=GuiAttr.GRID_DIV_UNIT,
+        note_length_func=lambda: GuiAttr.GRID_DIV_UNIT,
     ):
         super().__init__(
             grid_view=grid_view,
@@ -42,6 +43,7 @@ class GridScene(BaseGridScene):
             denominator=denominator,
             grid_divider=grid_divider,
             num_of_bars=num_of_bars,
+            note_length_func=note_length_func,
         )
         self.supported_event_types = [EventType.NOTE]
         self._piano_keyboard_view: Optional[KeyboardView] = None

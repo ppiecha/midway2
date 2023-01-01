@@ -23,8 +23,7 @@ from PySide6.QtWidgets import (
 
 from src.app.model.project import Project
 from src.app.utils.logger import get_console_logger
-from src.app.utils.notification import register_listener
-from src.app.utils.properties import MidiAttr, NotificationMessage, PlayOptions
+from src.app.utils.properties import MidiAttr, PlayOptions
 from src.app.backend.midway_synth import MidwaySynth
 from src.app.model.types import Preset
 from src.app.model.track import Track, TrackVersion

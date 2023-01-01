@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from math import modf, copysign
-from typing import Optional, List, Type
+from typing import Optional, List, Type, Callable
 
 from PySide6.QtCore import QRectF, QPointF
 from PySide6.QtGui import Qt, QMouseEvent
@@ -25,7 +25,7 @@ from src.app.utils.logger import get_console_logger
 from src.app.utils.notification import register_listener
 from src.app.utils.properties import GuiAttr, KeyAttr, NotificationMessage, GridAttr, MidiAttr
 
-logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
+logger = get_console_logger(name=__name__, log_level=logging.INFO)
 
 
 class KeyboardGridBox(Box):
@@ -46,7 +46,13 @@ class BaseGridView(GraphicsView):
     ):
         super().__init__(show_scrollbars=GridAttr.SHOW_SCROLLBARS in cls.GRID_ATTR)
         self._num_of_bars = num_of_bars
-        self.grid_scene = cls(num_of_bars=num_of_bars, channel=channel, grid_view=self)
+        self.grid_scene = cls(
+            num_of_bars=num_of_bars,
+            channel=channel,
+            grid_view=self,
+            grid_divider=track_version.grid_divider,
+            note_length_func=lambda: track_version.note_length,
+        )
         self.setScene(self.grid_scene)
         if GridAttr.FIXED_HEIGHT in cls.GRID_ATTR:
             self.setFixedHeight(self.sceneRect().height())
@@ -102,6 +108,7 @@ class BaseGridScene(QGraphicsScene):
         numerator: int = 4,
         denominator: int = 4,
         grid_divider=GuiAttr.GRID_DIV_UNIT,
+        note_length_func: Callable = lambda: GuiAttr.GRID_DIV_UNIT,
     ):
         super().__init__()
         self.grid_view = grid_view
@@ -114,6 +121,7 @@ class BaseGridScene(QGraphicsScene):
         self._num_of_bars = num_of_bars
         self.redraw()
         self.selection = GridSelection(grid=self, grid_attr=BaseGridScene.GRID_ATTR)
+        self.note_length_func = note_length_func
         register_listener(
             mapping={
                 NotificationMessage.EVENT_ADDED: self.add_node,
@@ -151,7 +159,7 @@ class BaseGridScene(QGraphicsScene):
         if node:
             event.unit = node.event.unit
         else:
-            event.unit = GuiAttr.GRID_DIV_UNIT
+            event.unit = self.note_length_func()
         return event
 
     def set_event_pitch(self, node: Node, y: int) -> Event:

@@ -94,12 +94,14 @@ class RulerScene(BaseGridScene):
     KEYBOARD_CLS = MetaKeyboard
     GRID_ATTR = GridAttr.DIRECT_SELECTION | GridAttr.MOVE_HORIZONTAL | GridAttr.FIXED_HEIGHT
 
-    def __init__(self, channel: Channel, num_of_bars, grid_view: BaseGridView):
+    def __init__(self, channel: Channel, num_of_bars, grid_view: BaseGridView, grid_divider, note_length_func):
         self.ruler = Ruler(channel=channel, num_of_bars=num_of_bars, grid_view=grid_view)
         super().__init__(
             grid_view=grid_view,
             channel=channel,
             num_of_bars=num_of_bars,
+            grid_divider=grid_divider,
+            note_length_func=note_length_func,
         )
         self.grid_view = grid_view
         self.supported_event_types = [

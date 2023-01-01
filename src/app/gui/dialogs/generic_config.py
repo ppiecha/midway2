@@ -154,7 +154,7 @@ class GenericConfigDlg(QDialog):
                 self.config.project_version.change_track(
                     project_version=self.general.project_version,
                     track_id=self.config.track.id,
-                    new_track=self.general.track
+                    new_track=self.general.track,
                 )
             case GenericConfigMode.NEW_TRACK_VERSION:
                 self.config.project_version.add_track_version(
@@ -165,7 +165,7 @@ class GenericConfigDlg(QDialog):
                     project_version=self.general.project_version,
                     track_id=self.config.track.id,
                     track_version_id=self.config.track_version.id,
-                    new_track_version=self.general.track_version
+                    new_track_version=self.general.track_version,
                 )
 
     @staticmethod

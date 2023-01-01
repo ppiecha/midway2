@@ -21,8 +21,7 @@ from src.app.model.track import Track, TrackVersion, Tracks
 from src.app.model.types import Channel, Bpm, TimedEvent, Preset
 from src.app.model.variant import Variant
 from src.app.utils.logger import get_console_logger
-from src.app.utils.notification import notify
-from src.app.utils.properties import MidiAttr, PlayOptions, NotificationMessage, StatusMessage
+from src.app.utils.properties import MidiAttr, PlayOptions, StatusMessage
 from src.app.utils.units import (
     unit2tick,
     bpm2time_scale,
@@ -33,7 +32,7 @@ from src.app.utils.units import (
 if TYPE_CHECKING:
     from src.app.gui.main_frame import MainFrame
 
-logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
+logger = get_console_logger(name=__name__, log_level=logging.INFO)
 
 
 class FontLoader(QThread):

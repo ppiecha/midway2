@@ -18,15 +18,16 @@ from PySide6.QtWidgets import (
     QToolButton,
     QTableWidget,
     QTableWidgetItem,
+    QButtonGroup,
 )
 from src.app.gui.editor.piano_roll import PianoRoll
 from src.app.model.project_version import ProjectVersion
 from src.app.utils.logger import get_console_logger
-from src.app.utils.notification import register_listener
+from src.app.utils.notification import register_listener, notify
 from src.app.utils.properties import MenuAttr, NotificationMessage
 from src.app.gui.widgets import Box, FontBox, PresetBox, ChannelBox
 from src.app.backend.midway_synth import MidwaySynth
-from src.app.model.types import Preset, ABCWidgetFinalMeta
+from src.app.model.types import Preset, ABCWidgetFinalMeta, Id, NoteUnit
 from src.app.model.sequence import Sequence
 from src.app.model.track import Track, TrackVersion
 
@@ -81,6 +82,8 @@ class BaseTrackVersionControlTab(TrackVersionControlTab):
         self.w_stop_all_notes.setDefaultAction(self.mf.menu.actions[MenuAttr.TRACK_VERSION_STOP_ALL_NOTES])
         self.config_dlg_btn = QToolButton()
         self.config_dlg_btn.setDefaultAction(self.mf.menu.actions[MenuAttr.TRACK_VERSION_EDIT])
+        self.note_length_group = QButtonGroup()
+        self.set_note_length_group()
 
         # Layout
         self.midi_box = Box(direction=QBoxLayout.LeftToRight)
@@ -94,6 +97,8 @@ class BaseTrackVersionControlTab(TrackVersionControlTab):
 
         self.midi_box.addStretch()
 
+        for button in self.note_length_group.buttons():
+            self.midi_box.addWidget(button)
         self.midi_box.addWidget(self.w_play)
         self.midi_box.addWidget(self.w_stop)
         # self.midi_box.addWidget(self.w_metronome)
@@ -112,6 +117,29 @@ class BaseTrackVersionControlTab(TrackVersionControlTab):
 
         if self.mf.synth.is_loaded():
             self.init_fonts()
+
+    def set_note_length_group(self):
+        def on_toggle(checked: bool):
+            if checked:
+                length = self.note_length_group.id(self.note_length_group.checkedButton())
+                self.track_version.note_length = float(length)
+
+        note_length_options = [
+            int(NoteUnit.WHOLE),
+            int(NoteUnit.HALF),
+            int(NoteUnit.QUARTER),
+            int(NoteUnit.EIGHTH),
+            int(NoteUnit.SIXTEENTH),
+            int(NoteUnit.THIRTY_SECOND),
+        ]
+        for option in note_length_options:
+            button = QToolButton()
+            button.setCheckable(True)
+            button.setText(str(option))
+            button.toggled.connect(on_toggle)
+            self.note_length_group.addButton(button, option)
+
+        self.note_length_group.button(int(self.track_version.note_length)).setChecked(True)
 
     def play(self):
         pass
@@ -418,7 +446,7 @@ class TrackVersionControl(QWidget):
             self._new_track_version(track_version=track_version)
 
     def change_track_version(
-            self, project_version: ProjectVersion, track_id: Id, track_version_id: Id, new_track_version: TrackVersion
+        self, project_version: ProjectVersion, track_id: Id, track_version_id: Id, new_track_version: TrackVersion
     ):
         if self.project_version == project_version and self.track.id == track_id:
             track_version = self.track.get_version(identifier=track_version_id)

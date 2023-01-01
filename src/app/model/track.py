@@ -12,7 +12,7 @@ from src.app.model.event import EventType
 from src.app.model.sequence import Sequence
 from src.app.model.types import Channel, MidiValue, MidiBankValue, get_one, TrackType, Preset, Id
 from src.app.utils.exceptions import DuplicatedName, NoDataFound
-from src.app.utils.properties import Color, MidiAttr
+from src.app.utils.properties import Color, MidiAttr, GuiAttr
 
 
 class TrackVersion(BaseModel):
@@ -23,6 +23,8 @@ class TrackVersion(BaseModel):
     bank: MidiBankValue = MidiAttr.DEFAULT_BANK
     patch: MidiValue = MidiAttr.DEFAULT_PATCH
     sequence: Sequence
+    grid_divider: float = GuiAttr.GRID_DIV_UNIT
+    note_length: float = GuiAttr.GRID_DIV_UNIT
 
     def preset(self):
         if any(item is None for item in (self.sf_name, self.bank, self.patch)):
