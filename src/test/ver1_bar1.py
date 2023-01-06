@@ -5,7 +5,6 @@ from src.app.backend.midway_synth import MidwaySynth
 from src.app.model.bar import Bar
 from src.app.model.composition import Composition
 from src.app.model.event import Event, EventType
-from src.app.model.variant_item import LoopType
 
 
 if __name__ == "__main__":

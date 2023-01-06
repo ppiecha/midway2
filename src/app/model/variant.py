@@ -18,6 +18,7 @@ class VariantType(str, Enum):
 
 
 class VariantItem(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
     track_id: UUID
     version_id: UUID
     enabled: bool

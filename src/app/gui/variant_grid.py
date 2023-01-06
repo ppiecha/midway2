@@ -102,7 +102,10 @@ class GridCell(QWidget):
 
     @abstractmethod
     def on_enable_changed(self):
-        pass
+        if self.cell_mode == CellMode.VERSION:
+            if self.variant_item is None:
+                raise ValueError("Variant must be defined")
+            self.variant_item.enabled = self.enabled.isChecked()
 
 
 class VersionGridCell(GridCell):
@@ -116,6 +119,7 @@ class VersionGridCell(GridCell):
         self.track = self.project_version.tracks.get_track(identifier=track_id, raise_not_found=True)
         self.version = VersionCombo(self, project_version=self.project_version, track=self.track)
         self.version.setVisible(CellMode.VERSION in self.cell_mode)
+        self.enabled.setChecked(self.variant_item.enabled)
         self.main_box.addWidget(self.version)
         self.main_box.setAlignment(Qt.AlignLeft)
 
