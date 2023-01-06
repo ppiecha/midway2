@@ -4,9 +4,9 @@ import logging
 from math import modf, copysign
 from typing import Optional, List, Type, Callable
 
-from PySide6.QtCore import QRectF, QPointF
-from PySide6.QtGui import Qt, QMouseEvent
-from PySide6.QtWidgets import QGraphicsScene, QGraphicsSceneMouseEvent, QBoxLayout
+from PySide6.QtCore import QRectF, QPointF, QPoint
+from PySide6.QtGui import Qt, QMouseEvent, QAction
+from PySide6.QtWidgets import QGraphicsScene, QGraphicsSceneMouseEvent, QBoxLayout, QMenu, QApplication
 from pydantic import PositiveInt
 
 from src.app.backend.synth import Synth
@@ -19,6 +19,7 @@ from src.app.model.event import Event, EventType, Diff, EventDiff
 from src.app.model.meter import invert
 from src.app.model.midi_keyboard import BaseKeyboard
 from src.app.model.sequence import Sequence
+from src.app.model.serializer import model_to_string
 from src.app.model.track import TrackVersion
 from src.app.model.types import Channel
 from src.app.utils.logger import get_console_logger
@@ -95,6 +96,37 @@ class BaseGridView(GraphicsView):
         else:
             self.grid_scene.select_all(selected=False)
 
+    def bar_from_pos(self, pos: QPointF) -> int:
+        scene_pos = self.mapToScene(QPoint(pos.x(), pos.y()))
+        return scene_pos.x() // self.grid_scene.bar_width
+
+    def on_menu(self, position) -> None:
+        def copy_bar():
+            clip = QApplication.clipboard()
+            bar_num = self.bar_from_pos(position)
+            bar = self.grid_scene.sequence[bar_num]
+            clip.setText(model_to_string(bar))
+            # mime_data = clip.mimeData()
+            # encoded_data = QByteArray()
+            # stream = QDataStream(encoded_data, QIODevice.WriteOnly)
+            # stream.writeString()
+            # mime_data.setData(AppAttr, encoded_data)
+
+        def copy_bar_action():
+            action = QAction("Copy bar")
+            action.triggered.connect(copy_bar)
+            return action
+
+        # item = self.itemAt(position)
+        # if item is not None:
+        #     # Forward contextmenu event to QTextGraphicsItem, etc
+        #     self.grid_scene.sendEvent(item)
+        #     return
+        logger.debug("Menu requested (base_grid)")
+        menu = QMenu()
+        menu.addAction(copy_bar_action())
+        menu.popup(position)
+
 
 class BaseGridScene(QGraphicsScene):
     KEYBOARD_CLS = None
@@ -128,6 +160,10 @@ class BaseGridScene(QGraphicsScene):
                 NotificationMessage.EVENT_REMOVED: self.remove_node,
             }
         )
+
+    # def bar_from_pos(self, pos: QPointF) -> int:
+    #     scene_pos = self.mapToScene(pos)
+    #     return scene_pos // self.grid_scene.bar_width
 
     def ratio(self, x: float) -> float:
         return x / self.bar_width
@@ -218,35 +254,6 @@ class BaseGridScene(QGraphicsScene):
             e=e, node=node, moving=moving, resizing=resizing, user_defined=user_defined
         )
         return self.sequence.get_changed_event(old_event=event_diff.event, diff=event_diff.diff)
-        # event.preset = self.keyboard.track_version.preset()
-        # return event
-
-    # def point_to_event(
-    #     self,
-    #     e: QGraphicsSceneMouseEvent,
-    #     node: Node = None,
-    #     moving: bool = False,
-    #     resizing: bool = False,
-    #     user_defined: bool = False,
-    # ) -> Optional[Event]:
-    #     event_diff = self.point_to_event_diff(
-    #         e=e,
-    #         node=node,
-    #         moving=moving,
-    #         resizing=resizing,
-    #     )
-    #     x, y = e.scenePos().x(), e.scenePos().y()
-    #     event = self.set_event_pitch(node=node, y=y)
-    #     if event:
-    #         event = self.set_event_position(
-    #             event=event, node=node, x=x, user_defined=user_defined
-    #         )
-    #         event = self.set_event_unit(event=event, node=node)
-    #         new_event = self.sequence.get_moved_event(
-    #             old_event=event, event_diff=event_diff
-    #         )
-    #         return new_event
-    #     return None
 
     def event_to_point(self, event: Event) -> QPointF:
         x = event.bar_num * self.bar_width
@@ -397,7 +404,7 @@ class BaseGridScene(QGraphicsScene):
         return self.grid_divider * KeyAttr.W_HEIGHT
 
     @property
-    def sequence(self):
+    def sequence(self) -> Sequence:
         return self._sequence
 
     @sequence.setter
@@ -436,6 +443,16 @@ class BaseGridScene(QGraphicsScene):
                             self.selection.selecting = False
                             key = self.keyboard.get_key_by_pos(position=y)
                             event = self.point_to_event(e=e, user_defined=True)
+                            # self.addRect(
+                            #     QRect(
+                            #         -100,
+                            #         100,
+                            #         -100,
+                            #         100,
+                            #     ),
+                            #     QPen(Color.GRID_SELECTION),
+                            #     QBrush(Color.GRID_SELECTION),
+                            # )
                             if key and event:
                                 self.add_event(event=event)
                                 key.play_note_in_thread(secs=MidiAttr.KEY_PLAY_TIME)

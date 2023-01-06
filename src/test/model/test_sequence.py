@@ -144,3 +144,15 @@ def test_changed_event_unit(bar0, bar1):
     assert moved_event.pitch == 50
     assert moved_event.beat == NoteUnit.HALF.value
     assert moved_event.unit == add(NoteUnit.QUARTER.value, NoteUnit.HALF.value)
+
+
+def test_copy_bar_from_to(bar0, bar1):
+    sequence = Sequence.from_bars([bar0, bar1])
+    event0 = Event(type=EventType.NOTE, pitch=50, beat=NoteUnit.HALF.value, unit=NoteUnit.QUARTER.value, bar_num=0)
+    sequence.add_event(bar_num=0, event=event0)
+    event1 = Event(type=EventType.NOTE, pitch=60, beat=NoteUnit.HALF.value, unit=NoteUnit.QUARTER.value, bar_num=1)
+    sequence.add_event(bar_num=1, event=event1)
+    sequence.copy_bar_from_to(from_bar_num=0, to_bar_num=1)
+    events1 = bar1.events()
+    assert len(events1) == 1
+    assert events1[0].pitch == 50 and events1[0].bar_num == 1

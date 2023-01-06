@@ -3,8 +3,9 @@ from __future__ import annotations
 import gc
 import logging
 import weakref
+from queue import Queue
 from time import sleep
-from typing import List, Optional, Callable, TYPE_CHECKING, Any
+from typing import List, Optional, Callable, TYPE_CHECKING, Any, Tuple
 from uuid import UUID
 
 from PySide6.QtCore import QThread, Signal, QObject
@@ -21,7 +22,8 @@ from src.app.model.track import Track, TrackVersion, Tracks
 from src.app.model.types import Channel, Bpm, TimedEvent, Preset
 from src.app.model.variant import Variant
 from src.app.utils.logger import get_console_logger
-from src.app.utils.properties import MidiAttr, PlayOptions, StatusMessage
+from src.app.utils.notification import notify
+from src.app.utils.properties import MidiAttr, PlayOptions, StatusMessage, NotificationMessage, StopMessage
 from src.app.utils.units import (
     unit2tick,
     bpm2time_scale,
@@ -45,12 +47,24 @@ class FontLoader(QThread):
         self.synth.load_sound_fonts()
 
 
-class MidwaySynth(Synth, QObject):
-    stopped = Signal()
+class MidwaySynth(Synth):
+    q = Queue()
+
+    class StopWorker(QObject):
+        finished = Signal()
+
+        def run(self):
+            while True:
+                item: StopMessage = MidwaySynth.q.get()
+                if item == StopMessage.QUIT:
+                    MidwaySynth.q.task_done()
+                    break
+                notify(message=NotificationMessage.STOP)
+                MidwaySynth.q.task_done()
+            self.finished.emit()
 
     def __init__(self, mf: Optional[MainFrame] = None, sf2_path: str = AppAttr.PATH_SF2):
         Synth.__init__(self)
-        QObject.__init__(self)
         self.mf = mf
         self.sf2_path = sf2_path
         self.player: Optional[Player] = None
@@ -60,6 +74,31 @@ class MidwaySynth(Synth, QObject):
             self.thread.start()
         else:
             self.load_sound_fonts()
+        self.stop_thread, self.stop_worker = self.run_stop_loop()
+
+    def run_stop_loop(self) -> Tuple[QThread, StopWorker]:
+        stop_thread = QThread()
+        stop_worker = MidwaySynth.StopWorker()
+        stop_worker.finished.connect(stop_thread.quit)
+        stop_worker.moveToThread(stop_thread)
+        stop_thread.started.connect(stop_worker.run)
+        stop_worker.finished.connect(stop_worker.deleteLater)
+        stop_thread.finished.connect(stop_thread.deleteLater)
+        stop_thread.start()
+        return stop_thread, stop_worker
+
+    def send_stop_message(self, message: StopMessage):
+        logger.debug(f"processing message {message}")
+        self.q.put(item=message)
+        logger.debug("waiting for queue")
+        self.q.join()
+        logger.debug("q done")
+
+    def send_stop_notification(self):
+        self.send_stop_message(message=StopMessage.STOP)
+
+    def quit(self):
+        self.send_stop_message(message=StopMessage.QUIT)
 
     def sfid(self, sf_name: str) -> int:
         return self.sf_map[sf_name]
@@ -111,7 +150,10 @@ class MidwaySynth(Synth, QObject):
             self.wait_to_the_end()
 
     def all_notes_off(self, chan: Optional[Channel] = None):
-        channels = self.mf.project.get_reserved_channels()
+        if self.mf is None:
+            channels = MidiAttr.CHANNELS
+        else:
+            channels = self.mf.project.get_reserved_channels()
         if chan:
             channels = [chan]
         for channel in channels:
@@ -132,7 +174,10 @@ class MidwaySynth(Synth, QObject):
         fs.start(driver=MidiAttr.DRIVER)
         sequencer = Sequencer(synth=fs, time_scale=bpm2time_scale(bpm=bpm), use_system_timer=False)
         sequencer.play_bar(synth=fs, bar=bar, bpm=bpm, repeat=repeat)
+        print(f"time {bar_length2sec(bar=bar, bpm=bpm) * repeat}")
         sleep(bar_length2sec(bar=bar, bpm=bpm) * repeat)
+        fs.system_reset()
+        del fs
 
     def play(
         self,
@@ -282,16 +327,21 @@ class Player:
         self.schedule_next_bar()
 
     def stop(self):
+        logger.debug("In stop")
         self.synth.all_notes_off()
+        logger.debug("all notes off")
         if self.event_provider() and self.event_provider().sequencer():
             self.event_provider()._sequencer = None
         if self.event_provider():
             self._event_provider = None
+        logger.debug("before qc")
         gc.collect()
+        logger.debug("after qc")
         if self.event_provider() is None:
             logger.debug("stopped and disposed")
-        # notify(message=NotificationMessage.STOP)
-        self.synth.stopped.emit()
+        else:
+            logger.debug("event provider still assigned")
+        self.synth.send_stop_notification()
 
     def seq_callback(self, time, event, seq, data):
         def should_stop() -> bool:

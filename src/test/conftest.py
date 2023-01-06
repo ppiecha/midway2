@@ -13,7 +13,7 @@ from src.app.model.event import Event, EventType
 from src.app.model.project_version import ProjectVersion
 from src.app.model.rhythm import Rhythm
 from src.app.model.sequence import Sequence
-from src.app.model.track import Track, TrackVersion, RhythmTrackVersion
+from src.app.model.track import Track, TrackVersion  # , RhythmTrackVersion
 from src.app.model.types import Bpm, NoteUnit, Preset
 from src.app.model.variant import Variant, VariantType
 from src.app.utils.properties import MidiAttr, DrumPatch
@@ -256,16 +256,19 @@ def fixture_bass_sequence(rhythm, num_of_bars) -> Sequence:
     return Sequence.from_bars(bars=bars)
 
 
-@pytest.fixture()
-def drums_composition(drums_sequence) -> ProjectVersion | None:
-    track_version = RhythmTrackVersion(sf_name=MidiAttr.DEFAULT_SF2, sequence=drums_sequence)
-    # track = Track(name="Drums", versions=[track_version])
-    # return Composition.from_tracks(tracks=[track], name="drums_composition")
+# @pytest.fixture()
+# def drums_composition(drums_sequence) -> ProjectVersion | None:
+#     track_version = RhythmTrackVersion(sf_name=MidiAttr.DEFAULT_SF2, sequence=drums_sequence)
+# track = Track(name="Drums", versions=[track_version])
+# return Composition.from_tracks(tracks=[track], name="drums_composition")
 
 
 @pytest.fixture(scope="session")
 def synth() -> MidwaySynth():
-    return MidwaySynth()
+    s = MidwaySynth()
+    yield s
+    s.stop()
+    s.quit()
 
 
 @pytest.fixture(name="two_notes")
@@ -333,7 +336,7 @@ def seq_empty_bars() -> Sequence:
 
 @pytest.fixture()
 def project_template_file_name() -> str:
-    return "C:\\Users\\piotr\\_piotr_\\__GIT__\\Python\\midway2\\src\\app\\default_project.json"
+    return r"C:\Users\piotr\_piotr_\__GIT__\Python\midway2\projects\test1.json"
 
 
 @pytest.fixture(name="empty_project_version")

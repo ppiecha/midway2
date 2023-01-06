@@ -54,7 +54,5 @@ def test_play_compiled_sound_fonts(synth, bar_c_major_up, bar_c_major_down, bpm)
     project_version = ProjectVersion.init_from_tracks(name="test_play_compiled_loop", bpm=bpm, tracks=tracks)
     compiled = project_version.get_compiled_sequence(variant_id=project_version.variants.get_first_variant().id)
     print(compiled)
-    synth.play(
-        project_version=project_version, start_variant_id=project_version.variants.get_first_variant().id, bpm=50
-    )
+    synth.play(project_version=project_version, start_variant_id=project_version.variants.get_first_variant().id)
     synth.wait_to_the_end()

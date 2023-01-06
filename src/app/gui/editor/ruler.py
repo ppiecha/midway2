@@ -1,24 +1,35 @@
+from __future__ import annotations
 import logging
+import sys
+from typing import List
 
-from PySide6.QtCore import Qt, QRect
-from PySide6.QtGui import QPainter, QPen, QBrush
+from PySide6.QtCore import Qt, QRect, QPointF
+from PySide6.QtGui import QPainter, QPen, QBrush, QAction
 from PySide6.QtWidgets import (
     QGraphicsItem,
     QGraphicsScene,
+    QGraphicsSceneContextMenuEvent,
+    QApplication,
+    QMenu,
+    QGraphicsSceneMouseEvent,
+    QGraphicsView,
+    QGraphicsRectItem,
 )
 
 from src.app.gui.editor.base_grid import BaseGridScene, BaseGridView
 from src.app.gui.editor.keyboard import MetaKeyboard
 from src.app.gui.widgets import GraphicsView
+from src.app.model.bar import Bar
 from src.app.model.event import EventType
 from src.app.model.midi_keyboard import (
     MetaKeyPos,
     MetaMidiKeyboard,
 )
 from src.app.model.sequence import Sequence
-from src.app.model.types import Channel
+from src.app.model.serializer import model_to_string
+from src.app.model.types import Channel, BarNum, get_one
 from src.app.utils.logger import get_console_logger
-from src.app.utils.properties import KeyAttr, Color, GuiAttr, GridAttr
+from src.app.utils.properties import KeyAttr, Color, GuiAttr, GridAttr, get_app_palette
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
@@ -124,7 +135,7 @@ class Ruler(QGraphicsItem):
         channel: Channel,
         num_of_bars: int,
         show_meta_notes: bool = True,
-        grid_view=None,
+        grid_view: BaseGridView = None,
     ):
         super().__init__()
         self.grid_view = grid_view
@@ -133,6 +144,7 @@ class Ruler(QGraphicsItem):
         self._num_of_bars = num_of_bars
         self._sequence = None
         self.rect = self.get_rect()
+        self.selection = Ruler.Selection(self)
 
     def get_rect(self):
         meta_notes_height = 3 * KeyAttr.W_HEIGHT
@@ -246,3 +258,148 @@ class Ruler(QGraphicsItem):
 
     def boundingRect(self):
         return self.get_rect()
+
+    def contextMenuEvent(self, event: QGraphicsSceneContextMenuEvent) -> None:
+        seq = self.grid_view.grid_scene.sequence
+
+        def copy_to_next_bar():
+            bar_num = self.get_bar_from_pos(event.pos())
+            logger.debug(seq)
+            seq.copy_to_next_bar(bar_num=bar_num)
+            logger.debug(seq)
+
+        def copy_to_clipboard_action():
+            clip = QApplication.clipboard()
+            bar_num = self.get_bar_from_pos(event.pos())
+            bar = self.grid_view.grid_scene.sequence[bar_num]
+            clip.setText(model_to_string(bar))
+            # mime_data = clip.mimeData()
+            # encoded_data = QByteArray()
+            # stream = QDataStream(encoded_data, QIODevice.WriteOnly)
+            # stream.writeString()
+            # mime_data.setData(AppAttr, encoded_data)
+
+        def copy_to_next_action(parent) -> QAction:
+            action = QAction("Copy to next bar", parent)
+            action.triggered.connect(copy_to_next_bar)
+            return action
+
+        if event.scenePos().y() < GuiAttr.RULER_HEIGHT:
+            logger.debug("menu requested")
+            menu = QMenu()
+            if self.selection.is_single_selection() and not self.selection.is_single_last_selection():
+                menu.addAction(copy_to_next_action(parent=menu))
+            menu.exec(event.screenPos())
+        else:
+            logger.debug("do default action")
+
+    def get_bar_from_pos(self, pos: QPointF) -> BarNum:
+        return self.grid_view.bar_from_pos(pos)
+
+    def get_bar_width(self) -> int:
+        return self.grid_view.grid_scene.bar_width
+
+    def mousePressEvent(self, e: QGraphicsSceneMouseEvent):
+        if e.scenePos().y() < GuiAttr.RULER_HEIGHT:
+            # if e.button() == Qt.LeftButton:
+            bar_num = self.get_bar_from_pos(e.scenePos())
+            if self.selection.is_bar_selected(bar_num=bar_num):
+                if e.modifiers() == Qt.ControlModifier:
+                    self.selection.remove_bar_selection(bar_num=bar_num)
+                else:
+                    self.selection.clear()
+                    self.selection.add_bar_selection(bar_num=bar_num)
+            else:
+                if e.modifiers() == Qt.ControlModifier:
+                    self.selection.add_bar_selection(bar_num=bar_num)
+                else:
+                    self.selection.clear()
+                    self.selection.add_bar_selection(bar_num=bar_num)
+
+            logger.debug(f"left button bar {bar_num}")
+            e.accept()
+        else:
+            e.ignore()
+
+    class SelectionRect(QGraphicsRectItem):
+        def __init__(self, ruler: Ruler, bar_num: BarNum):
+            super().__init__()
+            self.ruler = ruler
+            self.bar_num = bar_num
+            self.setPen(QPen(Color.GRID_SELECTION))
+            self.setBrush(QBrush(Color.GRID_SELECTION))
+
+        def rect(self) -> QRect:
+            bar_width = self.ruler.get_bar_width()
+            return QRect(self.bar_num * bar_width, 0, bar_width, GuiAttr.RULER_HEIGHT)
+
+        def paint(self, painter: QPainter, _, __=None):
+            painter.fillRect(self.rect(), self.brush())
+
+        def boundingRect(self):
+            return self.rect()
+
+    class Selection:
+        def __init__(self, ruler: Ruler):
+            self.ruler = ruler
+            self.selection_rect: List[Ruler.SelectionRect] = []
+
+        def add_bar_selection(self, bar_num: BarNum):
+            rect = Ruler.SelectionRect(ruler=self.ruler, bar_num=bar_num)
+            self.selection_rect.append(rect)
+            self.ruler.grid_view.grid_scene.addItem(rect)
+
+        def remove_bar_selection(self, bar_num: BarNum):
+            rect = self.get_selection_rect_by_bar(bar_num=bar_num)
+            self.selection_rect.remove(rect)
+            self.ruler.grid_view.grid_scene.removeItem(rect)
+
+        def get_selection_rect_by_bar(self, bar_num: BarNum, raise_on_empty: bool = True) -> Ruler.SelectionRect:
+            lookup = [rect for rect in self.selection_rect if rect.bar_num == bar_num]
+            return get_one(data=lookup, raise_on_empty=raise_on_empty)
+
+        def _selected_bars(self) -> List[BarNum]:
+            return sorted([rect.bar_num for rect in self.selection_rect])
+
+        # bar = self.grid_view.grid_scene.sequence[bar_num]
+        def selected_bars(self) -> List[Bar]:
+            pass
+            # return sorted([rect.bar_num for rect in self.selection_rect])
+
+        def is_single_selection(self) -> bool:
+            return len(self._selected_bars()) == 1
+
+        def is_single_last_selection(self) -> bool:
+            _selected_bars = self._selected_bars()
+            if len(_selected_bars) != 1:
+                return False
+            return _selected_bars[0] == self.ruler.num_of_bars - 1
+
+        def clear(self):
+            bars = self._selected_bars()
+            for bar_num in bars:
+                self.remove_bar_selection(bar_num=bar_num)
+
+        def is_bar_selected(self, bar_num: BarNum):
+            return self.get_selection_rect_by_bar(bar_num=bar_num, raise_on_empty=False) is not None
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    app.setStyle("Fusion")  # Style needed for palette to work
+    app.setPalette(get_app_palette())
+    scene = QGraphicsScene()
+    scene.addText("Hello, world!")
+    scene.addRect(
+        QRect(
+            0,
+            0,
+            100,
+            100,
+        ),
+        QPen(Color.GRID_SELECTION),
+        QBrush(Color.GRID_SELECTION),
+    )
+    view = QGraphicsView(scene)
+    view.show()
+    sys.exit(app.exec())

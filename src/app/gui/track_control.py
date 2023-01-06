@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (
 from src.app.gui.editor.piano_roll import PianoRoll
 from src.app.model.project_version import ProjectVersion
 from src.app.utils.logger import get_console_logger
-from src.app.utils.notification import register_listener, notify
+from src.app.utils.notification import register_listener
 from src.app.utils.properties import MenuAttr, NotificationMessage
 from src.app.gui.widgets import Box, FontBox, PresetBox, ChannelBox
 from src.app.backend.midway_synth import MidwaySynth

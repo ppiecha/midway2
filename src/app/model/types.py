@@ -7,7 +7,7 @@ from typing import NewType, Dict, Any, List, NamedTuple, TYPE_CHECKING, Optional
 from uuid import UUID
 
 from PySide6.QtWidgets import QWidget
-from pydantic import PositiveInt, confloat, conint, BaseModel
+from pydantic import PositiveInt, confloat, conint, BaseModel, NonNegativeInt
 from src.app.utils.exceptions import NoDataFound, TooMany
 
 if TYPE_CHECKING:
@@ -33,6 +33,7 @@ BendNormalized = confloat(ge=-1, le=1)
 BendDurationNormalized = confloat(ge=0, le=1)
 NumOfBars = PositiveInt
 Id = UUID | str
+BarNum = NonNegativeInt
 
 
 class NoteUnit(float, Enum):

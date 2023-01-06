@@ -23,7 +23,8 @@ from PySide6.QtWidgets import (
 
 from src.app.model.project import Project
 from src.app.utils.logger import get_console_logger
-from src.app.utils.properties import MidiAttr, PlayOptions
+from src.app.utils.notification import register_listener
+from src.app.utils.properties import MidiAttr, PlayOptions, NotificationMessage
 from src.app.backend.midway_synth import MidwaySynth
 from src.app.model.types import Preset
 from src.app.model.track import Track, TrackVersion
@@ -32,7 +33,7 @@ if TYPE_CHECKING:
     from src.app.gui.main_frame import MainFrame
     from src.app.model.project_version import ProjectVersion
 
-logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
+logger = get_console_logger(name=__name__, log_level=logging.INFO)
 
 
 class SafeThread(threading.Thread):
@@ -246,8 +247,7 @@ class PlayButton(QToolButton):
         self.action = self.play_action()
         self.setDefaultAction(self.action)
 
-        # register_listener(mapping={NotificationMessage.STOP: self.set_action})
-        self.mf.synth.stopped.connect(self.set_action)
+        register_listener(mapping={NotificationMessage.STOP: self.set_action})
 
     def set_action(self):
         is_playing = self.mf.synth.is_playing()
@@ -264,8 +264,6 @@ class PlayButton(QToolButton):
             else:
                 self.action.triggered.disconnect()
                 self.action.triggered.connect(self.play_slot)
-
-    # fixme stop notification must be called in thread safe mode
 
     def play_slot(self):
         self.mf.synth.play_object(
@@ -292,17 +290,6 @@ class PlayButton(QToolButton):
 
     def stop_slot(self):
         self.mf.synth.stop()
-
-    # def stop_action(self) -> Action:
-    #     self.mode = PlayButton.Mode.STOP
-    #     return Action(
-    #         mf=self.mf,
-    #         caption="Stop",
-    #         slot=self.stop_slot(),
-    #         icon=PlayButton.ICON_STOP,
-    #         shortcut=None,
-    #         attach=False,
-    #     )
 
 
 class Action(QAction):

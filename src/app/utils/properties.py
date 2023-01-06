@@ -66,6 +66,7 @@ class AppAttr:
     PATH_MIDI = os.path.join(PATH_ROOT, FOLDER_MIDI)
     PATH_AUDIO = os.path.join(PATH_ROOT, FOLDER_AUDIO)
     os.environ["PATH"] += PATH_FS + ";"
+    MIME_TYPE = APP_NAME
 
 
 class MidiAttr:
@@ -89,10 +90,10 @@ class GuiAttr:
     DEFAULT_VERSION_NAME = "Default"
     DEFAULT_COMPOSITION = "Default composition"
     DEFAULT_NUM_OF_BARS = 8
-    DEFAULT_BPM = 80
+    DEFAULT_BPM = 100
     # Grid
     RULER_HEIGHT = 20
-    GRID_DIV_UNIT = NoteUnit.EIGHTH
+    GRID_DIV_UNIT = NoteUnit.SIXTEENTH
     GRID_MIN_UNIT = value.thirty_second
     # Single variant
     DEFAULT = "Default"
@@ -211,6 +212,11 @@ class VariantGridRowIndex(int, Enum):
     SELECTOR = 0
     PLAY = 1
     TRACK_OFFSET = 2
+
+
+class StopMessage(str, Enum):
+    STOP = "Stop"
+    QUIT = "Quit"
 
 
 class DrumPatch(int, Enum):

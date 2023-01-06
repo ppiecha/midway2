@@ -135,8 +135,8 @@ class Bar(BaseModel):
 
     def events(self, deep_copy: bool = False):
         if deep_copy:
-            return (copy.deepcopy(event) for event in self.bar)
-        return (event for event in self.bar)
+            return [copy.deepcopy(event) for event in self.bar]
+        return self.bar
 
     def __repr__(self) -> str:
         """Enable str() and repr() for Bars."""

@@ -10,12 +10,13 @@ from src.app.model.bar import Bar
 from src.app.model.event import Event, EventType, Diff, PairOfEvents
 from src.app.model.meter import Meter, invert
 from src.app.model.midi_keyboard import MidiRange
+from src.app.model.types import BarNum
 from src.app.utils.logger import get_console_logger
 from src.app.utils.properties import NotificationMessage
 
 logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
 
-_bars = Dict[int, Union[Bar, type(None)]]
+_bars = Dict[BarNum, Union[Bar, type(None)]]
 
 
 class Sequence(BaseModel):
@@ -67,8 +68,24 @@ class Sequence(BaseModel):
         for bar_num in self.bars.keys():
             self.bars[bar_num] = Bar(meter=meter, bar_num=bar_num)
 
-    def clear_bar(self, bar_num: NonNegativeInt):
-        self.bars[bar_num] = Bar(meter=self.meter(), bar_num=bar_num)
+    # def clear_bar(self, bar_num: NonNegativeInt):
+    #     self.bars[bar_num] = Bar(meter=self.meter(), bar_num=bar_num)
+
+    def copy_bar_from_to(self, from_bar_num: BarNum, to_bar_num: BarNum):
+        from_bar = self.bars[from_bar_num]
+        events = from_bar.events(deep_copy=True)
+        for event in events:
+            event.bar_num = to_bar_num
+        self.clear_bar(bar_num=to_bar_num)
+        self.add_events(bar_num=to_bar_num, events=events)
+
+    def copy_to_next_bar(self, bar_num: BarNum):
+        self.copy_bar_from_to(from_bar_num=bar_num, to_bar_num=bar_num + 1)
+
+    def copy_to_rest_bars(self, bar_num: BarNum):
+        rest_of_bars = [k for k, v in self.bars.items() if k > bar_num]
+        for to_bar_num in rest_of_bars:
+            self.copy_bar_from_to(from_bar_num=bar_num, to_bar_num=to_bar_num)
 
     def set_num_of_bars(self, value):
         if value <= 0:
@@ -79,7 +96,7 @@ class Sequence(BaseModel):
             for bar_num in range(self.num_of_bars(), value):
                 self.bars[bar_num] = Bar(meter=self.meter(), bar_num=bar_num)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> Bar:
         """Enable the  '[]' notation on Bars to get the item at the index."""
         if index not in self.bars.keys():
             raise ValueError(f"Bar index out of range {index} -> {self.bars}")
@@ -127,10 +144,20 @@ class Sequence(BaseModel):
                 event=event,
             )
 
-    def remove_events(self, bar_num: NonNegativeInt, events: Optional[List[Event]]) -> None:
-        self.bars[bar_num].remove_events(events=events)
-        # for event in events:
-        #     self.remove_event(bar_num=bar_num, event=event)
+    def remove_events(self, bar_num: Optional[BarNum], events: Optional[List[Event]]) -> None:
+        # self.bars[bar_num].remove_events(events=events)
+        if bar_num is not None:
+            bars = [bar_num]
+        else:
+            bars = self.bars.keys()
+        for _bar_num in bars:
+            if events is None:
+                events = self.bars[_bar_num].events()
+            for event in events:
+                self.remove_event(bar_num=_bar_num, event=event)
+
+    def clear_bar(self, bar_num: BarNum):
+        self.remove_events(bar_num=bar_num, events=None)
 
     def remove_events_by_type(self, event_type: EventType) -> None:
         for bar in self.bars.values():

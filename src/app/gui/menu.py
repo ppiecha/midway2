@@ -303,6 +303,3 @@ def stop_track_version(mf: MainFrame):
 def add_single_variant(mf: MainFrame):
     current_project_version_info = mf.get_current_project_version_info()
     current_project_version_info.project_version.add_single_variant(name="test1", selected=True, enable_all_tracks=True)
-
-
-# TODO play current composition

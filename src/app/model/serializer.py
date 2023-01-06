@@ -1,5 +1,7 @@
 import json
 
+from pydantic import BaseModel
+
 from src.app.backend.synth import DEFAULT_ENCODING
 from src.app.model.types import Json, Result
 
@@ -26,6 +28,15 @@ def write_json_file(json_dict: Json | str, json_file_name: str) -> Result[str]:
                     return Result(error=f"Bad input type {type(value)}")
     except (json.JSONDecodeError, IOError) as e:
         return Result(error=str(e))
+
+
+def model_to_string(model: BaseModel) -> str:
+    return model.json(exclude_none=True, exclude_defaults=True)
+
+
+def string_to_model(string: str, model_class) -> BaseModel:
+    model_dict = json.loads(string)
+    return model_class(**model_dict)
 
 
 def test(a):

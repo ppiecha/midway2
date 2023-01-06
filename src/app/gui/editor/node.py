@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from src.app.gui.editor.base_grid import BaseGridScene
 
 
-logger = get_console_logger(name=__name__, log_level=logging.DEBUG)
+logger = get_console_logger(name=__name__, log_level=logging.INFO)
 
 
 class Node(QGraphicsItem):
