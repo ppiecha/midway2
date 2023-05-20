@@ -22,3 +22,14 @@ def save_file_dialog(
 ) -> str:
     file_name, _ = QFileDialog.getSaveFileName(parent, caption, dir=dir_, filter=filter_, options=options)
     return file_name
+
+
+def open_file_dialog(
+    parent: QWidget,
+    caption: str = "",
+    dir_: str = "",
+    filter_: str = "",
+    options: QFileDialog.Options = QFileDialog.Options(),
+) -> str:
+    file_name, _ = QFileDialog.getOpenFileName(parent, caption, dir=dir_, filter=filter_, options=options)
+    return file_name

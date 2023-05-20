@@ -199,8 +199,8 @@ def new_project(mf: MainFrame):
     mf.show_config_dlg(config=map_config(mf)(mode=GenericConfigMode.NEW_PROJECT_VERSION))
 
 
-def open_project(_: MainFrame):
-    pass
+def open_project(mf: MainFrame):
+    mf.open_project()
 
 
 def save_project(mf: MainFrame):

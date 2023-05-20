@@ -30,7 +30,7 @@ from src.app.model.types import dict_diff, DictDiff
 from src.app.utils.logger import get_console_logger
 from src.app.utils.notification import register_listener
 from src.app.utils.properties import IniAttr, AppAttr, NotificationMessage, FileFilterAttr, StatusMessage
-from src.app.utils.file_system import file_exists, save_file_dialog
+from src.app.utils.file_system import file_exists, save_file_dialog, open_file_dialog
 
 logger = get_console_logger(__name__)
 
@@ -98,7 +98,7 @@ class MainFrame(QMainWindow):
 
     def load_last_project(self):
         if (file_name := self.get_last_project_file_name()) != "":
-            self.project_file_name = file_name
+            self.open_project(file_name=file_name)
 
     def set_geometry(self):
         if self.config.value(IniAttr.MAIN_WINDOW_GEOMETRY, None) is not None:
@@ -159,8 +159,16 @@ class MainFrame(QMainWindow):
             QMessageBox.Cancel,
         )
 
-    def get_save_file_name(self):
+    def get_save_file_name(self) -> str:
         return save_file_dialog(parent=self, dir_=AppAttr.PATH_PROJECT, filter_=FileFilterAttr.PROJECT)
+
+    def get_file_name_to_open(self) -> str:
+        return open_file_dialog(parent=self, dir_=AppAttr.PATH_PROJECT, filter_=FileFilterAttr.PROJECT)
+
+    def open_project(self, file_name: str = None):
+        if file_name is None:
+            file_name = self.get_file_name_to_open()
+        self.project_file_name = file_name
 
     def save_project(self, file_name: str) -> QMessageBox.StandardButton:
         resp = QMessageBox.Ok
