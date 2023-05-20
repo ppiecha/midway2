@@ -166,19 +166,22 @@ class MainFrame(QMainWindow):
         resp = QMessageBox.Ok
         if (error := self.project.save_to_file(file_name=file_name)) is not None:
             self.show_message_box(message=error)
-            resp = QMessageBox.Cancel
+            return QMessageBox.Cancel
         self.show_message(StatusMessage.PROJECT_SAVED)
         return resp
+
+    def save_project_as(self) -> QMessageBox.StandardButton:
+        if (file_name := self.get_save_file_name()) != "":
+            return self.save_project(file_name=file_name)
+        else:
+            return QMessageBox.Cancel
 
     def action_not_saved_changes(self) -> QMessageBox.StandardButton:
         resp = QMessageBox.Ok
         if self.has_unsaved_changes():
             if (resp := self.ask_about_changes()) == QMessageBox.Save:
                 if not self.project_file_name:
-                    if (file_name := self.get_save_file_name()) != "":
-                        resp = self.save_project(file_name=file_name)
-                    else:
-                        resp = QMessageBox.Cancel
+                    self.save_project_as()
                 else:
                     resp = self.save_project(file_name=self.project_file_name)
         return resp
